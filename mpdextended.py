@@ -43,7 +43,6 @@ class MPDClient(MPDClient):#{{{1
         super(MPDClient, self).__init__()
 
     def _docommand(self, command, args, retval):
-        lock = False
         if command not in ('idle', 'noidle') and self._idle:
             self._writecommand('noidle', [])
         with self._lock:
@@ -91,16 +90,16 @@ class IdleThread(threading.Thread):#{{{1
                     change = self.mpdclient.idle(self.subsystems)
                 except ConnectionError:
                     print 'debug: idle ConnectionError'
-                    change = 'ConnectionError'
+                    change = ['ConnectionError']
                 except socket.timeout:
                     print 'debug: idle timedout'
-                    change = 'ConnectionError'
+                    change = ['ConnectionError']
                     if self.mpdclient._idle:
                         try:
                             change = self.mpdclient.noidle()
                         except (ConnectionError, socket.timeout):
                             print 'debug: idle-noidle error'
-                            change = 'ConnectionError'
+                            change = ['ConnectionError']
                 finally:
                     self.callback(change)
                     print 'debug: callback done'

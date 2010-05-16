@@ -75,7 +75,6 @@ class PlayControls:#{{{1
             except:
                 pass
             self.currentVolume = value
-        return True
 
     def toggleMute(self):
         if self.currentVolume == 0:

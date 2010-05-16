@@ -113,6 +113,7 @@ class LibraryForm(auxilia.Actions):#{{{1
             print 'load FS took %.3f seconds' % (time() - t)
             print 'library load took %.3f seconds' % (time() - p)
         finally:
+            self.view.emit(SIGNAL('update'), ['player'])
             self.view.setCursor(Qt.ArrowCursor)
 
     def __loadArtistView(self):#{{{2
