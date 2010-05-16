@@ -206,7 +206,7 @@ class View(auxilia.Actions):#{{{1
         mapped and show if not.
         '''
         if reason == QSystemTrayIcon.MiddleClick:
-            self.playPause()
+            self.playControls.playPause()
         if KDE:
             info = KWindowSystem.windowInfo( self.view.winId(), NET.XAWMState | NET.WMState | ((2**32)/2), NET.WM2ExtendedStrut)
             mapped = bool(info.mappingState() == NET.Visible and not info.isMinimized())
