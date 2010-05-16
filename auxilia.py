@@ -108,6 +108,30 @@ class Actions:
         , 'Rescan library'\
         , 'Rescan all files in the music directory.')
 
+    def actionBookmark(self, parent, slot):#{{{2
+        return self.action(parent, slot\
+        , 'document-save-as'\
+        , 'Bookmark Station'\
+        , 'Add the station to the bookmarks list.')
+
+    def actionPreview(self, parent, slot):#{{{2
+        return self.action(parent, slot\
+        , 'media-playback-start'\
+        , 'Preview'\
+        , 'Start listening to the station right away.')
+
+    def actionPlayBM(self, parent, slot):#{{{2
+        return self.action(parent, slot\
+        , 'media-playback-start'\
+        , 'Play'\
+        , 'Start listening to the station.')
+
+    def actionScReload(self, parent, slot):#{{{2
+        return self.action(parent, slot\
+        , 'view-refresh'\
+        , 'Reload'\
+        , 'Reload the genre list.')
+
 #    def action(self, parent, slot):#{{{2
 #        return self.action(parent, slot\
 #        , ''\

@@ -16,14 +16,15 @@
 # limitations under the License.
 #-------------------------------------------------------------------------------}}}
 from PyQt4.QtCore import SIGNAL, Qt
-from PyQt4.QtGui import QMessageBox, QTreeWidgetItem
+from PyQt4.QtGui import QMessageBox, QTreeWidgetItem, QKeySequence, QListWidget
 
 from xml.etree import ElementTree as ET
 import os
 
 import shoutcast
+from auxilia import Actions
 
-class ShoutcastForm():#{{{1
+class ShoutcastForm(Actions):#{{{1
     '''Grab Shoutcast streams and save them as "bookmarks" - and play them on
        the currently selected server.
 
@@ -39,7 +40,7 @@ class ShoutcastForm():#{{{1
         self.search = False
         self.stationTree = StationTree(view)
 
-        self.bookmarkList = BookmarkList(view, bookmarkFile)
+        self.bookmarkList = BookmarkList(view, os.path.expanduser(bookmarkFile))
         self.bookmarkList.reload()
 
         self.client = shoutcast.ShoutcastClient()
@@ -51,9 +52,17 @@ class ShoutcastForm():#{{{1
 
         view.connect(self.view.genreList, SIGNAL('itemSelectionChanged()'), self.__treeSelect)
         view.connect(self.view.genreList, SIGNAL('itemDoubleClicked(QTreeWidgetItem*,int)'), self.__previewStation)
+        view.connect(self.view.bookmarkList, SIGNAL('itemDoubleClicked(QListWidgetItem*)'), self.__play)
         #self.connect(self.view.playStation, SIGNAL('clicked()'), self.__previewStation)
         view.connect(self.view.saveStation, SIGNAL('clicked()'), self.__saveStation)
         #self.connect(self.bookmarkList.play,SIGNAL('clicked()'),self.__play)
+
+        # Add conext menu's
+        self.actionPreview(self.view.genreList, self.__previewStation)
+        self.actionBookmark(self.view.genreList, self.__saveStation)
+        self.actionScReload(self.view.genreList, self.__loadGenres)
+        self.actionPlayBM(self.view.bookmarkList, self.__play)
+        self.actionRemove(self.view.bookmarkList, self.bookmarkList.delete)
 
         self.view.bookmarkList.dropEvent = self.dropEvent
 
@@ -128,7 +137,7 @@ class ShoutcastForm():#{{{1
             finally:
                 self.view.setCursor(Qt.ArrowCursor)
 
-    def __previewStation(self, item):#{{{2
+    def __previewStation(self, item=None):#{{{2
         '''Play the currently selected station.'''
         (tuneinBase,station) = self.stationTree.currentStation()
         #try:
@@ -142,7 +151,7 @@ class ShoutcastForm():#{{{1
         #except Exception,e:
         #    QMessageBox(QMessageBox.Critical,'Shoutcast Error',str(e),QMessageBox.Ok,self).exec_()
 
-    def __play(self):#{{{2
+    def __play(self, item=None):#{{{2
         '''Play the currently selected bookmarked station.'''
         #try:
         self.mpd.stop()
@@ -222,9 +231,8 @@ class BookmarkList():#{{{1
     '''The list of bookmarked stations.'''
     def __init__(self, view, bookmarkFile):#{{{2
         self.view = view
-        self.playlistDir = bookmarkFile.rpartition('/')[0]
         self.bookmarkFile = os.path.expanduser(bookmarkFile)
-        #view.connect(delete,SIGNAL('clicked()'),self.__delete)
+        self.view.bookmarkList.keyPressEvent = self.keyPressEvent
 
     def reload(self):#{{{2
         # read in and hang on to the bookmarks
@@ -283,7 +291,7 @@ class BookmarkList():#{{{1
 
         self.xml.write(self.bookmarkFile,'UTF-8')
 
-    def __delete(self):#{{{2
+    def delete(self):#{{{2
         '''Delete the current bookmark.'''
         row = self.view.bookmarkList.currentRow()
         current = self.view.bookmarkList.takeItem(row)
@@ -294,7 +302,13 @@ class BookmarkList():#{{{1
         station = self.__getStation(name)
         stations = self.xml.find('stations')
         stations.remove(station)
-        self.xml.write(self.playlistDir,'UTF-8')
+        self.xml.write(self.bookmarkFile,'UTF-8')
+
+    def keyPressEvent(self, event):#{{{2
+        if event.matches(QKeySequence.Delete):
+            self.delete()
+        else:
+            QListWidget.keyPressEvent(self.view.bookmarkList, event)
 
 
 # vim: set expandtab shiftwidth=4 softtabstop=4:

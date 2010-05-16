@@ -995,6 +995,9 @@
             </property>
             <item row="4" column="0" colspan="3">
              <widget class="QTreeWidget" name="genreList">
+              <property name="contextMenuPolicy">
+               <enum>Qt::ActionsContextMenu</enum>
+              </property>
               <property name="dragEnabled">
                <bool>true</bool>
               </property>
@@ -1021,15 +1024,52 @@
               </property>
               <item>
                <widget class="QPushButton" name="reloadGenres">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
                 <property name="text">
                  <string>Reload</string>
+                </property>
+                <property name="icon">
+                 <iconset>
+                  <normaloff>icons/view-refresh.png</normaloff>icons/view-refresh.png</iconset>
                 </property>
                </widget>
               </item>
               <item>
                <widget class="QPushButton" name="saveStation">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
                 <property name="text">
-                 <string>Save</string>
+                 <string>Bookmark</string>
+                </property>
+                <property name="icon">
+                 <iconset>
+                  <normaloff>icons/document-save-as.png</normaloff>icons/document-save-as.png</iconset>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="previewStation">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="text">
+                 <string>Preview</string>
+                </property>
+                <property name="icon">
+                 <iconset>
+                  <normaloff>icons/media-playback-start.png</normaloff>icons/media-playback-start.png</iconset>
                 </property>
                </widget>
               </item>
@@ -1068,6 +1108,9 @@
             </property>
             <item row="0" column="0">
              <widget class="QListWidget" name="bookmarkList">
+              <property name="contextMenuPolicy">
+               <enum>Qt::ActionsContextMenu</enum>
+              </property>
               <property name="frameShadow">
                <enum>QFrame::Plain</enum>
               </property>
