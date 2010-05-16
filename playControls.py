@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #-------------------------------------------------------------------------------}}}
-from PyQt4.QtCore import Qt, SIGNAL
+from PyQt4.QtCore import SIGNAL
 
 class PlayControls:#{{{1
     currentVolume = 0
@@ -82,14 +82,6 @@ class PlayControls:#{{{1
         else:
             self.oldVolume = self.currentVolume
             self.setVolume(0)
-
-    def songSeek(self, event):#{{{2
-        if event.button() == Qt.LeftButton:
-            status = self.mpdclient.currentsong()
-            time = status.get('time', None)
-            if time is not None:
-                value = float(event.x()) / int(self.view.progress.geometry().width())
-                self.mpdclient.seekid(status['id'], int(int(time) * value))
 
     def connectSignals(self, view):
         view.connect(view.play, SIGNAL('clicked(bool)'), self.playPause)
