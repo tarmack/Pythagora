@@ -53,9 +53,7 @@ class ShoutcastForm(Actions):#{{{1
         view.connect(self.view.genreList, SIGNAL('itemSelectionChanged()'), self.__treeSelect)
         view.connect(self.view.genreList, SIGNAL('itemDoubleClicked(QTreeWidgetItem*,int)'), self.__previewStation)
         view.connect(self.view.bookmarkList, SIGNAL('itemDoubleClicked(QListWidgetItem*)'), self.__play)
-        #self.connect(self.view.playStation, SIGNAL('clicked()'), self.__previewStation)
         view.connect(self.view.saveStation, SIGNAL('clicked()'), self.__saveStation)
-        #self.connect(self.bookmarkList.play,SIGNAL('clicked()'),self.__play)
 
         # Add conext menu's
         self.actionPreview(self.view.genreList, self.__previewStation)
@@ -75,7 +73,6 @@ class ShoutcastForm(Actions):#{{{1
 
     def reload(self):#{{{2
         self.bookmarkList.reload()
-        #self.__loadGenres()
 
     def __loadGenres(self):#{{{2
         '''Retrieve the genres.'''
@@ -109,7 +106,6 @@ class ShoutcastForm(Actions):#{{{1
             self.stationTree.loadStations(stationlist)
         except Exception,e:
             print 'error: ', str(e)
-            #QMessageBox(QMessageBox.Critical,'Shoutcast Error',str(e),QMessageBox.Ok,self).exec_()
         finally:
             self.view.setCursor(Qt.ArrowCursor)
 
@@ -132,7 +128,6 @@ class ShoutcastForm(Actions):#{{{1
                 self.stationTree.loadStations(stationlist)
             except Exception,e:
                 print 'error: ', str(e)
-                #QMessageBox(QMessageBox.Critical,'Shoutcast Error',str(e),QMessageBox.Ok,self).exec_()
                 current.setSelected(False)
             finally:
                 self.view.setCursor(Qt.ArrowCursor)
@@ -140,7 +135,6 @@ class ShoutcastForm(Actions):#{{{1
     def __previewStation(self, item=None):#{{{2
         '''Play the currently selected station.'''
         (tuneinBase,station) = self.stationTree.currentStation()
-        #try:
         urls = self.client.getStation(tuneinBase,station['id'])
         station['urls'] = urls
         self.mpd.stop()
@@ -148,31 +142,22 @@ class ShoutcastForm(Actions):#{{{1
         for url in urls:
             self.mpd.add(url)
         self.mpd.play()
-        #except Exception,e:
-        #    QMessageBox(QMessageBox.Critical,'Shoutcast Error',str(e),QMessageBox.Ok,self).exec_()
 
     def __play(self, item=None):#{{{2
         '''Play the currently selected bookmarked station.'''
-        #try:
         self.mpd.stop()
         self.mpd.clear()
         for url in self.bookmarkList.getStationFiles():
             self.mpd.add(url)
         self.mpd.play()
-        #except Exception,e:
-        #    QMessageBox(QMessageBox.Critical,'Shoutcast Error',str(e),QMessageBox.Ok,self).exec_()
 
     def __saveStation(self):#{{{2
         '''Bookmark the currently selected station.'''
         (tuneinBase,station) = self.stationTree.currentStation()
-        #try:
         if station.get('urls',None) == None:
             urls = self.client.getStation(tuneinBase,station['id'])
             station['urls'] = urls
         self.bookmarkList.addStation(station)
-        #except Exception,e:
-        #    print 'error: ', e
-            #QMessageBox(QMessageBox.Critical,'Shoutcast Error',str(e),QMessageBox.Ok,self).exec_()
 
 #===============================================================================
 class StationTree():#{{{1
@@ -184,15 +169,11 @@ class StationTree():#{{{1
         view.connect(self.view.genreList, SIGNAL('itemClicked(QTreeWidgetItem*,int)'), self.__treeClick)
 
     def __treeClick(self):#{{{2
-        '''Enable/disable buttons based on what's selected'''
         current = self.view.genreList.currentItem()
         if current.isExpanded():
             current.setExpanded(False)
         else:
             current.setExpanded(True)
-        # child node - it's a station
-        #self.play.setEnabled(current.parent() != None)
-        #self.save.setEnabled(current.parent() != None)
 
     def loadTree(self, genrelist):#{{{2
         '''Reload the tree from the given list of genres.'''
