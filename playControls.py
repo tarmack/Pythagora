@@ -15,7 +15,6 @@
 # limitations under the License.
 #-------------------------------------------------------------------------------}}}
 from PyQt4.QtCore import Qt, SIGNAL
-from PyQt4.QtGui import QSystemTrayIcon
 
 class PlayControls:#{{{1
     currentVolume = 0
@@ -70,13 +69,6 @@ class PlayControls:#{{{1
 
     def setVolume(self,value):#{{{2
         '''Change the volume'''
-        if type(value) != int:
-            if value.type() == 31: # enum: QEvent.wheel
-                value.accept()
-                value = self.currentVolume + (int(value.delta())/(8*15))
-            else:
-                QSystemTrayIcon.event(self.view.trayIcon, value)
-                return False
         if value != self.currentVolume:
             try:
                 self.mpdclient.volume(value - self.currentVolume)

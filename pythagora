@@ -17,7 +17,7 @@
 # limitations under the License.
 #-------------------------------------------------------------------------------}}}
 from PyQt4.QtCore import QTimer, SIGNAL, Qt
-from PyQt4.QtGui import QApplication, QWidget
+from PyQt4.QtGui import QApplication, QWidget, QSystemTrayIcon
 
 import sys
 import socket
@@ -79,7 +79,7 @@ class Manager(View):#{{{1
         # Overload some methods.
         self.view.keyPressEvent = self.KeyPressEvent
         self.view.progress.mouseReleaseEvent = self.playControls.songSeek
-        self.view.trayIcon.event = self.playControls.setVolume
+        self.view.trayIcon.event = self.trayEvent
 
         self.timer.start(1000)
 
@@ -175,6 +175,14 @@ class Manager(View):#{{{1
             self.view.setCursor(Qt.ArrowCursor)
             if self.idleTimer.timerId() < 0:
                 self.idleTimer.start()
+
+    def trayEvent(self, event):#{{{2
+        if event.type() == 31: # enum: QEvent.wheel
+            event.accept()
+            self.playControls.volumeUp(int(event.delta())/(8*15))
+        else:
+            QSystemTrayIcon.event(self.view.trayIcon, event)
+            return False
 
     def __runIdle(self):#{{{2
         if not self.shuttingDown and self.mpdclient.connected():
