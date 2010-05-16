@@ -130,7 +130,7 @@ class Manager(View):#{{{1
             self.update.progress()
         elif not self.app.closingDown():
             if not self.mpdclient._sock:
-                self.__updateError('not connected')
+                self.update.__error('not connected')
         self.currentList.loadIcons()
 
     def __connectMPD(self):#{{{2
