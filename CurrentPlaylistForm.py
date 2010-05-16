@@ -222,7 +222,8 @@ class CurrentPlaylistForm(auxilia.DragNDrop):#{{{1
         source = event.source()
         toPos = self.view.currentList.row(self.view.currentList.itemAt(event.pos()))
         if source == self.view.currentList:
-            # FIXME: moving non contiguous selection messes up order.
+            # FIXME: moving non contiguous selection to a position in the
+            #        middle of the selection messes up order.
             event.accept()
             # Move the songs to the new position.
             itemList = self.view.currentList.selectedItems()
@@ -251,23 +252,15 @@ class CurrentPlaylistForm(auxilia.DragNDrop):#{{{1
         try:
             self.view.setCursor(Qt.WaitCursor)
             self.mpdclient.command_list_ok_begin()
-            self.updating = True
-            for i, song in enumerate(itemList):
+            for song in itemList:
                 if toPos < 0:
                     self.mpdclient.add(song)
                 else:
                     self.mpdclient.addid(song, toPos)
-                if i % 100 == 0:
-                    self.mpdclient.command_list_end()
-                    self.mpdclient.command_list_ok_begin()
+                    toPos += 1
+        finally:
             self.mpdclient.command_list_end()
             self.editing = time()
-        except:
-            self.mpdclient.command_list_end()
-            raise
-        finally:
-            self.updating = False
-            self.view.emit(SIGNAL('playlistChanged()'))
             self.view.setCursor(Qt.ArrowCursor)
 
     def _takeItem(self, row):#{{{2

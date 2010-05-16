@@ -18,6 +18,7 @@
 from PyQt4.QtCore import SIGNAL, Qt
 from PyQt4.QtGui import QMessageBox, QInputDialog, QKeySequence, QListWidget, QTreeWidget
 
+import mpd
 import songwidgets
 import auxilia
 
@@ -127,19 +128,24 @@ class PlaylistForm(auxilia.DragNDrop, auxilia.Actions):#{{{1
                     toPos += 1
                     count += 1
             self.mpdclient.command_list_end()
-            self.__getPlaylist(self.currentPlaylist)
         finally:
             self.view.setCursor(Qt.ArrowCursor)
 
 
     def reload(self):#{{{2
         '''Reload the lists from the server'''
+        try:
+            plname = unicode(self.view.playlistList.selectedItems()[0].text())
+        except:
+            plname = None
         self.view.playlistList.clear()
         playlists = [x['playlist'] for x in self.mpdclient.lsinfo() if 'playlist' in x]
         playlists.sort(auxilia.cmpUnicode)
         for l in playlists:
             self.view.playlistList.addItem(l)
-        self.currentPlaylist = None
+
+        self.currentPlaylist = plname
+        self.__getPlaylist(plname)
 
     def selectPlaylist(self, item):#{{{2
         self.__getPlaylist(unicode(item.text()))
@@ -152,15 +158,18 @@ class PlaylistForm(auxilia.DragNDrop, auxilia.Actions):#{{{1
                 plname = unicode(self.view.playlistList.selectedItems()[0].text())
             except:
                 return
+        else: self.view.playlistList.setCurrentItem(self.view.playlistList.findItems(plname, Qt.MatchExactly)[0])
         self.currentPlaylist = plname
 
-        songList = self.mpdclient.listplaylistinfo(plname)
-        for i, song in enumerate(songList):
-            self.view.songList.addTopLevelItem(songwidgets.LongSongWidget(song, i))
+        try:
+            songList = self.mpdclient.listplaylistinfo(plname)
+            for i, song in enumerate(songList):
+                self.view.songList.addTopLevelItem(songwidgets.LongSongWidget(song, i))
+        except mpd.CommandError:
+            pass
 
         for i in range(3):
             self.view.songList.resizeColumnToContents(i)
-        else: self.view.playlistList.setCurrentItem(self.view.playlistList.findItems(plname, Qt.MatchExactly)[0])
 
     def __loadPlayList(self):#{{{2
         self.__loadList()
@@ -188,27 +197,35 @@ class PlaylistForm(auxilia.DragNDrop, auxilia.Actions):#{{{1
         try:
             self.mpdclient.load(unicode(self.view.playlistList.selectedItems()[0].text()))
         except:
-            self.view.emit(SIGNAL('playlistChanged()'))
             return
         if state == 'play':
             self.mpdclient.play()
-        self.view.emit(SIGNAL('playlistChanged()'))
 
     def __newList(self):#{{{2
         '''Ask the user for a name for the new playlist'''
         playlists = [x['playlist'] for x in self.mpdclient.lsinfo() if 'playlist' in x]
 
-        (name,ok) = QInputDialog.getText(self.view, 'new Playlist', 'Please enter a name for the new playlist.', 0, 'New Playlist')
+        (name,ok) = QInputDialog.getText(self.view
+                , 'new Playlist'
+                , 'Please enter a name for the new playlist.'
+                , 0
+                , 'New Playlist')
         if ok == True:
             while name in playlists:
-                (name,ok) = QInputDialog.getText(self.view, 'new Playlist', 'The playlist %s already exists.\nPlease enter a different name' % name, 0, 'New Playlist')
+                (name,ok) = QInputDialog.getText(self.view
+                        , 'new Playlist'
+                        , 'The playlist %s already exists.\nPlease enter a different name' % name
+                        , 0
+                        , 'New Playlist')
                 if ok != True:
                     return self.currentPlaylist
+            self.view.playlistList.addItem(name)
             try:
                 self.view.playlistList.setCurrentItem(self.view.playlistList.findItems(name, Qt.MatchExactly)[0])
             except:
                 pass
-            self.__getPlaylist(name)
+            self.view.songList.clear()
+            self.currentPlaylist = name
             return name
 
     def __deleteList(self):#{{{2
@@ -220,9 +237,11 @@ class PlaylistForm(auxilia.DragNDrop, auxilia.Actions):#{{{1
         plname = unicode(item.text())
         resp = QMessageBox.question(self.view,'Delete Playlist','Are you sure you want to delete '+plname,QMessageBox.Yes|QMessageBox.No,QMessageBox.No)
         if resp == QMessageBox.Yes:
-            self.mpdclient.rm(plname)
+            try:
+                self.mpdclient.rm(plname)
+            except mpd.CommandError:
+                pass
             self.view.playlistList.takeItem(self.view.playlistList.row(item))
-            self.__getPlaylist()
 
 
     def __addPlaySong(self):#{{{2
@@ -236,18 +255,21 @@ class PlaylistForm(auxilia.DragNDrop, auxilia.Actions):#{{{1
 
     def __addSong(self):#{{{2
         self.mpdclient.command_list_ok_begin()
-        for item in self.view.songList.selectedItems():
-            self.mpdclient.add(item.song['file'])
-        self.mpdclient.command_list_end()
+        try:
+            for item in self.view.songList.selectedItems():
+                self.mpdclient.add(item.song['file'])
+        finally:
+            self.mpdclient.command_list_end()
 
     def __removeSong(self):#{{{2
-        self.mpdclient.command_list_ok_begin()
         itemlist = self.view.songList.selectedItems()
         itemlist.reverse()
-        for item in itemlist:
-            self.mpdclient.playlistdelete(self.currentPlaylist, item.pos)
-        self.mpdclient.command_list_end()
-        self.__getPlaylist()
+        self.mpdclient.command_list_ok_begin()
+        try:
+            for item in itemlist:
+                self.mpdclient.playlistdelete(self.currentPlaylist, item.pos)
+        finally:
+            self.mpdclient.command_list_end()
 
 
 

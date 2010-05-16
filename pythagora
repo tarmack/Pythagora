@@ -308,6 +308,9 @@ class Update:#{{{1
         self.view.randomButton.setChecked(bool(int(status['random'])))
         self.view.crossFade.setValue(int(status['xfade']))
 
+    def stored_playlist(self, status):#{{{2
+        self.view.emit(SIGNAL('reloadPlaylists()'))
+
     def setSongLabel(self, title='', artist='', album=''):#{{{2
         self.view.trayIcon.setToolTip('<b><big>%s</big></b>\r\nby <big>%s</big>\r\nfrom <i>%s</i>' % (title, artist, album))
         self.view.songLabel.setText(title, artist, album)

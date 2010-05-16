@@ -39,7 +39,10 @@ def cmpUnicode(a, b):#{{{1
     return locale.strcoll(a, b)#filter(lambda x: x.isalnum(), a), filter(lambda x: x.isalnum(), b))
 
 def cmpTracks(a, b):#{{{1
-    return int(re.match('^\d+', a).group()) - int(re.match('^\d+', b).group())
+    try:
+        return int(re.match('^\d+', a).group()) - int(re.match('^\d+', b).group())
+    except:
+        return cmpUnicode(a, b)
 
 def fileName(name):#{{{1
     return filter(lambda x: x != '/' , name)
@@ -206,7 +209,7 @@ class DragNDrop:#{{{1
         # Get the name of the droped playlist.
         playlist = unicode(event.source().selectedItems()[0].text())
         # Build a list of the songs.
-        itemList = [song['file'] for song in self.mpdclient.listplaylistinfo(playlist)]
+        itemList = (song['file'] for song in self.mpdclient.listplaylistinfo(playlist))
         self.addDrop(itemList, pos)
 
     def dropFile(self, event, pos):#{{{2
@@ -237,8 +240,8 @@ class DragNDrop:#{{{1
         selection = (unicode(x.text()) for x in event.source().selectedItems())
         for value in selection:
             songList = self.mpdclient.find(key, value)
-            #songList.sort(cmpUnicode, lambda song:song.get('album',''))
-            songList.sort(cmpUnicode, lambda song:song.get('track',''))
+            songList.sort(cmpTracks, lambda song:song.get('track',''))
+            songList.sort(cmpUnicode, lambda song:song.get('album',''))
             fileList.extend([x['file'] for x in songList])
         return fileList
 
