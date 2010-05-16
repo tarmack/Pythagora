@@ -46,6 +46,8 @@ class PlaylistForm(auxilia.DragNDrop, auxilia.Actions):#{{{1
         view.connect(view.deleteButton,SIGNAL('clicked()'),self.__deleteList)
 
         # overload dropEvent()
+        self.view.newButton.dropEvent = self.newListDropEvent
+        self.view.newButton.dragEnterEvent = self.newListDragEnterEvent
         self.view.songList.dropEvent = self.songListDropEvent
         self.view.playlistList.dropEvent = self.playlistListDropEvent
         # overload keyPressEvent() and keep original
@@ -80,6 +82,14 @@ class PlaylistForm(auxilia.DragNDrop, auxilia.Actions):#{{{1
             self.view.songList.setCurrentRow(-1)
         else:
             QTreeWidget.keyPressEvent(self.view.songList, event)
+
+    def newListDragEnterEvent(self, event):
+        event.accept()
+
+    def newListDropEvent(self, event):#{{{2
+        print 'dropped new playlist'
+        self.__newList()
+        self.songListDropEvent(event, -1)
 
     def playlistListDropEvent(self, event):#{{{2
         self.currentPlaylist = unicode(self.view.playlistList.itemAt(event.pos()).text())
