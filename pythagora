@@ -355,7 +355,7 @@ def formatTime(seconds):#{{{1
     result = []
     units = (60*60*24, 60*60, 60)
     for size in units:
-        if seconds > size or form == '%02i':
+        if seconds > size-1 or form == '%02i':
             count = seconds / size
             seconds -= (count * size)
             result.append(form % count)
