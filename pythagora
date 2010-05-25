@@ -92,13 +92,16 @@ class Manager(View):#{{{1
         self.__connectMPD()
         self.config.save()
 
-    def callback(self, changed):#{{{2
+    def callback(self, changes):#{{{2
         '''Remember, this is executed from another thread.'''
-        print 'debug: called back with "%s"' % changed
+        print 'debug: called back with "%s"' % changes
         if self.shuttingDown:
             print 'debug: callback aborted, application is closing down.'
             return
-        self.view.emit(SIGNAL('update'), changed)
+        if 'ConnectionError()' in changes:
+            self.view.emit(SIGNAL(changes))
+        else:
+            self.view.emit(SIGNAL('update'), changes)
         # The slots will be executed asynchronously so we use a timer to
         # schedule the next idle call after all events have been processed.
         if self.idleTimer.timerId() < 0:
@@ -252,11 +255,8 @@ class Update:#{{{1
             self.view.emit(SIGNAL('ConnectionError()'))
             return
         if changes:
-            if changes == 'ConnectionError()':
-                self.view.emit(SIGNAL(changes))
-            else:
-                for change in changes:
-                    getattr(self, change)(status)
+            for change in changes:
+                getattr(self, change)(status)
         else:
             self.player(status)
 
