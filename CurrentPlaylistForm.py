@@ -353,7 +353,14 @@ class CurrentPlaylistForm(auxilia.DragNDrop):#{{{1
         songSecs = songTime - (songMin * 60)
         songHour = int(songMin / 60)
         songMin -= songHour * 60
-        self.view.playTimeLabel.setText('Total play time: %02d:%02d:%02d' % (songHour,songMin,songSecs))
+        songDay = songHour / 24
+        songHour -= songDay * 24
+        if songHour == 1:
+            self.view.playTimeLabel.setText('Total play time: %d day %02d:%02d:%02d ' % (songDay, songHour, songMin, songSecs))
+        elif songHour:
+            self.view.playTimeLabel.setText('Total play time: %d days %02d:%02d:%02d ' % (songDay, songHour, songMin, songSecs))
+        else:
+            self.view.playTimeLabel.setText('Total play time: %02d:%02d:%02d ' % (songHour, songMin, songSecs))
         self.currentPlayTime = songTime
 
     def __setOneLinePlaylist(self, value):#{{{2
