@@ -141,7 +141,7 @@ class Manager(View):#{{{1
         if self.mpdclient.connected():
             self.mpdclient.close()
             self.mpdclient.disconnect()
-        socket.setdefaulttimeout(10)
+        socket.setdefaulttimeout(1)
         server = self.config.server
         try:
             if not server:
