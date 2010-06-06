@@ -343,9 +343,11 @@ class Update:#{{{1
     def __setPlayPauseState(self,state):#{{{2
         if state == 'play':
             self.view.play.setIcon(self.pauseIcon)
+            self.view.trayIcon.setIcon(self.pauseIcon)
             self.state = 'play'
         else:
             self.view.play.setIcon(self.startIcon)
+            self.view.trayIcon.setIcon(self.startIcon)
             self.state = 'stop'
 
 #}}}1
