@@ -355,9 +355,9 @@ class CurrentPlaylistForm(auxilia.DragNDrop):#{{{1
         songMin -= songHour * 60
         songDay = songHour / 24
         songHour -= songDay * 24
-        if songHour == 1:
+        if songDay == 1:
             self.view.playTimeLabel.setText('Total play time: %d day %02d:%02d:%02d ' % (songDay, songHour, songMin, songSecs))
-        elif songHour:
+        elif songDay > 0:
             self.view.playTimeLabel.setText('Total play time: %d days %02d:%02d:%02d ' % (songDay, songHour, songMin, songSecs))
         else:
             self.view.playTimeLabel.setText('Total play time: %02d:%02d:%02d ' % (songHour, songMin, songSecs))
