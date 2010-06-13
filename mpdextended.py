@@ -42,13 +42,13 @@ class MPDClient(MPDClient):#{{{1
         self._lock = threading.RLock()
         super(MPDClient, self).__init__()
 
-    def _docommand(self, command, args, retval):
+    def _docommand(self, command, args, retval):#{{{2
         if command not in ('idle', 'noidle') and self._idle:
             self._writecommand('noidle', [])
         with self._lock:
             return super(MPDClient, self)._docommand(command, args, retval)
 
-    def _writecommand(self, command, args=[]):
+    def _writecommand(self, command, args=[]):#{{{2
         if command.startswith('command_list') and self._idle:
             self._writecommand('noidle', [])
             with self._lock:
