@@ -99,7 +99,7 @@ class Manager(View):#{{{1
             print 'debug: callback aborted, application is closing down.'
             return
         if 'ConnectionError' in changes:
-            self.view.emit(SIGNAL(changes))
+            self.view.emit(SIGNAL('ConnectionError'))
         else:
             self.view.emit(SIGNAL('update'), changes)
         # The slots will be executed asynchronously so we use a timer to
