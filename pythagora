@@ -385,7 +385,6 @@ def formatTime(seconds):#{{{1
 
 if __name__ == "__main__":
     for opt in sys.argv:
-        print opt
         if opt == "-h" or opt.startswith("--help"):
             import usage
             print usage.usage
