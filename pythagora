@@ -211,7 +211,7 @@ class Manager(View):#{{{1
             return False
     def __runIdle(self):#{{{2
         if not self.shuttingDown and self.mpdclient.connected():
-            self.mpdclient.idleThread(self.callback)
+            self.mpdclient.idleThread(self.callback, timeout=20)
 
     def __connectSignals(self):#{{{2
         self.playControls.connectSignals(self.view)
