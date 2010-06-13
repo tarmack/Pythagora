@@ -56,11 +56,12 @@ class MPDClient(MPDClient):#{{{1
         else:
             super(MPDClient, self)._writecommand(command, args)
 
-    def idleThread(self, callback, subsystems=[]):#{{{2
+    def idleThread(self, callback, subsystems=[], timeout=10):#{{{2
         self._thread.callback = callback
         self._thread.subsystems = subsystems
         if self._commandlist != None:
             raise CommandListError('idle command not allowed in command list.')
+        self._thread.timeout = timeout
         self._thread.goidle.set()
 
     def connected(self):#{{{2
@@ -79,6 +80,7 @@ class IdleThread(threading.Thread):#{{{1
         self.daemon = True
         self.goidle = threading.Event()
         self.mpdclient = mpdclient
+        self.timeout = 10
 
     def run(self):#{{{2
         while True:
@@ -87,6 +89,8 @@ class IdleThread(threading.Thread):#{{{1
                 # acquire lock so we are sure the idle results go to us.
                 print 'debug: idling'
                 try:
+                    oldTimeout = self.mpdclient._sock.gettimeout()
+                    self.mpdclient._sock.settimeout(self.timeout)
                     change = self.mpdclient.idle(self.subsystems)
                 except ConnectionError:
                     print 'debug: idle ConnectionError'
@@ -101,6 +105,7 @@ class IdleThread(threading.Thread):#{{{1
                             print 'debug: idle-noidle error'
                             change = ['ConnectionError']
                 finally:
+                    self.mpdclient._sock.settimeout(oldTimeout)
                     self.callback(change)
                     print 'debug: callback done'
             self.goidle.clear()
