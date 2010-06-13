@@ -196,7 +196,7 @@ class RetrieverThread(threading.Thread, Retriever):#{{{1
                     if getrefcount(item) > 2:
                         icon = self.songIcon(item.song)
                         self.icons.append((item, icon,))
-                    else: print 'debug: '+item.text()
+                    else: print 'debug: '+unicode(item.text())
                 except:
                     print 'debug: error while fetching icon'
                     raise
