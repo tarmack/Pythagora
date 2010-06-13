@@ -19,6 +19,7 @@ from PyQt4.QtCore import SIGNAL, QTimer
 from PyQt4.QtGui import QSystemTrayIcon, QLabel, QHeaderView, QMenu, QIcon, QTabBar
 from PyQt4 import uic
 from time import time
+import sys
 
 import CurrentPlaylistForm
 import ShoutcastForm
@@ -30,8 +31,10 @@ import WriteOut
 WriteOut.Quiet()
 
 try:
-    from PyKDE4.kdeui import KWindowSystem, NET
-    KDE = True
+    if "--nokde" not in sys.argv:
+        from PyKDE4.kdeui import KWindowSystem, NET
+        KDE = True
+    else: KDE = False
 except ImportError:
     KDE = False
 
@@ -47,7 +50,9 @@ class View(auxilia.Actions):#{{{1
         self.mpdclient = mpdclient
         appIcon = QIcon('icons/Pythagora.png')
         try:
-            self.view = uic.loadUi('Pythagora.ui')
+            if KDE:
+                self.view = uic.loadUi('Pythagora.ui')
+            else: raise
         except:
             self.view = uic.loadUi('Pythagora.ui.Qt')
         self.view.setWindowTitle('Pythagora')
