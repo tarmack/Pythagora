@@ -121,8 +121,8 @@ Returns:    list of HTTP URLs for the station
                 return element.attrib['ct']
 
     #---------------------------------------------------------------------------
-    def __send__(self,request,timeout=60):#{{{2
-        conn = httplib.HTTPConnection(self.BASEURL)
+    def __send__(self,request,timeout=20):#{{{2
+        conn = httplib.HTTPConnection(self.BASEURL, timeout=timeout)
         conn.request('GET',request)
         response = conn.getresponse()
         if response.status > 202:
