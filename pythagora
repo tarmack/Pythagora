@@ -28,8 +28,6 @@ import playControls
 import configuration
 from MainWindow import View
 import auxilia
-import WriteOut
-WriteOut.Quiet()
 
 #============== Long term TODO's ==============================================
 # TODO: notification on song change (http://mpd.wikia.com/wiki/Mpd_osd.py_(using_dbus)
@@ -386,6 +384,18 @@ def formatTime(seconds):#{{{1
 
 
 if __name__ == "__main__":
+    for opt in sys.argv:
+        print opt
+        if opt == "-h" or opt.startswith("--help"):
+            import usage
+            print usage.usage
+            if opt == "--help-qt":
+                print usage.qtOptions
+            sys.exit(0)
+    import WriteOut
+    # silence pyflakes.
+    WriteOut.Quiet()
+
     main()
 #    import cProfile
 #    cProfile.run('main()')
@@ -393,3 +403,4 @@ if __name__ == "__main__":
 
 
 # vim: set expandtab shiftwidth=4 softtabstop=4:
+
