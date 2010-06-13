@@ -98,7 +98,7 @@ class Manager(View):#{{{1
         if self.shuttingDown:
             print 'debug: callback aborted, application is closing down.'
             return
-        if 'ConnectionError()' in changes:
+        if 'ConnectionError' in changes:
             self.view.emit(SIGNAL(changes))
         else:
             self.view.emit(SIGNAL('update'), changes)
