@@ -27,11 +27,6 @@
 #---------------------------------------------------------------------------}}}
 from mpdunicode import *
 import threading
-try:
-    import WriteOut
-    WriteOut.Quiet()
-except ImportError:
-    pass
 
 class MPDClient(MPDClient):#{{{1
     '''This proxy class wraps round the mpdunicode module.

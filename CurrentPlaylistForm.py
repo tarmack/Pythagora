@@ -23,8 +23,6 @@ from sys import getrefcount
 import songwidgets
 import auxilia
 import iconretriever
-import WriteOut
-WriteOut.Quiet()
 
 # TODO: Consistent drop placing with indicator.
 # TODO: See if drag pixmap can be alpha blended. (probably imposible)

@@ -27,8 +27,6 @@ import PlaylistForm
 import LibraryForm
 import auxilia
 import songwidgets
-import WriteOut
-WriteOut.Quiet()
 
 try:
     if "--nokde" not in sys.argv:

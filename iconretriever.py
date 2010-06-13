@@ -20,8 +20,6 @@ from glob import glob
 from sys import getrefcount
 import threading
 import time
-import WriteOut
-WriteOut.Quiet()
 
 import auxilia
 
