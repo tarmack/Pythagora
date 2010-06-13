@@ -58,6 +58,7 @@ class View(auxilia.Actions):#{{{1
         self.view.forward.setIcon(auxilia.PIcon("media-skip-forward"))
         self.view.trackView.header().setResizeMode(1, QHeaderView.Stretch)
         self.view.songLabel = songwidgets.SongLabel()
+        self.view.songLabel.setAcceptDrops(True)
         self.view.titleLayout.addWidget(self.view.songLabel)
         # Load all forms.
         self.createViews()

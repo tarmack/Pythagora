@@ -132,6 +132,9 @@
         </item>
         <item row="3" column="0" colspan="8">
          <widget class="QProgressBar" name="progress">
+          <property name="acceptDrops">
+           <bool>true</bool>
+          </property>
           <property name="maximum">
            <number>1000</number>
           </property>

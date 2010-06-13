@@ -81,6 +81,12 @@ class Manager(View):#{{{1
 
         self.timer.start(1000)
 
+        self.view.progress.dragEnterEvent = self.__topEnter
+        self.view.songLabel.dragEnterEvent = self.__topEnter
+        self.view.progress.dropEvent = self.__topDrop
+        self.view.songLabel.dropEvent = self.__topDrop
+
+
     def connectTo(self, action):#{{{2
         name = unicode(action.text())
         if self.config.server and name == self.config.server[0] and self.mpdclient.connected():
@@ -212,6 +218,17 @@ class Manager(View):#{{{1
     def __runIdle(self):#{{{2
         if not self.shuttingDown and self.mpdclient.connected():
             self.mpdclient.idleThread(self.callback, timeout=20)
+
+    def __topEnter(self, event):
+        if event.source() != self.view.currentList:
+            event.accept()
+
+    def __topDrop(self, event):
+        event.accept()
+        self.mpdclient.clear()
+        self.currentList.dropEvent(event)
+        self.mpdclient.play()
+
 
     def __connectSignals(self):#{{{2
         self.playControls.connectSignals(self.view)
