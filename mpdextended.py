@@ -95,9 +95,10 @@ class IdleThread(threading.Thread):#{{{1
                     change = ['ConnectionError']
                     if self.mpdclient._idle:
                         try:
+                            self.mpdclient._sock.settimeout(2)
                             change = self.mpdclient.noidle()
-                        except (ConnectionError, socket.timeout):
-                            print 'debug: idle-noidle error'
+                        except (ConnectionError, socket.timeout), e:
+                            print 'debug: idle-noidle error', e
                             change = ['ConnectionError']
                 finally:
                     self.mpdclient._sock.settimeout(oldTimeout)
