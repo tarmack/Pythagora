@@ -300,8 +300,8 @@ class Update:#{{{1
         cs, ss = status['time'].split(':')
         self.setProgress(cs, ss)
         currentSong = int(status.get('song', None))
-        self.view.emit(SIGNAL('currentSong'), currentSong)
         if status['songid'] != self.lastSongId:
+            self.view.emit(SIGNAL('currentSong'), currentSong)
             self.currentsong = self.mpdclient.currentsong()
             album = self.currentsong.get('album', 'Unknown')
             self.shoutcastCount = 0
