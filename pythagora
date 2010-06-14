@@ -217,16 +217,15 @@ class Manager(View):#{{{1
         if not self.shuttingDown and self.mpdclient.connected():
             self.mpdclient.idleThread(self.callback, timeout=20)
 
-    def __topEnter(self, event):
+    def __topEnter(self, event):#{{{2
         if event.source() != self.view.currentList:
             event.accept()
 
-    def __topDrop(self, event):
+    def __topDrop(self, event):#{{{2
         event.accept()
         self.mpdclient.clear()
         self.currentList.dropEvent(event, append=True)
         self.mpdclient.play()
-
 
     def __connectSignals(self):#{{{2
         self.playControls.connectSignals(self.view)
