@@ -99,20 +99,19 @@ class CurrentPlaylistForm(auxilia.DragNDrop):#{{{1
 
 
     def setPlaying(self, playing): #{{{2
-        if playing != self.playing:
-            print 'debug: setPlaying to ', playing
-            beforeScroll = self.view.currentList.verticalScrollBar().value()
-            item = self.view.currentList.item(self.playing)
+        print 'debug: setPlaying to ', playing
+        beforeScroll = self.view.currentList.verticalScrollBar().value()
+        item = self.view.currentList.item(self.playing)
+        if item:
+            item.playing(False)
+        if playing >= 0:
+            item = self.view.currentList.item(playing)
             if item:
-                item.playing(False)
-            if playing >= 0:
-                item = self.view.currentList.item(playing)
-                if item:
-                    item.playing(True)
-                    self.playing = playing
-                else: self.playing = -1
+                item.playing(True)
+                self.playing = playing
             else: self.playing = -1
-            self.__scrollList(beforeScroll)
+        else: self.playing = -1
+        self.__scrollList(beforeScroll)
 
     def reload(self):#{{{2
         '''Causes the current play list to be reloaded from the server'''
