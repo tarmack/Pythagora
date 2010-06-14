@@ -223,17 +223,21 @@ class CurrentPlaylistForm(auxilia.DragNDrop):#{{{1
             toPos = -1
         print toPos
         if source == self.view.currentList:
-            # FIXME: moving non contiguous selection to a position in the
-            #        middle of the selection messes up order.
             event.accept()
             # Move the songs to the new position.
             itemList = self.view.currentList.selectedItems()
+            itemList.sort(key=self.view.currentList.row)
+            print [unicode(x.text()) for x in itemList]
             if toPos < itemList[-1].song['pos']:
                 # We moved up, reverse the list.
                 itemList.reverse()
+            if toPos < 0:
+                toPos = self.view.currentList.count()-1
             for item in itemList:
-                if toPos < 0:
-                    toPos = self.view.currentList.count()-1
+                if self.view.currentList.row(item) < toPos:
+                    # Item moved down, reduce target index.
+                    toPos -= 1
+                print "move ", unicode(item.text()), "to", toPos
                 self.mpdclient.moveid(item.song['id'], toPos)
             self.view.emit(SIGNAL('playlistChanged()'))
         elif source == self.view.songList:
