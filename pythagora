@@ -224,7 +224,7 @@ class Manager(View):#{{{1
     def __topDrop(self, event):
         event.accept()
         self.mpdclient.clear()
-        self.currentList.dropEvent(event)
+        self.currentList.dropEvent(event, append=True)
         self.mpdclient.play()
 
 

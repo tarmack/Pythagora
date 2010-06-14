@@ -215,10 +215,14 @@ class CurrentPlaylistForm(auxilia.DragNDrop):#{{{1
         else:
             QListWidget.keyPressEvent(self.view.currentList, event)
 
-    def dropEvent(self, event):#{{{2
+    def dropEvent(self, event, append=False):#{{{2
         event.setDropAction(Qt.CopyAction)
         source = event.source()
-        toPos = self.view.currentList.row(self.view.currentList.itemAt(event.pos()))
+        if not append:
+            toPos = self.view.currentList.row(self.view.currentList.itemAt(event.pos()))
+        else:
+            toPos = -1
+        print toPos
         if source == self.view.currentList:
             # FIXME: moving non contiguous selection to a position in the
             #        middle of the selection messes up order.
