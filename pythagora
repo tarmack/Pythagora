@@ -215,7 +215,7 @@ class Manager(View):#{{{1
             return False
     def __runIdle(self):#{{{2
         if not self.shuttingDown and self.mpdclient.connected():
-            self.mpdclient.idleThread(self.callback, timeout=20)
+            self.mpdclient.idleThread(self.callback, timeout=10)
 
     def __topEnter(self, event):#{{{2
         if event.source() != self.view.currentList:
