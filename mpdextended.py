@@ -84,26 +84,10 @@ class IdleThread(threading.Thread):#{{{1
                 # acquire lock so we are sure the idle results go to us.
                 print 'debug: idling'
                 try:
-                    oldTimeout = self.mpdclient._sock.gettimeout()
-                    self.mpdclient._sock.settimeout(self.timeout)
-                    change = self.mpdclient.idle(self.subsystems)
+                    self.callback(self.mpdclient.idle(self.subsystems, self.timeout))
                 except ConnectionError:
                     print 'debug: idle ConnectionError'
-                    change = ['ConnectionError']
-                except socket.timeout:
-                    print 'debug: idle timedout'
-                    change = ['ConnectionError']
-                    if self.mpdclient._idle:
-                        try:
-                            self.mpdclient._sock.settimeout(2)
-                            change = self.mpdclient.noidle()
-                        except (ConnectionError, socket.timeout), e:
-                            print 'debug: idle-noidle error', e
-                            change = ['ConnectionError']
-                finally:
-                    self.mpdclient._sock.settimeout(oldTimeout)
-                    self.callback(change)
-                    print 'debug: callback done'
+                    self.callback(['ConnectionError'])
             self.goidle.clear()
 
 

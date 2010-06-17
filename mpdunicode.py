@@ -27,10 +27,12 @@
 from mpd import *
 
 class MPDClient(MPDClient):#{{{1
-    '''This proxy class wraps round the python-mpd module.
+    ''' This proxy class wraps round the python-mpd module.
     It converts the dictionary values in the output to unicode
-    objects and adds support for unicode input.
-    It also ads support for the idle command and friends.'''
+    objects and adds support for unicode input.  It also ads
+    support for some missing commands including the idle
+    command and friends.
+    '''
     def __init__(self):
         self._idle = False
         super(MPDClient, self).__init__()
@@ -39,14 +41,26 @@ class MPDClient(MPDClient):#{{{1
                               ,'consume': self._getnone
                               })
 
-    def idle(self, subsystems=[]):
+    def idle(self, subsystems=[], timeout=None):
+        ''' Calls the idle command on the server and blocks until
+        mpd signals with changes or timeout expires. It returns a
+        list with the subsystems that had changes.
+        '''
         if self._commandlist is not None:
             raise CommandListError("idle not allowed in command list")
         if self._idle:
             raise ProtocolError('Already in idle mode.')
         self._idle = True
-        rtn = self._docommand('idle', subsystems, self._getlist)
-        self._idle = False
+        oldTimeout = self._sock.gettimeout()
+        if timeout is not None:
+            self._sock.settimeout(timeout)
+        try:
+            rtn = self._docommand('idle', subsystems, self._getlist)
+        except socket.timeout:
+            rtn = self.noidle()
+        finally:
+            self._sock.settimeout(oldTimeout)
+            self._idle = False
         return rtn
 
     def noidle(self):
