@@ -57,7 +57,10 @@ class MPDClient(MPDClient):#{{{1
         try:
             rtn = self._docommand('idle', subsystems, self._getlist)
         except socket.timeout:
-            rtn = self.noidle()
+            try:
+                rtn = self.noidle()
+            except socket.timeout:
+                raise ConnectionError("Connection timed out")
         finally:
             self._sock.settimeout(oldTimeout)
             self._idle = False
