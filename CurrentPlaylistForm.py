@@ -170,7 +170,7 @@ class CurrentPlaylistForm(auxilia.DragNDrop):#{{{1
                 self.view.currentList.takeItem(last)
 
             self.view.numSongsLabel.setText(status['playlistlength']+' Songs')
-            self.__setPlayTime(self.currentPlayTime)
+            self.__setPlayTime()
 
             self.view.currentList.setUpdatesEnabled(True)
             self.__scrollList(beforeScroll)
@@ -353,7 +353,8 @@ class CurrentPlaylistForm(auxilia.DragNDrop):#{{{1
         self.mpdclient.playid(self.view.currentList.currentItem().song['id'])
         self.setPlaying(self.view.currentList.row(item))
 
-    def __setPlayTime(self,songTime):#{{{2
+    def __setPlayTime(self):#{{{2
+        songTime = self.currentPlayTime
         songMin = int(songTime / 60)
         songSecs = songTime - (songMin * 60)
         songHour = int(songMin / 60)
@@ -366,7 +367,6 @@ class CurrentPlaylistForm(auxilia.DragNDrop):#{{{1
             self.view.playTimeLabel.setText('Total play time: %d days %02d:%02d:%02d ' % (songDay, songHour, songMin, songSecs))
         else:
             self.view.playTimeLabel.setText('Total play time: %02d:%02d:%02d ' % (songHour, songMin, songSecs))
-        self.currentPlayTime = songTime
 
     def __setOneLinePlaylist(self, value):#{{{2
         self.config.oneLinePlaylist = value
