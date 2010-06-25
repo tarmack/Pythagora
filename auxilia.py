@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*
-#-------------------------------------------------------------------------------{{{
+#-------------------------------------------------------------------------------
 # Copyright 2009 E. A. Graham Jr. <txcrackers@gmail.com>.
 # Copyright 2010 B. Kroon <bart@tarmack.eu>.
 #
@@ -14,7 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#-------------------------------------------------------------------------------}}}
+#-------------------------------------------------------------------------------
 import locale
 import os
 import re
@@ -23,130 +23,130 @@ from PyQt4.QtGui import QAction, QWidgetAction, QToolButton
 
 locale.setlocale(locale.LC_ALL, "")
 
-def songTitle(song):#{{{1
+def songTitle(song):
     return song.get('title', song.get('name', song['file']))
 
-def songArtist(song):#{{{1
+def songArtist(song):
     return song.get('artist', song.get('performer', song.get('composer', '?')))
 
-def songTime(song):#{{{1
+def songTime(song):
     stime = int(song.get('time', '0'))
     tmin = stime / 60
     tsec = stime - tmin * 60
     return '%i:%02i' % (tmin, tsec)
 
-def cmpUnicode(a, b):#{{{1
+def cmpUnicode(a, b):
     return locale.strcoll(a, b)#filter(lambda x: x.isalnum(), a), filter(lambda x: x.isalnum(), b))
 
-def cmpTracks(a, b):#{{{1
+def cmpTracks(a, b):
     try:
         return int(re.match('^\d+', a).group()) - int(re.match('^\d+', b).group())
     except:
         return cmpUnicode(a, b)
 
-def fileName(name):#{{{1
+def fileName(name):
     return filter(lambda x: x != '/' , name)
 
-# Actions {{{1
+# Actions
 #==============================================================================
 
 class Actions:
-    def actionPlayAdd(self, parent, slot):#{{{2
+    def actionPlayAdd(self, parent, slot):
         return self.action(parent, slot\
                 , "media-playback-start"\
                 , 'Add and play'\
                 , 'Add song to playlist and start playing it.')
 
-    def actionPlayReplace(self, parent, slot):#{{{2
+    def actionPlayReplace(self, parent, slot):
         return self.action(parent, slot\
                 , "media-playback-start"\
                 , 'Replace and play'\
                 , 'Replace the playlist with the selection and start playing.')
 
-    def actionAddSongs(self, parent, slot):#{{{2
+    def actionAddSongs(self, parent, slot):
         return self.action(parent, slot\
         , "list-add"\
         , 'Add to playlist'\
         , 'Add the selection to the playlist.')
 
-    def actionJumpArtist(self, parent, slot):#{{{2
+    def actionJumpArtist(self, parent, slot):
         return self.action(parent, slot\
         , "go-jump"\
         , 'Jump to artist'\
         , 'Jump to all songs from the selected artist in the library.')
 
-    def actionJumpAlbum(self, parent, slot):#{{{2
+    def actionJumpAlbum(self, parent, slot):
         return self.action(parent, slot\
         , "go-jump"\
         , 'Jump to album'\
         , 'Jump to all songs from the selected album in the library.')
 
-    def actionLoad(self, parent, slot):#{{{2
+    def actionLoad(self, parent, slot):
         return self.action(parent, slot\
         , "document-send"\
         , 'Load playlist'\
         , 'Replace the current playlist.')
 
-    def actionRemove(self, parent, slot):#{{{2
+    def actionRemove(self, parent, slot):
         return self.action(parent, slot\
         , "list-remove"\
         , 'Remove'\
         , 'Remove selected.')
 
-    def actionLibReload(self, parent, slot):#{{{2
+    def actionLibReload(self, parent, slot):
         return self.action(parent, slot\
         , 'view-refresh'\
         , 'Reload library'\
         , 'Reload the music library from the server.')
 
-    def actionLibUpdate(self, parent, slot):#{{{2
+    def actionLibUpdate(self, parent, slot):
         return self.action(parent, slot\
         , 'folder-sync'\
         , 'Update library'\
         , 'Update the music database with new and changed files')
 
-    def actionLibRescan(self, parent, slot):#{{{2
+    def actionLibRescan(self, parent, slot):
         return self.action(parent, slot\
         , 'folder-sync'\
         , 'Rescan library'\
         , 'Rescan all files in the music directory.')
 
-    def actionBookmark(self, parent, slot):#{{{2
+    def actionBookmark(self, parent, slot):
         return self.action(parent, slot\
         , 'document-save-as'\
         , 'Bookmark Station'\
         , 'Add the station to the bookmarks list.')
 
-    def actionPreview(self, parent, slot):#{{{2
+    def actionPreview(self, parent, slot):
         return self.action(parent, slot\
         , 'media-playback-start'\
         , 'Preview'\
         , 'Start listening to the station right away.')
 
-    def actionPlayBM(self, parent, slot):#{{{2
+    def actionPlayBM(self, parent, slot):
         return self.action(parent, slot\
         , 'media-playback-start'\
         , 'Play'\
         , 'Start listening to the station.')
 
-    def actionScReload(self, parent, slot):#{{{2
+    def actionScReload(self, parent, slot):
         return self.action(parent, slot\
         , 'view-refresh'\
         , 'Reload'\
         , 'Reload the genre list.')
 
-#    def action(self, parent, slot):#{{{2
-#        return self.action(parent, slot\
-#        , ''\
-#        , ''\
-#        , '')
+    #def action(self, parent, slot):
+    #    return self.action(parent, slot\
+    #    , ''\
+    #    , ''\
+    #    , '')
 
-    def actionHideRestore(self, parent, slot):#{{{2
+    def actionHideRestore(self, parent, slot):
         return self.action(parent, slot\
         , text='Hide'\
         , tooltip='Hide application window in the systemtray.')
 
-    def action(self, parent, slot, icon=None, text='', tooltip=None):#{{{2
+    def action(self, parent, slot, icon=None, text='', tooltip=None):
         action = QAction(text, parent)
         if type(icon) == str:
             action.setIcon(PIcon(icon))
@@ -155,11 +155,11 @@ class Actions:
         self.__addAction(action, parent, slot)
         return action
 
-    def __addAction(self, action, parent, slot):#{{{2
+    def __addAction(self, action, parent, slot):
         parent.addAction(action)
         self.view.connect(action, SIGNAL('triggered()'), slot)
 
-    def menuTitle(self, icon, text):#{{{2
+    def menuTitle(self, icon, text):
         self.eventEater = EventEater()
         buttonaction = QAction(self.view)
         font = buttonaction.font()
@@ -185,26 +185,25 @@ class EventEater(QObject):
             return True
         return False
 
-#}}}1
 
-class DragNDrop:#{{{1
+class DragNDrop:
     # TODO: large drops shoud give busy cursor.
-    def dropSong(self, event, pos):#{{{2
+    def dropSong(self, event, pos):
         event.accept()
         itemList = [x.song['file'] for x in event.source().selectedItems()]
         self.addDrop(itemList, pos)
 
-    def dropArtist(self, event, pos):#{{{2
+    def dropArtist(self, event, pos):
         event.accept()
         itemList = self.__buildList(event, 'artist')
         self.addDrop(itemList, pos)
 
-    def dropAlbum(self, event, pos):#{{{2
+    def dropAlbum(self, event, pos):
         event.accept()
         itemList = self.__buildList(event, 'album')
         self.addDrop(itemList, pos)
 
-    def dropPlaylist(self, event, pos):#{{{2
+    def dropPlaylist(self, event, pos):
         event.accept()
         # Get the name of the droped playlist.
         playlist = unicode(event.source().selectedItems()[0].text())
@@ -212,7 +211,7 @@ class DragNDrop:#{{{1
         itemList = (song['file'] for song in self.mpdclient.listplaylistinfo(playlist))
         self.addDrop(itemList, pos)
 
-    def dropFile(self, event, pos):#{{{2
+    def dropFile(self, event, pos):
         pathlist = []
         event.accept()
         itemList = event.source().selectedItems()
@@ -235,7 +234,7 @@ class DragNDrop:#{{{1
                     pathlist.append(path[:-1])
         self.addDrop(pathlist, pos)
 
-    def __buildList(self, event, key):#{{{2
+    def __buildList(self, event, key):
         fileList = []
         selection = (unicode(x.text()) for x in event.source().selectedItems())
         for value in selection:
@@ -245,7 +244,7 @@ class DragNDrop:#{{{1
             fileList.extend([x['file'] for x in songList])
         return fileList
 
-def PIcon(icon):#{{{1
+def PIcon(icon):
     try:
         from PyKDE4.kdeui import KIcon
         return KIcon(icon)

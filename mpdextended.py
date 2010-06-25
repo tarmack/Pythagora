@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*
-#---------------------------------------------------------------------------{{{
+#------------------------------------------------------------------------------
 # Copyright 2010 B. Kroon <bart@tarmack.eu>.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,26 +24,26 @@
 # allowing any command while in idle mode. If the server is in idle mode any
 # command other than noidle will be transparently prepended with the noidle
 # command.
-#---------------------------------------------------------------------------}}}
+#------------------------------------------------------------------------------
 from mpdunicode import *
 import threading
 
-class MPDClient(MPDClient):#{{{1
+class MPDClient(MPDClient):
     '''This proxy class wraps round the mpdunicode module.
     It can be used to call idle() in a separate thread.'''
-    def __init__(self):#{{{2
+    def __init__(self):
         self._thread = IdleThread(self)
         self._thread.start()
         self._lock = threading.RLock()
         super(MPDClient, self).__init__()
 
-    def _docommand(self, command, args, retval):#{{{2
+    def _docommand(self, command, args, retval):
         if command not in ('idle', 'noidle') and self._idle:
             self._writecommand('noidle', [])
         with self._lock:
             return super(MPDClient, self)._docommand(command, args, retval)
 
-    def _writecommand(self, command, args=[]):#{{{2
+    def _writecommand(self, command, args=[]):
         if command.startswith('command_list') and self._idle:
             self._writecommand('noidle', [])
             with self._lock:
@@ -51,7 +51,7 @@ class MPDClient(MPDClient):#{{{1
         else:
             super(MPDClient, self)._writecommand(command, args)
 
-    def idleThread(self, callback, subsystems=[], timeout=10):#{{{2
+    def idleThread(self, callback, subsystems=[], timeout=10):
         self._thread.callback = callback
         self._thread.subsystems = subsystems
         if self._commandlist != None:
@@ -59,7 +59,7 @@ class MPDClient(MPDClient):#{{{1
         self._thread.timeout = timeout
         self._thread.goidle.set()
 
-    def connected(self):#{{{2
+    def connected(self):
         if self._sock:
             try:
                 self.ping()
@@ -69,7 +69,7 @@ class MPDClient(MPDClient):#{{{1
                 return False
         else: return False
 
-class IdleThread(threading.Thread):#{{{1
+class IdleThread(threading.Thread):
     def __init__(self, mpdclient):
         threading.Thread.__init__(self)
         self.daemon = True
@@ -77,7 +77,7 @@ class IdleThread(threading.Thread):#{{{1
         self.mpdclient = mpdclient
         self.timeout = 10
 
-    def run(self):#{{{2
+    def run(self):
         while True:
             self.goidle.wait()
             with self.mpdclient._lock:
@@ -91,4 +91,3 @@ class IdleThread(threading.Thread):#{{{1
             self.goidle.clear()
 
 
-# vim: set expandtab shiftwidth=4 softtabstop=4:

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*
-#-------------------------------------------------------------------------------{{{
+#-------------------------------------------------------------------------------
 # Copyright 2009 E. A. Graham Jr. <txcrackers@gmail.com>.
 # Copyright 2010 B. Kroon <bart@tarmack.eu>.
 #
@@ -14,7 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#-------------------------------------------------------------------------------}}}
+#-------------------------------------------------------------------------------
 from PyQt4.QtCore import SIGNAL, Qt
 from PyQt4.QtGui import QMessageBox, QTreeWidgetItem, QKeySequence, QListWidget
 
@@ -24,7 +24,7 @@ import os
 import shoutcast
 from auxilia import Actions
 
-class ShoutcastForm(Actions):#{{{1
+class ShoutcastForm(Actions):
     '''Grab Shoutcast streams and save them as "bookmarks" - and play them on
        the currently selected server.
 
@@ -34,7 +34,7 @@ class ShoutcastForm(Actions):#{{{1
     '''
     stations = {}
 
-    def __init__(self, view, app, mpdclient, bookmarkFile):#{{{2
+    def __init__(self, view, app, mpdclient, bookmarkFile):
         self.view = view
         self.adding = False
         self.search = False
@@ -64,17 +64,17 @@ class ShoutcastForm(Actions):#{{{1
 
         self.view.bookmarkList.dropEvent = self.dropEvent
 
-    def dropEvent(self, event):#{{{2
+    def dropEvent(self, event):
         event.setDropAction(Qt.CopyAction)
         source = event.source()
         if source == self.view.genreList:
             event.accept()
             self.__saveStation()
 
-    def reload(self):#{{{2
+    def reload(self):
         self.bookmarkList.reload()
 
-    def __loadGenres(self):#{{{2
+    def __loadGenres(self):
         '''Retrieve the genres.'''
         if not self.adding:
             self.adding = True
@@ -89,7 +89,7 @@ class ShoutcastForm(Actions):#{{{1
             self.adding = False
             self.view.setCursor(Qt.ArrowCursor)
 
-    def __loadSearch(self, patern):#{{{2
+    def __loadSearch(self, patern):
         print 'debug: loading search results.'
         patern = unicode(patern)
         if patern == '':
@@ -109,7 +109,7 @@ class ShoutcastForm(Actions):#{{{1
         finally:
             self.view.setCursor(Qt.ArrowCursor)
 
-    def __treeSelect(self):#{{{2
+    def __treeSelect(self):
         '''Figure out what to do when something's selected in the list'''
         current = self.view.genreList.currentItem()
         # child node - it's a station
@@ -132,7 +132,7 @@ class ShoutcastForm(Actions):#{{{1
             finally:
                 self.view.setCursor(Qt.ArrowCursor)
 
-    def __previewStation(self, item=None):#{{{2
+    def __previewStation(self, item=None):
         '''Play the currently selected station.'''
         (tuneinBase,station) = self.stationTree.currentStation()
         urls = self.client.getStation(tuneinBase,station['id'])
@@ -143,7 +143,7 @@ class ShoutcastForm(Actions):#{{{1
             self.mpd.add(url)
         self.mpd.play()
 
-    def __play(self, item=None):#{{{2
+    def __play(self, item=None):
         '''Play the currently selected bookmarked station.'''
         self.mpd.stop()
         self.mpd.clear()
@@ -151,7 +151,7 @@ class ShoutcastForm(Actions):#{{{1
             self.mpd.add(url)
         self.mpd.play()
 
-    def __saveStation(self):#{{{2
+    def __saveStation(self):
         '''Bookmark the currently selected station.'''
         (tuneinBase,station) = self.stationTree.currentStation()
         if station.get('urls',None) == None:
@@ -159,30 +159,30 @@ class ShoutcastForm(Actions):#{{{1
             station['urls'] = urls
         self.bookmarkList.addStation(station)
 
-#===============================================================================
-class StationTree():#{{{1
+
+class StationTree():
     '''The main shoutcast tree: genres and stations.'''
-    def __init__(self, view):#{{{2
+    def __init__(self, view):
         # top - tree
         self.search = False
         self.view = view
         view.connect(self.view.genreList, SIGNAL('itemClicked(QTreeWidgetItem*,int)'), self.__treeClick)
 
-    def __treeClick(self):#{{{2
+    def __treeClick(self):
         current = self.view.genreList.currentItem()
         if current.isExpanded():
             current.setExpanded(False)
         else:
             current.setExpanded(True)
 
-    def loadTree(self, genrelist):#{{{2
+    def loadTree(self, genrelist):
         '''Reload the tree from the given list of genres.'''
         self.view.genreList.clear()
         for genre in genrelist:
             gw = QTreeWidgetItem([genre])
             self.view.genreList.addTopLevelItem(gw)
 
-    def loadStations(self,stationlist):#{{{2
+    def loadStations(self,stationlist):
         '''Append the stations to the currently selected genre.'''
         current = self.view.genreList.currentItem()
         if current == None:
@@ -190,7 +190,7 @@ class StationTree():#{{{1
         for station in stationlist:
             current.addChild(QTreeWidgetItem([station['name']]))
 
-    def currentStation(self):#{{{2
+    def currentStation(self):
         '''Figure out and return the current station and the base URL for it.'''
         current = self.view.genreList.currentItem()
         # parent node - genre, bleah
@@ -207,15 +207,15 @@ class StationTree():#{{{1
                 return (tuneinBase,station)
         return None
 
-#===============================================================================
-class BookmarkList():#{{{1
+
+class BookmarkList():
     '''The list of bookmarked stations.'''
-    def __init__(self, view, bookmarkFile):#{{{2
+    def __init__(self, view, bookmarkFile):
         self.view = view
         self.bookmarkFile = os.path.expanduser(bookmarkFile)
         self.view.bookmarkList.keyPressEvent = self.keyPressEvent
 
-    def reload(self):#{{{2
+    def reload(self):
         # read in and hang on to the bookmarks
         if os.path.isfile(self.bookmarkFile):
             self.xml = ET.parse(self.bookmarkFile)
@@ -231,7 +231,7 @@ class BookmarkList():#{{{1
             except Exception, e:
                 print 'error: ', e
 
-    def __getStation(self,name):#{{{2
+    def __getStation(self,name):
         '''Find a station by name.'''
         stations = self.xml.findall('//station')
         for station in stations:
@@ -239,7 +239,7 @@ class BookmarkList():#{{{1
                 return station
         return None
 
-    def getStationFiles(self):#{{{2
+    def getStationFiles(self):
         '''Get the URLs for the currently selected station.'''
         name = str(self.view.bookmarkList.currentItem().text())
         station = self.__getStation(name)
@@ -248,7 +248,7 @@ class BookmarkList():#{{{1
             rtn.append(url.text)
         return rtn
 
-    def addStation(self,station):#{{{2
+    def addStation(self,station):
         '''Create a new bookmark.'''
         # see if we already have it
         element = self.__getStation(station['name'])
@@ -272,7 +272,7 @@ class BookmarkList():#{{{1
 
         self.xml.write(self.bookmarkFile,'UTF-8')
 
-    def delete(self):#{{{2
+    def delete(self):
         '''Delete the current bookmark.'''
         row = self.view.bookmarkList.currentRow()
         current = self.view.bookmarkList.takeItem(row)
@@ -285,11 +285,9 @@ class BookmarkList():#{{{1
         stations.remove(station)
         self.xml.write(self.bookmarkFile,'UTF-8')
 
-    def keyPressEvent(self, event):#{{{2
+    def keyPressEvent(self, event):
         if event.matches(QKeySequence.Delete):
             self.delete()
         else:
             QListWidget.keyPressEvent(self.view.bookmarkList, event)
 
-
-# vim: set expandtab shiftwidth=4 softtabstop=4:

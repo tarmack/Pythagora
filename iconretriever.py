@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*
-#-------------------------------------------------------------------------------{{{
+#-------------------------------------------------------------------------------
 # Copyright 2010 B. Kroon <bart@tarmack.eu>.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,7 +13,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#-------------------------------------------------------------------------------}}}
+#-------------------------------------------------------------------------------
 import os
 import urllib
 from glob import glob
@@ -28,7 +28,7 @@ NOCOVER = 'icons/audio-x-generic.png'
 APIKEY = 'c01e19f763d7bd5adc905bd7456cf80d'
 SECONDS_BETWEEN_REQUESTS = 0.2
 
-class Retriever:#{{{1
+class Retriever:
     def __init__(self, musicPath):
         self.lastContact = time.time()
         self.unavailebleAlbums = []
@@ -55,7 +55,7 @@ class Retriever:#{{{1
                 self.coverPath = checkDir(os.path.join(self.coverPath, APPNAME))
         print 'debug: coverPath = ', self.coverPath
 
-    def songIcon(self, song):#{{{2
+    def songIcon(self, song):
         '''Try to get a cover image from folder.jpg, if that fails. Get an album
         cover from the interwebs. If it can't find an album cover it tries to get
         a picture of the artist.'''
@@ -82,7 +82,7 @@ class Retriever:#{{{1
             return cover
         return NOCOVER
 
-    def getFolderImage(self, song):#{{{2
+    def getFolderImage(self, song):
         if not self.musicPath:
             return None
         x = song['file'].rfind('/')
@@ -93,7 +93,7 @@ class Retriever:#{{{1
         else:
             return None
 
-    def getAlbumImage(self, artist, album):#{{{2
+    def getAlbumImage(self, artist, album):
         '''Get a album cover, return None on failure.'''
         coverFile = os.path.join(self.coverPath, auxilia.fileName(artist)+'-'+auxilia.fileName(album))
         # find cached version of the cover.
@@ -117,7 +117,7 @@ class Retriever:#{{{1
             self.unavailebleAlbums.append(album)
         return cover
 
-    def getArtistImage(self, artist):#{{{2
+    def getArtistImage(self, artist):
         '''Get a picture of artist, return None on failure.'''
         coverFile = os.path.join(self.coverPath, auxilia.fileName(artist))
         # find cached version of the picture.
@@ -140,7 +140,7 @@ class Retriever:#{{{1
             self.unavailebleArtists.append(artist)
         return cover
 
-    def _cacheImage(self, handle, coverFile):#{{{2
+    def _cacheImage(self, handle, coverFile):
         '''Download the image and save it in coverPath.'''
         imagePath = None
         for line in handle.read().decode('utf-8').split('\n'):
@@ -161,7 +161,7 @@ class Retriever:#{{{1
         # We got no image info from last.fm, well to bad.
         return None
 
-    def _coverGlob(self, coverPath):#{{{2
+    def _coverGlob(self, coverPath):
         """
         Check if the cover file is in the cache. If it's not make sure we have
         some time between requests to the web services.
@@ -175,7 +175,7 @@ class Retriever:#{{{1
         self.lastContact = time.time()
         return None
 
-class RetrieverThread(threading.Thread, Retriever):#{{{1
+class RetrieverThread(threading.Thread, Retriever):
     def __init__(self, musicPath):
         threading.Thread.__init__(self)
         Retriever.__init__(self, musicPath)
@@ -208,7 +208,7 @@ class RetrieverThread(threading.Thread, Retriever):#{{{1
         self.event.set()
         self.join()
 
-class ThreadedRetriever:#{{{1
+class ThreadedRetriever:
     def __init__(self, musicPath):
         self.retriever = RetrieverThread(musicPath)
         self.icons = self.retriever.icons

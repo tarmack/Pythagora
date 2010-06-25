@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*
-#-------------------------------------------------------------------------------{{{
+#-------------------------------------------------------------------------------
 # Copyright 2009 E. A. Graham Jr. <txcrackers@gmail.com>.
 # Copyright 2010 B. Kroon <bart@tarmack.eu>.
 #
@@ -14,7 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#-------------------------------------------------------------------------------}}}
+#-------------------------------------------------------------------------------
 from PyQt4.QtCore import SIGNAL, QTimer
 from PyQt4.QtGui import QSystemTrayIcon, QLabel, QHeaderView, QMenu, QIcon, QTabBar
 from PyQt4 import uic
@@ -40,8 +40,8 @@ except ImportError:
 #       ^ Probably impossible ^ (maybe just hard when compositing with windowpreviews is enabled)
 # TODO: Make splitter sizes of not shown parts be rememberd correctly.
 
-class View(auxilia.Actions):#{{{1
-    def __init__(self, configuration, mpdclient, app):#{{{2
+class View(auxilia.Actions):
+    def __init__(self, configuration, mpdclient, app):
         self.focus = time()
         self.shuttingDown = False
         self.config = configuration
@@ -112,11 +112,9 @@ class View(auxilia.Actions):#{{{1
         self.view.closeEvent = self.closeEvent
         self.view.connect(self.app,SIGNAL('aboutToQuit()'),self.shutdown)
         self.view.show()
-        #}}}
-
 
 #==============================================================================
-# Code for switching tabs on drag & drop. (__init__() continues) {{{2
+# Code for switching tabs on drag & drop. (__init__() continues)
 #==============================================================================
 
         # Instantiate timer
@@ -128,38 +126,37 @@ class View(auxilia.Actions):#{{{1
         self.view.tabs.dragEnterEvent = self.dragEnterEvent
         self.view.tabs.dragMoveEvent = self.dragMoveEvent
 
-    def dragEnterEvent(self, event):#{{{3
+    def dragEnterEvent(self, event):
         '''Starts timer on enter and sets first position.'''
         self.tabPos = event.pos()
         event.accept()
         self.tabTimer.start(500)
 
-    def dragLeaveEvent(self, event):#{{{3
+    def dragLeaveEvent(self, event):
         '''If the mouse leaves the tabWidget stop the timer.'''
         self.tabTimer.stop()
 
-    def dragMoveEvent(self, event):#{{{3
+    def dragMoveEvent(self, event):
         '''Keep track of the mouse and change the position, restarts the timer when moved.'''
         # TODO: Set threshold for movement.
         self.tabPos = event.pos()
         self.tabTimer.start()
 
-    def __selectTab(self):#{{{3
+    def __selectTab(self):
         '''Changes the view to the tab where the mouse was hovering above.'''
         index = self.view.tabs.tabBar().tabAt(self.tabPos)
         self.view.tabs.setCurrentIndex(index)
         self.tabTimer.stop()
-#}}}2
 #==============================================================================
 
-    def createViews(self):#{{{2
+    def createViews(self):
         '''Set up our different view handlers.'''
         self.playlists = PlaylistForm.PlaylistForm(self.view, self.app, self.mpdclient)
         self.currentList = CurrentPlaylistForm.CurrentPlaylistForm(self.view, self.app, self.mpdclient, self.config)
         self.liberry = LibraryForm.LibraryForm(self.view, self.app, self.mpdclient, self.config)
         self.shoutcast = ShoutcastForm.ShoutcastForm(self.view, self.app, self.mpdclient, self.config.scBookmarkFile)
 
-    def shutdown(self):#{{{2
+    def shutdown(self):
         self.shuttingDown = True
         self.timer.stop()
         self.app.processEvents()
@@ -183,15 +180,15 @@ class View(auxilia.Actions):#{{{1
             self.config.save()
         print 'debug: shutdown finished'
 
-    def showConfig(self):#{{{2
+    def showConfig(self):
         self.config.showConfiguration(self.view)
 
-    def closeEvent(self, event):#{{{2
+    def closeEvent(self, event):
         '''Catch MainWindow's close event so we can hide it instead.'''
         self.__toggleHideRestore()
         event.ignore()
 
-    def __togglePlaylistTools(self, value=None):#{{{2
+    def __togglePlaylistTools(self, value=None):
         text = ('Show Playlist Tools', 'Hide Playlist Tools')
         if value == None:
             if self.view.playlistTools.isVisible():
@@ -204,7 +201,7 @@ class View(auxilia.Actions):#{{{1
         self.view.currentBottom.setArrowType(int(value)+1)
         self.view.currentBottom.setText(text[value])
 
-    def __toggleHideRestore(self, reason=None):#{{{2
+    def __toggleHideRestore(self, reason=None):
         '''Show or hide the window based on some parameters. We can detect
         when we are obscured and come to the top. In other cases we hide if
         mapped and show if not.
@@ -230,7 +227,7 @@ class View(auxilia.Actions):#{{{1
             else: self.view.show()
 
 
-    def __buildConnectTo(self):#{{{2
+    def __buildConnectTo(self):
         self.view.menuConnect.clear()
         self.view.menuConnect.addAction(auxilia.PIcon('dialog-cancel'), 'None (disconnect)')
         connected = self.mpdclient.connected()
@@ -240,5 +237,3 @@ class View(auxilia.Actions):#{{{1
             else: icon = auxilia.PIcon('network-disconnect')
             self.view.menuConnect.addAction(icon, server)
 
-
-# vim: set expandtab shiftwidth=4 softtabstop=4:

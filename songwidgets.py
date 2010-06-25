@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*
-#-------------------------------------------------------------------------------{{{
+#-------------------------------------------------------------------------------
 # Copyright 2009 E. A. Graham Jr. <txcrackers@gmail.com>.
 # Copyright 2010 B. Kroon <bart@tarmack.eu>.
 #
@@ -14,7 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#-------------------------------------------------------------------------------}}}
+#-------------------------------------------------------------------------------
 from PyQt4.QtCore import Qt, QPointF
 from PyQt4.QtGui import QListWidgetItem, QTreeWidgetItem, QBrush, QColor, QLabel\
         , QFontMetrics, QPainter, QLinearGradient, QPalette, QPen
@@ -28,7 +28,7 @@ import auxilia
 # stuff with.
 #===============================================================================
 
-class FullTreeWidget(QListWidgetItem):#{{{1
+class FullTreeWidget(QListWidgetItem):
     '''Song, album, cover in a tree widget item'''
     # Used in CurrentPlaylistForm
     def __init__(self, song, oneLine=False):
@@ -45,7 +45,7 @@ class FullTreeWidget(QListWidgetItem):#{{{1
         self.icon = bool(icon)
         QListWidgetItem.setIcon(self, icon)
 
-    def playing(self, playing):#{{{2
+    def playing(self, playing):
         font = self.font()
         if playing:
             font.setWeight(75)
@@ -56,14 +56,14 @@ class FullTreeWidget(QListWidgetItem):#{{{1
         self.setFont(font)
         self.setBackground(brush)
 
-class simpleWidget(QListWidgetItem):#{{{1
+class simpleWidget(QListWidgetItem):
     '''Simple for album in library view.'''
     def __init__(self, text, tooltip):
         QListWidgetItem.__init__(self)
         self.setText(text)
         self.setToolTip('\n'.join(tooltip))
 
-class TrackWidget(QTreeWidgetItem):#{{{1
+class TrackWidget(QTreeWidgetItem):
     '''Track widget used in library track view.'''
     def __init__(self, song):
         QTreeWidgetItem.__init__(self)
@@ -74,13 +74,13 @@ class TrackWidget(QTreeWidgetItem):#{{{1
         self.setToolTip(1, "Artist:\t %s\nAlbum:\t %s\nFile:\t %s"\
                 % (auxilia.songArtist(song), song.get('album', ''), song['file']))
 
-class fileWidget(QTreeWidgetItem):#{{{1
+class fileWidget(QTreeWidgetItem):
     '''Widget used for displaying the filesystem tree.'''
     def __init__(self, name):
         QTreeWidgetItem.__init__(self)
         self.setText(0,name)
 
-class LongSongWidget(QTreeWidgetItem):#{{{1
+class LongSongWidget(QTreeWidgetItem):
     '''Lays out a song in a three-column tree widget: artist, title, album.
     Used in PlaylistForm.'''
     def __init__(self, song, pos):
@@ -91,14 +91,14 @@ class LongSongWidget(QTreeWidgetItem):#{{{1
         self.setText(1,auxilia.songTitle(song))
         self.setText(2,song.get('album',''))
 
-class SongLabel(QLabel):#{{{1
+class SongLabel(QLabel):
     title = 'title'
     artist = 'artist'
     album = 'album'
     by = ' by '
     from_ = ' from '
     parts = ('title', 'by', 'artist', 'from_', 'album')
-    def __init__(self):#{{{2
+    def __init__(self):
         QLabel.__init__(self)
         self.byFont = self.font()
         self.from_Font = self.byFont
@@ -110,13 +110,13 @@ class SongLabel(QLabel):#{{{1
         self.albumFont = self.font()
         self.albumFont.setItalic(True)
 
-    def setText(self, title='', artist='', album=''):#{{{2
+    def setText(self, title='', artist='', album=''):
         self.title = title
         self.artist = artist
         self.album = album
         self.repaint()
 
-    def paintEvent(self, event):#{{{2
+    def paintEvent(self, event):
         gradient = self.__gradient()
         self.spaceLeft = self.contentsRect()
         for part in self.parts:
@@ -134,7 +134,7 @@ class SongLabel(QLabel):#{{{1
             self.setToolTip(tooltip)
         else: self.setToolTip('')
 
-    def __gradient(self):#{{{2
+    def __gradient(self):
         left = QPointF(self.contentsRect().topLeft())
         right = QPointF(self.contentsRect().topRight())
         gradient = QLinearGradient(left, right)
@@ -144,5 +144,3 @@ class SongLabel(QLabel):#{{{1
         pen.setBrush(QBrush(gradient))
         return pen
 
-
-# vim: set expandtab shiftwidth=4 softtabstop=4:

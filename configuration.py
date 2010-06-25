@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*
-#-------------------------------------------------------------------------------{{{
+#-------------------------------------------------------------------------------
 # Copyright 2009 E. A. Graham Jr. <txcrackers@gmail.com>.
 # Copyright 2010 B. Kroon <bart@tarmack.eu>.
 #
@@ -14,17 +14,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#-------------------------------------------------------------------------------}}}
+#-------------------------------------------------------------------------------
 from PyQt4.QtCore import QSize, Qt, SIGNAL, QVariant, QSettings
 from PyQt4.QtGui import QIcon, QMessageBox, QFileDialog, QTableWidgetItem, QLineEdit
 from PyQt4 import uic
 import os.path
 
-#===============================================================================
-# Server config UI
-#===============================================================================
-class Configuration:#{{{1
-    def __init__(self):#{{{2
+class Configuration:
+    def __init__(self):
         self.types = {
                 int: QVariant.toInt,
                 bool: QVariant.toBool,
@@ -50,7 +47,7 @@ class Configuration:#{{{1
                 'playlistSplit':        [5,20],
                 }
 
-    def __getattr__(self, attr):#{{{2
+    def __getattr__(self, attr):
         try:
             self.defaults[attr]
         except KeyError:
@@ -60,7 +57,7 @@ class Configuration:#{{{1
         setattr(self, attr, value)
         return value
 
-    def __getOption(self, option):#{{{2
+    def __getOption(self, option):
         if option == 'knownHosts':
             settings = QSettings()
             hosts = {}
@@ -86,7 +83,7 @@ class Configuration:#{{{1
             return int(value[0])
         return valueType(value)
 
-    def storeOption(self, option, value):#{{{2
+    def storeOption(self, option, value):
         try:
             valueType = type(self.defaults[option])
             if option == 'knownHosts':
@@ -101,11 +98,11 @@ class Configuration:#{{{1
         except Exception, e:
             print 'error: ', e, '\n', 'error: ', option, value
 
-    def save(self):#{{{2
+    def save(self):
         for option in self.defaults:
             self.storeOption(option, getattr(self, option))
 
-    def showConfiguration(self, parent, modal=False):#{{{2
+    def showConfiguration(self, parent, modal=False):
         '''Display the configuration dialog and activate the changes.'''
         self.parent = parent
         self.setup = uic.loadUi('Configuration.ui')
@@ -151,7 +148,7 @@ class Configuration:#{{{1
             self.setup.exec_()
         else: self.setup.show()
 
-    def __accept(self):#{{{2
+    def __accept(self):
         self.knownHosts = {}
         for row in xrange(self.setup.serverTable.rowCount()):
             server = self.__getServer(row)
@@ -177,7 +174,7 @@ class Configuration:#{{{1
             elif server[1:] is not self.server[1:]:
                 self.parent.emit(SIGNAL('reconnect()'))
 
-    def __getServer(self, row):#{{{2
+    def __getServer(self, row):
         name = self.setup.serverTable.item(row, 0).text()
         host = [self.setup.serverTable.item(row, col).text() for col in [1, 2]]
         host.append(self.setup.serverTable.cellWidget(row, 3).text())
@@ -185,7 +182,7 @@ class Configuration:#{{{1
             return None
         return {unicode(name): [unicode(x) for x in host]}
 
-    def __addServer(self):#{{{2
+    def __addServer(self):
         self.setup.serverTable.blockSignals(True)
         row = self.setup.serverTable.rowCount()
         self.setup.serverTable.insertRow(row)
@@ -204,7 +201,7 @@ class Configuration:#{{{1
             if item.text() == '':
                 item.setText('6600')
 
-    def __checkDir(self,name,dir):#{{{2
+    def __checkDir(self,name,dir):
         if not os.path.isdir(os.path.expanduser(str(dir))):
             msgBox = QMessageBox()
             msgBox.setText("%s Directory does not exist" % name)
@@ -214,14 +211,14 @@ class Configuration:#{{{1
             if ret == QMessageBox.Yes:
                 os.makedirs(str(dir))
 
-    def __selectMusicDir(self):#{{{2
+    def __selectMusicDir(self):
         fd = QFileDialog(self.setup,'Shared Music Directory',self.setup.musicPath.text())
         fd.setFileMode(QFileDialog.DirectoryOnly)
         if fd.exec_() == 1:
             dir = str(fd.selectedFiles().first())
             self.setup.musicPath.setText(dir)
 
-    def __selectPlDir(self):#{{{2
+    def __selectPlDir(self):
         fd = QFileDialog(self.setup,'Shared Playlist Directory',self.setup.scBookmarkFile.text())
         fd.setNameFilter('XML files (*.xml)')
         fd.setDefaultSuffix('xml')
@@ -229,5 +226,3 @@ class Configuration:#{{{1
             dir = str(fd.selectedFiles().first())
             self.setup.scBookmarkFile.setText(dir)
 
-
-# vim: set expandtab shiftwidth=4 softtabstop=4:

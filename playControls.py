@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*
-#-------------------------------------------------------------------------------{{{
+#-------------------------------------------------------------------------------
 # Copyright 2010 B. Kroon <bart@tarmack.eu>.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,16 +13,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#-------------------------------------------------------------------------------}}}
+#-------------------------------------------------------------------------------
 from PyQt4.QtCore import SIGNAL
 
-class PlayControls:#{{{1
+class PlayControls:
     currentVolume = 0
     oldVolume = 0
-    def __init__(self, mpdclient):#{{{2
+    def __init__(self, mpdclient):
         self.mpdclient = mpdclient
 
-    def playPause(self):#{{{2
+    def playPause(self):
         try:
             state = self.mpdclient.status()['state']
             if state == 'play':
@@ -34,40 +34,40 @@ class PlayControls:#{{{1
         except:
             pass
 
-    def back(self):#{{{2
+    def back(self):
         try:
             self.mpdclient.previous()
         except:
             pass
 
-    def stop(self):#{{{2
+    def stop(self):
         try:
             self.mpdclient.stop()
         except:
             pass
 
-    def forward(self):#{{{2
+    def forward(self):
         try:
             self.mpdclient.next()
         except:
             pass
 
-    def setRandom(self, value):#{{{2
+    def setRandom(self, value):
         self.mpdclient.random(int(value))
 
-    def setRepeat(self, value):#{{{2
+    def setRepeat(self, value):
         self.mpdclient.repeat(int(value))
 
-    def setCrossFade(self, value):#{{{2
+    def setCrossFade(self, value):
         self.mpdclient.crossfade(value)
 
-    def volumeUp(self, value=2):#{{{2
+    def volumeUp(self, value=2):
         self.setVolume(self.currentVolume + value)
 
-    def volumeDown(self, value=2):#{{{2
+    def volumeDown(self, value=2):
         self.setVolume(self.currentVolume - value)
 
-    def setVolume(self,value):#{{{2
+    def setVolume(self,value):
         '''Change the volume'''
         if value != self.currentVolume:
             try:

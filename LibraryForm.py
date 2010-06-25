@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-#-------------------------------------------------------------------------------{{{
+#-------------------------------------------------------------------------------
 # Copyright 2009 E. A. Graham Jr. <txcrackers@gmail.com>.
 # Copyright 2010 B. Kroon <bart@tarmack.eu>.
 #
@@ -14,7 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#-------------------------------------------------------------------------------}}}
+#-------------------------------------------------------------------------------
 from PyQt4.QtCore import SIGNAL, Qt
 from time import time
 import operator
@@ -22,13 +22,12 @@ import operator
 import songwidgets
 import auxilia
 
-#===============================================================================
-class LibraryForm(auxilia.Actions):#{{{1
+class LibraryForm(auxilia.Actions):
     '''List and controls for the full "library" of music known to the server.
        Note that this does not actually manage the filesystem or tags or covers.
        There are many other programs that do that exceedingly well already.
     '''
-    def __init__(self, view, app, mpdclient, config):#{{{2
+    def __init__(self, view, app, mpdclient, config):
         self.app = app
         self.view = view
         self.mpdclient = mpdclient
@@ -53,8 +52,8 @@ class LibraryForm(auxilia.Actions):#{{{1
         view.connect(view.albumView,SIGNAL('itemDoubleClicked(QListWidgetItem*)'),self.addAlbum)
         view.connect(view.trackView,SIGNAL('itemDoubleClicked(QTreeWidgetItem*,int)'),self.addTrack)
 
-# Create context menu's. {{{2
-#==============================================================================
+        # Create context menu's.
+        #=======================================================================
 
         # Create the actions for each window.
         self.artistPlayAdd = self.actionPlayAdd(self.view.artistView, self.__addPlayArtist)
@@ -69,9 +68,9 @@ class LibraryForm(auxilia.Actions):#{{{1
         self.trackPlayReplace = self.actionPlayReplace(self.view.trackView, self.__clearPlayTrack)
         self.trackAdd = self.actionAddSongs(self.view.trackView, self.addTrack)
 
-#===========================================================================}}}
+        #=======================================================================
 
-    def reload(self):#{{{2
+    def reload(self):
         if not self.config.server or not self.mpdclient.connected():
             return
         try:
@@ -116,7 +115,7 @@ class LibraryForm(auxilia.Actions):#{{{1
             self.view.emit(SIGNAL('update'), ['player'])
             self.view.setCursor(Qt.ArrowCursor)
 
-    def __loadArtistView(self):#{{{2
+    def __loadArtistView(self):
         self.view.artistView.clear()
         self.view.artistView.setUpdatesEnabled(False)
         artists = self.artistdict.keys()
@@ -126,7 +125,7 @@ class LibraryForm(auxilia.Actions):#{{{1
         self.artistSearch(self.view.artistSearch.text())
         self.view.artistView.setUpdatesEnabled(True)
 
-    def __loadAlbumView(self, albumlist):#{{{2
+    def __loadAlbumView(self, albumlist):
         '''Reloads the list with the list presented'''
         self.view.albumView.clear()
         self.view.albumView.setUpdatesEnabled(False)
@@ -137,7 +136,7 @@ class LibraryForm(auxilia.Actions):#{{{1
         self.albumSearch(self.view.albumSearch.text())
         self.view.albumView.setUpdatesEnabled(True)
 
-    def __loadTracksView(self, tracks):#{{{2
+    def __loadTracksView(self, tracks):
         self.view.trackView.clear()
         self.view.trackView.setUpdatesEnabled(False)
         for track in tracks:
@@ -147,7 +146,7 @@ class LibraryForm(auxilia.Actions):#{{{1
             self.trackSearch(self.view.trackSearch.text())
         self.view.trackView.setUpdatesEnabled(True)
 
-    def __loadFileSystemView(self, filelist, parent=None):#{{{2
+    def __loadFileSystemView(self, filelist, parent=None):
         update = True
         if not parent:
             self.view.filesystemTree.clear()
@@ -163,7 +162,7 @@ class LibraryForm(auxilia.Actions):#{{{1
             self.view.filesystemTree.setUpdatesEnabled(True)
 
 
-    def artistFilter(self):#{{{2
+    def artistFilter(self):
         songlist = []
         albumlist = {}
         artists = self.view.artistView.selectedItems()
@@ -190,7 +189,7 @@ class LibraryForm(auxilia.Actions):#{{{1
         self.__loadAlbumView(albumlist)
         self.__loadTracksView(songlist)
 
-    def albumFilter(self):#{{{2
+    def albumFilter(self):
         songlist = []
         albums = self.view.albumView.selectedItems()
         artists = [unicode(artist.text()) for artist in self.view.artistView.selectedItems()]
@@ -208,35 +207,35 @@ class LibraryForm(auxilia.Actions):#{{{1
                 songlist.extend(self.albumdict[album])
         self.__loadTracksView(songlist)
 
-    def artistSearch(self, key):#{{{2
+    def artistSearch(self, key):
         self.__search(key, self.view.artistView)
 
-    def albumSearch(self, key):#{{{2
+    def albumSearch(self, key):
         self.__search(key, self.view.albumView)
 
-    def trackSearch(self, key):#{{{2
+    def trackSearch(self, key):
         hits = self.view.trackView.findItems(str(key), (Qt.MatchContains|Qt.MatchWrap), 1)[:]
         for x in xrange(self.view.trackView.topLevelItemCount()):
             self.view.trackView.topLevelItem(x).setHidden(True)
         for hit in hits:
             hit.setHidden(False)
 
-    def __search(self, key, widget):#{{{2
+    def __search(self, key, widget):
         hits = widget.findItems(str(key), (Qt.MatchContains|Qt.MatchWrap))[:]
         for x in xrange(widget.count()):
             widget.item(x).setHidden(True)
         for hit in hits:
             hit.setHidden(False)
 
-    def rescan(self):#{{{2
+    def rescan(self):
         '''rescan the library'''
         self.__scan(self.mpdclient.rescan())
 
-    def update(self):#{{{2
+    def update(self):
         '''update the library'''
         self.__scan(self.mpdclient.update())
 
-    def __scan(self, jobId):#{{{2
+    def __scan(self, jobId):
         '''Wait for the scan to finish, while waiting keep processing events.'''
         self.view.setCursor(Qt.BusyCursor)
         try:
@@ -248,15 +247,15 @@ class LibraryForm(auxilia.Actions):#{{{1
         finally:
             self.reload()
 
-    def addArtist(self):#{{{2
+    def addArtist(self):
         '''Add all songs from the currently selected artist into the current playlist'''
         return self.__addSongSet('artist', self.view.artistView.selectedItems())
 
-    def addAlbum(self):#{{{2
+    def addAlbum(self):
         '''Add all songs from the currently selected album into the current playlist'''
         return self.__addSongSet('album', self.view.albumView.selectedItems())
 
-    def __addSongSet(self, key, selection):#{{{2
+    def __addSongSet(self, key, selection):
         first = None
         for item in selection:
             for song in self.mpdclient.find(key,unicode(item.text())):
@@ -266,7 +265,7 @@ class LibraryForm(auxilia.Actions):#{{{1
         self.view.emit(SIGNAL('playlistChanged()'))
         return first
 
-    def addTrack(self):#{{{2
+    def addTrack(self):
         '''Add all selected songs into the current playlist'''
         first = None
         for item in self.view.trackView.selectedItems():
@@ -277,36 +276,34 @@ class LibraryForm(auxilia.Actions):#{{{1
         return first
 
 
-    def __addPlayArtist(self):#{{{2
+    def __addPlayArtist(self):
         try:
             self.mpdclient.playid(self.addArtist())
         except:
             pass
 
-    def __clearPlayArtist(self):#{{{2
+    def __clearPlayArtist(self):
         self.mpdclient.clear()
         self.__addPlayArtist()
 
-    def __addPlayAlbum(self):#{{{2
+    def __addPlayAlbum(self):
         try:
             self.mpdclient.playid(self.addAlbum())
         except:
             pass
 
-    def __clearPlayAlbum(self):#{{{2
+    def __clearPlayAlbum(self):
         self.mpdclient.clear()
         self.__addPlayAlbum()
 
 
-    def __addPlayTrack(self):#{{{2
+    def __addPlayTrack(self):
         try:
             self.mpdclient.playid(self.addTrack())
         except:
             pass
 
-    def __clearPlayTrack(self):#{{{2
+    def __clearPlayTrack(self):
         self.mpdclient.clear()
         self.__addPlayTrack()
 
-
-# vim: set expandtab shiftwidth=4 softtabstop=4:

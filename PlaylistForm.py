@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-#-------------------------------------------------------------------------------{{{
+#-------------------------------------------------------------------------------
 # Copyright 2009 E. A. Graham Jr. <txcrackers@gmail.com>.
 # Copyright 2010 B. Kroon <bart@tarmack.eu>.
 #
@@ -14,7 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#-------------------------------------------------------------------------------}}}
+#-------------------------------------------------------------------------------
 from PyQt4.QtCore import SIGNAL, Qt
 from PyQt4.QtGui import QMessageBox, QInputDialog, QKeySequence, QListWidget, QTreeWidget
 
@@ -30,9 +30,9 @@ import auxilia
 #==============================================================================
 # Display and manage the currently known playlists.
 #==============================================================================
-class PlaylistForm(auxilia.DragNDrop, auxilia.Actions):#{{{1
+class PlaylistForm(auxilia.DragNDrop, auxilia.Actions):
     '''Display and manage the currently known playlists.'''
-    def __init__(self, view, app, mpdclient):#{{{2
+    def __init__(self, view, app, mpdclient):
         self.app = app
         self.view = view
         self.mpdclient = mpdclient
@@ -86,16 +86,16 @@ class PlaylistForm(auxilia.DragNDrop, auxilia.Actions):#{{{1
     def newListDragEnterEvent(self, event):
         event.accept()
 
-    def newListDropEvent(self, event):#{{{2
+    def newListDropEvent(self, event):
         print 'dropped new playlist'
         self.__newList()
         self.songListDropEvent(event, -1)
 
-    def playlistListDropEvent(self, event):#{{{2
+    def playlistListDropEvent(self, event):
         self.currentPlaylist = unicode(self.view.playlistList.itemAt(event.pos()).text())
         self.songListDropEvent(event, -1)
 
-    def songListDropEvent(self, event, toPos=None):#{{{2
+    def songListDropEvent(self, event, toPos=None):
         event.setDropAction(Qt.CopyAction)
         source = event.source()
         if not toPos:
@@ -124,7 +124,7 @@ class PlaylistForm(auxilia.DragNDrop, auxilia.Actions):#{{{1
             self.dropFile(event, toPos)
 
 
-    def addDrop(self, itemList, toPos):#{{{2
+    def addDrop(self, itemList, toPos):
         try:
             self.view.setCursor(Qt.WaitCursor)
             count = self.view.songList.topLevelItemCount()
@@ -142,7 +142,7 @@ class PlaylistForm(auxilia.DragNDrop, auxilia.Actions):#{{{1
             self.view.setCursor(Qt.ArrowCursor)
 
 
-    def reload(self):#{{{2
+    def reload(self):
         '''Reload the lists from the server'''
         try:
             plname = unicode(self.view.playlistList.selectedItems()[0].text())
@@ -157,10 +157,10 @@ class PlaylistForm(auxilia.DragNDrop, auxilia.Actions):#{{{1
         self.currentPlaylist = plname
         self.__getPlaylist(plname)
 
-    def selectPlaylist(self, item):#{{{2
+    def selectPlaylist(self, item):
         self.__getPlaylist(unicode(item.text()))
 
-    def __getPlaylist(self, plname=None):#{{{2
+    def __getPlaylist(self, plname=None):
         '''Load up and display the selected playlist or the one given.'''
         self.view.songList.clear()
         if not plname:
@@ -181,16 +181,16 @@ class PlaylistForm(auxilia.DragNDrop, auxilia.Actions):#{{{1
         for i in range(3):
             self.view.songList.resizeColumnToContents(i)
 
-    def __loadPlayList(self):#{{{2
+    def __loadPlayList(self):
         self.__loadList()
         self.mpdclient.play()
 
-    def __addPlayList(self):#{{{2
+    def __addPlayList(self):
         last = int(self.mpdclient.status['playlistlength'])
         self.__addList()
         self.mpdclient.play(last)
 
-    def __loadList(self):#{{{2
+    def __loadList(self):
         '''Load the currently selected playlist onto the server.
            Note: this operation clears the current playlist by default.
         '''
@@ -199,7 +199,7 @@ class PlaylistForm(auxilia.DragNDrop, auxilia.Actions):#{{{1
         self.mpdclient.clear()
         self.__addList(state)
 
-    def __addList(self, state=None):#{{{2
+    def __addList(self, state=None):
         '''Load the currently selected playlist onto the server.
         '''
         if not state:
@@ -211,7 +211,7 @@ class PlaylistForm(auxilia.DragNDrop, auxilia.Actions):#{{{1
         if state == 'play':
             self.mpdclient.play()
 
-    def __newList(self):#{{{2
+    def __newList(self):
         '''Ask the user for a name for the new playlist'''
         playlists = [x['playlist'] for x in self.mpdclient.lsinfo() if 'playlist' in x]
 
@@ -238,7 +238,7 @@ class PlaylistForm(auxilia.DragNDrop, auxilia.Actions):#{{{1
             self.currentPlaylist = name
             return name
 
-    def __deleteList(self):#{{{2
+    def __deleteList(self):
         '''Delete the currently selected playlist.'''
         try:
             item = self.view.playlistList.selectedItems()[0]
@@ -254,16 +254,16 @@ class PlaylistForm(auxilia.DragNDrop, auxilia.Actions):#{{{1
             self.view.playlistList.takeItem(self.view.playlistList.row(item))
 
 
-    def __addPlaySong(self):#{{{2
+    def __addPlaySong(self):
         last = int(self.mpdclient.status['playlistlength'])
         self.__addSong()
         self.mpdclient.play(last)
 
-    def __clearPlaySong(self):#{{{2
+    def __clearPlaySong(self):
         self.mpdclient.clear()
         self.__addPlaySong()
 
-    def __addSong(self):#{{{2
+    def __addSong(self):
         self.mpdclient.command_list_ok_begin()
         try:
             for item in self.view.songList.selectedItems():
@@ -271,7 +271,7 @@ class PlaylistForm(auxilia.DragNDrop, auxilia.Actions):#{{{1
         finally:
             self.mpdclient.command_list_end()
 
-    def __removeSong(self):#{{{2
+    def __removeSong(self):
         itemlist = self.view.songList.selectedItems()
         itemlist.reverse()
         self.mpdclient.command_list_ok_begin()
@@ -281,6 +281,3 @@ class PlaylistForm(auxilia.DragNDrop, auxilia.Actions):#{{{1
         finally:
             self.mpdclient.command_list_end()
 
-
-
-# vim: set expandtab shiftwidth=4 softtabstop=4:

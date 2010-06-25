@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*
-#-------------------------------------------------------------------------------{{{
+#-------------------------------------------------------------------------------
 # Copyright 2009 E. A. Graham Jr. <txcrackers@gmail.com>.
 # Copyright 2010 B. Kroon <bart@tarmack.eu>.
 #
@@ -14,7 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#-------------------------------------------------------------------------------}}}
+#-------------------------------------------------------------------------------
 from PyQt4.QtCore import SIGNAL, Qt, QSize#, QTimer
 from PyQt4.QtGui import QInputDialog, QKeySequence, QListWidget, QIcon
 from time import time
@@ -25,19 +25,19 @@ import auxilia
 import iconretriever
 
 # TODO: Consistent drop placing with indicator.
-# TODO: See if drag pixmap can be alpha blended. (probably imposible)
+# TODO: See if drag pixmap can be alpha blended. (probably impossible)
 # TODO: Make cover art download optional.
 
 #===============================================================================
 # List and controls for the currently loaded playlist
 #===============================================================================
-class CurrentPlaylistForm(auxilia.DragNDrop):#{{{1
+class CurrentPlaylistForm(auxilia.DragNDrop):
     '''List and controls for the currently loaded playlist'''
     updating = False
     editing = 0
     playing = -1
     currentPlayTime = 0
-    def __init__(self, view, app, mpdclient, config):#{{{2
+    def __init__(self, view, app, mpdclient, config):
         self.app = app
         self.view = view
         self.mpdclient = mpdclient
@@ -88,17 +88,16 @@ class CurrentPlaylistForm(auxilia.DragNDrop):#{{{1
         view.connect(self.view.oneLinePlaylist,SIGNAL('toggled(bool)'),self.__setOneLinePlaylist)
         self.view.emit(SIGNAL('playlistChanged()'))
 
-        # Menu for current playlist.{{{3
+        # Menu for current playlist.
         # Add the actions to widget.
         self.view.currentList.addAction(self.view.currentMenuPlay)
         self.view.currentList.addAction(self.view.currentMenuRemove)
         self.view.currentList.addAction(self.view.currentMenuClear)
         self.view.currentList.addAction(self.view.currentMenuSave)
         self.view.currentList.addAction(self.view.currentMenuCrop)
-        #}}}
 
 
-    def setPlaying(self, playing): #{{{2
+    def setPlaying(self, playing): 
         print 'debug: setPlaying to ', playing
         beforeScroll = self.view.currentList.verticalScrollBar().value()
         item = self.view.currentList.item(self.playing)
@@ -113,7 +112,7 @@ class CurrentPlaylistForm(auxilia.DragNDrop):#{{{1
         else: self.playing = -1
         self.__scrollList(beforeScroll)
 
-    def reload(self):#{{{2
+    def reload(self):
         '''Causes the current play list to be reloaded from the server'''
         if not self.config.server or not self.mpdclient.connected():
             return
@@ -132,6 +131,7 @@ class CurrentPlaylistForm(auxilia.DragNDrop):#{{{1
             else: return
             # Get the song id's of the selected songs.
             self.view.currentList.setUpdatesEnabled(False)
+            # FIXME: Swapping songs seems to confuse us and drop song items.
             for song in plist:
                 song['pos'] = int(song['pos'])
                 # if the song is in our parralel id list.
@@ -147,7 +147,7 @@ class CurrentPlaylistForm(auxilia.DragNDrop):#{{{1
                         for x in range(song['pos'], index):
                             holditem = self._takeItem(song['pos'])
                             itemlist[holditem.song['id']] = holditem
-                    # put the item back in the list at the right possition.
+                    # put the item back in the list at the right position.
                     self._insertItem(song['pos'], item)
                 # if ist in our 'hold on to' list.
                 elif song['id'] in itemlist:
@@ -158,7 +158,7 @@ class CurrentPlaylistForm(auxilia.DragNDrop):#{{{1
                     # put it in place in the view.
                     self._insertItem(song['pos'], item)
                 else:
-                    # If the song is not in the paralel or the 'hold on to' list. Just insert a new item at the correct possition.
+                    # If the song is not in the parallel or the 'hold on to' list. Just insert a new item at the correct position.
                     item = songwidgets.FullTreeWidget(song, oneLine)
                     self._insertItem(song['pos'], item)
                 # select the song again if needed.
@@ -184,13 +184,13 @@ class CurrentPlaylistForm(auxilia.DragNDrop):#{{{1
         finally:
             self.view.currentList.setUpdatesEnabled(True)
 
-    def loadIcons(self):#{{{2
+    def loadIcons(self):
         while self.retriever.icons:
             item, icon = self.retriever.icons.pop(0)
             if getrefcount(item) > 2:
                 item.setIcon(QIcon(icon))
 
-    def trackSearch(self, key):#{{{2
+    def trackSearch(self, key):
         print 'debug: trackSearch starting.'
         self.view.currentList.setUpdatesEnabled(False)
         t = time()
@@ -206,7 +206,7 @@ class CurrentPlaylistForm(auxilia.DragNDrop):#{{{1
         self.view.currentList.setUpdatesEnabled(True)
         print 'debug: trackSearch took %.3f seconds.' % (time()-t)
 
-    def keyPressEvent(self, event):#{{{2
+    def keyPressEvent(self, event):
         if event.matches(QKeySequence.Delete):
             self.__removeSelected()
         elif event.key() == Qt.Key_Escape:
@@ -214,7 +214,7 @@ class CurrentPlaylistForm(auxilia.DragNDrop):#{{{1
         else:
             QListWidget.keyPressEvent(self.view.currentList, event)
 
-    def dropEvent(self, event, append=False):#{{{2
+    def dropEvent(self, event, append=False):
         event.setDropAction(Qt.CopyAction)
         source = event.source()
         if not append:
@@ -253,7 +253,7 @@ class CurrentPlaylistForm(auxilia.DragNDrop):#{{{1
         elif source == self.view.filesystemTree:
             self.dropFile(event, toPos)
 
-    def addDrop(self, itemList, toPos):#{{{2
+    def addDrop(self, itemList, toPos):
         try:
             self.view.setCursor(Qt.WaitCursor)
             self.mpdclient.command_list_ok_begin()
@@ -268,27 +268,27 @@ class CurrentPlaylistForm(auxilia.DragNDrop):#{{{1
             self.editing = time()
             self.view.setCursor(Qt.ArrowCursor)
 
-    def _takeItem(self, row):#{{{2
+    def _takeItem(self, row):
         item = self.view.currentList.takeItem(row)
         del self.idlist[row]
         self.currentPlayTime -= int(item.song.get('time','0'))
         return item
 
-    def _insertItem(self, row, item):#{{{2
+    def _insertItem(self, row, item):
         self.view.currentList.insertItem(row, item)
         self.idlist.insert(row, item.song['id'])
         if not item.icon:
             self.retriever.fetchIcon(item, self.config.musicPath)
         self.currentPlayTime += int(item.song.get('time','0'))
 
-    def __resetCurrentList(self):#{{{2
+    def __resetCurrentList(self):
         self.view.currentList.clear()
         self.idlist = []
         self.version = 0
         self.playing = -1
         self.reload()
 
-    def __scrollList(self, beforeScroll=None):#{{{2
+    def __scrollList(self, beforeScroll=None):
         editing = time() - self.editing
         count = self.view.currentList.count()
         maxScroll = self.view.currentList.verticalScrollBar().maximum()
@@ -301,7 +301,7 @@ class CurrentPlaylistForm(auxilia.DragNDrop):#{{{1
         elif beforeScroll:
             self.view.currentList.scrollToItem(self.view.currentList.item(beforeScroll), 1)
 
-    def __saveCurrent(self):#{{{2
+    def __saveCurrent(self):
         '''Save the current playlist'''
         lsinfo = self.mpdclient.lsinfo()
         playlists = []
@@ -316,17 +316,17 @@ class CurrentPlaylistForm(auxilia.DragNDrop):#{{{1
             self.mpdclient.save(name)
             self.view.emit(SIGNAL('reloadPlaylists()'))
 
-    def __clearCurrent(self):#{{{2
+    def __clearCurrent(self):
         '''Clear the current playlist'''
         self.mpdclient.stop()
         self.mpdclient.clear()
         self.reload()
 
-    def __removeSelected(self):#{{{2
+    def __removeSelected(self):
         '''Remove the selected item(s) from the current playlist'''
         self.__removeSongs(self.view.currentList.selectedItems())
 
-    def __cropCurrent(self):#{{{2
+    def __cropCurrent(self):
         idlist = []
         for x in xrange(self.view.currentList.count()):
             item = self.view.currentList.item(x)
@@ -334,26 +334,26 @@ class CurrentPlaylistForm(auxilia.DragNDrop):#{{{1
                 idlist.append(item)
         self.__removeSongs(idlist)
 
-    def __removeSongs(self, itemList):#{{{2
+    def __removeSongs(self, itemList):
         self.mpdclient.command_list_ok_begin()
         for item in itemList:
             try:
                 self.mpdclient.deleteid(item.song['id'])
-            except:
-                pass
+            except Exception, e:
+                print e
         self.mpdclient.command_list_end()
         self.view.currentList.setCurrentRow(-1)
         self.view.emit(SIGNAL('playlistChanged()'))
         self.setPlaying(int(self.mpdclient.status().get('song', -1)))
 
-    def __playFromMenu(self):   # {{{2
+    def __playFromMenu(self):
         self.__playSong(self.view.currentList.selectedItems())
 
-    def __playSong(self, item):#{{{2
+    def __playSong(self, item):
         self.mpdclient.playid(self.view.currentList.currentItem().song['id'])
         self.setPlaying(self.view.currentList.row(item))
 
-    def __setPlayTime(self):#{{{2
+    def __setPlayTime(self):
         songTime = self.currentPlayTime
         songMin = int(songTime / 60)
         songSecs = songTime - (songMin * 60)
@@ -368,7 +368,7 @@ class CurrentPlaylistForm(auxilia.DragNDrop):#{{{1
         else:
             self.view.playTimeLabel.setText('Total play time: %02d:%02d:%02d ' % (songHour, songMin, songSecs))
 
-    def __setOneLinePlaylist(self, value):#{{{2
+    def __setOneLinePlaylist(self, value):
         self.config.oneLinePlaylist = value
         self.view.emit(SIGNAL('resetCurrentList()'))
         if value:
@@ -376,11 +376,9 @@ class CurrentPlaylistForm(auxilia.DragNDrop):#{{{1
         else:
             self.view.currentList.setIconSize(QSize(32, 32))
 
-    def _setEditing(self, i=0):#{{{2
+    def _setEditing(self, i=0):
         self.editing = time()
 
 def doprint(foo='foo'):
     print 'debug: doprint', repr(foo)
 
-
-# vim: set expandtab shiftwidth=4 softtabstop=4:

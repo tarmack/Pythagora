@@ -1,6 +1,6 @@
 #!/usr/bin/python -OO
 # -*- coding: utf-8 -*
-#-------------------------------------------------------------------------------{{{
+#-------------------------------------------------------------------------------
 # Copyright 2009 E. A. Graham Jr. <txcrackers@gmail.com>.
 # Copyright 2010 B. Kroon <bart@tarmack.eu>.
 #
@@ -15,7 +15,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#-------------------------------------------------------------------------------}}}
+#-------------------------------------------------------------------------------
 from PyQt4.QtCore import QTimer, SIGNAL, Qt
 from PyQt4.QtGui import QApplication, QWidget, QSystemTrayIcon
 
@@ -34,6 +34,7 @@ import auxilia
 # TODO: Support default media buttons, probably with mod key. (halfway)
 # TODO: build the actual Shoutcast support.
 # TODO: Make us resistant against connection flicker.
+# TODO: Use dbus to gain a new style KDE system tray icon.
 
 # TODO: Refactor stuff:
 #       * Method out stuff from __init_() in allot of classes.
@@ -41,7 +42,7 @@ import auxilia
 
 #==============================================================================
 
-def main(): #{{{
+def main():
     app = QApplication(sys.argv)
     print 'debug:', sys.argv
     app.setOrganizationName("Tarmack SW")
@@ -51,15 +52,15 @@ def main(): #{{{
     signal.signal(signal.SIGINT, view.keyboardInterrupt)
     exit = app.exec_()
     sys.exit(exit)
-#}}}
 
 #===============================================================================
 # Creates and links up the management display items.
 #===============================================================================
-class Manager(View):#{{{1
+class Manager(View):
     '''Creates and links up the management display items.'''
     oldVolume = 0
-    def __init__(self, app):#{{{2
+    misses = 0
+    def __init__(self, app):
         self.app = app
         self.mpdclient = mpd.MPDClient()
         self.timer = QTimer()
@@ -85,7 +86,7 @@ class Manager(View):#{{{1
         self.view.songLabel.dropEvent = self.__topDrop
 
 
-    def connectTo(self, action):#{{{2
+    def connectTo(self, action):
         name = unicode(action.text())
         if self.config.server and name == self.config.server[0] and self.mpdclient.connected():
             return
@@ -96,7 +97,7 @@ class Manager(View):#{{{1
         self.__connectMPD()
         self.config.save()
 
-    def callback(self, changes):#{{{2
+    def callback(self, changes):
         '''Remember, this is executed from another thread.'''
         print 'debug: called back with "%s"' % changes
         if self.shuttingDown:
@@ -111,7 +112,7 @@ class Manager(View):#{{{1
         if self.idleTimer.timerId() < 0:
             self.idleTimer.start()
 
-    def KeyPressEvent(self, event):#{{{2
+    def KeyPressEvent(self, event):
         if event.modifiers() == Qt.ControlModifier:
             if event.key() == Qt.Key_MediaPlay:
                 self.playControls.playPause()
@@ -129,7 +130,7 @@ class Manager(View):#{{{1
                 self.playControls.toggleMute()
         else: QWidget.keyPressEvent(self.view, event)
 
-    def __update(self):#{{{2
+    def __update(self):
         if self.mpdclient._idle:
             self.update.progress()
         elif not self.app.closingDown():
@@ -137,7 +138,7 @@ class Manager(View):#{{{1
                 self.__connectMPD()
         self.currentList.loadIcons()
 
-    def __connectMPD(self):#{{{2
+    def __connectMPD(self):
         if self.shuttingDown:
             return True
         self.update.setProgress(0, 0)
@@ -183,7 +184,7 @@ class Manager(View):#{{{1
             if self.idleTimer.timerId() < 0:
                 self.idleTimer.start()
 
-    def _error(self):#{{{2
+    def _error(self):
         if self.config.server:
             if self.errorCount > 0:
                 print 'error: Lost connection to mpd server.'
@@ -197,7 +198,7 @@ class Manager(View):#{{{1
                         self.view.play.setIcon(self.startIcon)
             self.errorCount += 1
 
-    def songSeek(self, event):#{{{2
+    def songSeek(self, event):
         if event.button() == Qt.LeftButton:
             status = self.mpdclient.currentsong()
             time = status.get('time', None)
@@ -205,7 +206,7 @@ class Manager(View):#{{{1
                 value = float(event.x()) / int(self.view.progress.geometry().width())
                 self.mpdclient.seekid(status['id'], int(int(time) * value))
 
-    def trayEvent(self, event):#{{{2
+    def trayEvent(self, event):
         if event.type() == 31: # enum: QEvent.wheel
             event.accept()
             self.playControls.volumeUp(int(event.delta())/(8*15))
@@ -213,21 +214,22 @@ class Manager(View):#{{{1
         else:
             QSystemTrayIcon.event(self.view.trayIcon, event)
             return False
-    def __runIdle(self):#{{{2
+
+    def __runIdle(self):
         if not self.shuttingDown and self.mpdclient.connected():
             self.mpdclient.idleThread(self.callback, timeout=10)
 
-    def __topEnter(self, event):#{{{2
+    def __topEnter(self, event):
         if event.source() != self.view.currentList:
             event.accept()
 
-    def __topDrop(self, event):#{{{2
+    def __topDrop(self, event):
         event.accept()
         self.mpdclient.clear()
         self.currentList.dropEvent(event, append=True)
         self.mpdclient.play()
 
-    def __connectSignals(self):#{{{2
+    def __connectSignals(self):
         self.playControls.connectSignals(self.view)
         self.view.connect(self.view.menuConnect, SIGNAL('triggered(QAction *)'), self.connectTo)
 
@@ -236,22 +238,21 @@ class Manager(View):#{{{1
         self.view.connect(self.view, SIGNAL('reconnect()'), self.__connectMPD)
         self.view.connect(self.view, SIGNAL('ConnectionError()'), self._error)
 
-    def keyboardInterrupt(self, signum, frame):#{{{2
+    def keyboardInterrupt(self, signum, frame):
         print 'debug: KeyboardInterrupt'
         try:
             self.app.quit()
         except:
             sys.exit(1)
 
-#}}}1
 
-class Update:#{{{1
+class Update:
     lastSongId = None
     state = None
     misses = 0
     errorCount = 0
     time = 0
-    def __init__(self, view, mpdclient, config, playControls):#{{{2
+    def __init__(self, view, mpdclient, config, playControls):
         self.pauseIcon = auxilia.PIcon("media-playback-pause")
         self.startIcon = auxilia.PIcon("media-playback-start")
         self.view = view
@@ -260,7 +261,7 @@ class Update:#{{{1
         self.playControls = playControls
         self.view.connect(self.view, SIGNAL('update'), self.update)
 
-    def update(self, changes):#{{{2
+    def update(self, changes):
         try:
             status = self.mpdclient.status()
             self.errorCount = 0
@@ -274,7 +275,7 @@ class Update:#{{{1
         else:
             self.player(status)
 
-    def progress(self):#{{{2
+    def progress(self):
             try:
                 if self.state == 'play':
                     if 'time' in self.currentsong:
@@ -284,10 +285,10 @@ class Update:#{{{1
             except Exception, e:
                 print 'error: updateProgress error', e
 
-    def playlist(self, status):#{{{2
+    def playlist(self, status):
         self.view.emit(SIGNAL('playlistChanged()'))
 
-    def player(self, status):#{{{2
+    def player(self, status):
         #try:
         if self.state != status['state']:
             self.__setPlayPauseState(status['state'])
@@ -312,24 +313,24 @@ class Update:#{{{1
         # Check if volume chaged behind our back.
         self.mixer(status)
 
-    def mixer(self, status):#{{{2
+    def mixer(self, status):
         volumeStatus = int(status['volume'])
         self.playControls.currentVolume = volumeStatus
         self.view.volume.setValue(volumeStatus)
 
-    def options(self, status):#{{{2
+    def options(self, status):
         self.view.repeatButton.setChecked(bool(int(status['repeat'])))
         self.view.randomButton.setChecked(bool(int(status['random'])))
         self.view.crossFade.setValue(int(status['xfade']))
 
-    def stored_playlist(self, status):#{{{2
+    def stored_playlist(self, status):
         self.view.emit(SIGNAL('reloadPlaylists()'))
 
-    def setSongLabel(self, title='', artist='', album=''):#{{{2
+    def setSongLabel(self, title='', artist='', album=''):
         self.view.trayIcon.setToolTip('<b><big>%s</big></b>\r\nby <big>%s</big>\r\nfrom <i>%s</i>' % (title, artist, album))
         self.view.songLabel.setText(title, artist, album)
 
-    def setProgress(self, cs, ss=None):#{{{2
+    def setProgress(self, cs, ss=None):
         ''' Moves the progress indicator to the correct position,
             calculate the timestamps and puts them in place.
         '''
@@ -346,7 +347,7 @@ class Update:#{{{1
             self.view.progress.setFormat('/'.join((formatTime(curTime), formatTime(songTime))))
         self.time = curTime
 
-    def clearForms(self):#{{{2
+    def clearForms(self):
         self.view.artistView.clear()
         self.view.albumView.clear()
         self.view.trackView.clear()
@@ -354,7 +355,7 @@ class Update:#{{{1
         self.view.playlistList.clear()
         self.view.songList.clear()
 
-    def __setPlayPauseState(self,state):#{{{2
+    def __setPlayPauseState(self,state):
         if state == 'play':
             self.view.play.setIcon(self.pauseIcon)
             self.view.trayIcon.setIcon(self.pauseIcon)
@@ -364,8 +365,7 @@ class Update:#{{{1
             self.view.trayIcon.setIcon(self.startIcon)
             self.state = 'stop'
 
-#}}}1
-def formatTime(seconds):#{{{1
+def formatTime(seconds):
     seconds = int(seconds)
     form = '%i'
     result = []
@@ -397,8 +397,4 @@ if __name__ == "__main__":
     main()
 #    import cProfile
 #    cProfile.run('main()')
-
-
-
-# vim: set expandtab shiftwidth=4 softtabstop=4:
 

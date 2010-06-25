@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*
-#---------------------------------------------------------------------------{{{
+#-------------------------------------------------------------------------------
 # Copyright 2010 B. Kroon <bart@tarmack.eu>.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,7 +13,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 # This module subclasses the python-mpd module of J.A. Treuman to give it
 # Support for unicode strings. It will transform all value strings to unicode
 # but leaves the dictionary keys alone. 
@@ -23,10 +23,10 @@
 # Because it is implemented as a proxy class it is fully transparent. With this
 # wrapper it is possible to make your application support unicode without much
 # hassle. "import mpdunicode as mpd" in existing code should do the trick.
-#---------------------------------------------------------------------------}}}
+#-------------------------------------------------------------------------------
 from mpd import *
 
-class MPDClient(MPDClient):#{{{1
+class MPDClient(MPDClient):
     ''' This proxy class wraps round the python-mpd module.
     It converts the dictionary values in the output to unicode
     objects and adds support for unicode input.  It also ads
@@ -88,5 +88,3 @@ class MPDClient(MPDClient):#{{{1
         self._idle = False
         super(MPDClient, self)._reset()
 
-
-# vim: set expandtab shiftwidth=4 softtabstop=4:
