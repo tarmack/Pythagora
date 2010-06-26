@@ -34,7 +34,7 @@ a piece of shit.
 
 class ShoutcastClient():
     '''VERY Simple client for accessing Shoutcast streams.'''
-    BASEURL = '207.200.98.25'
+    BASEURL = 'shoutcast.com'
 
     def getGenereList(self):
         '''Get list of genres'''
