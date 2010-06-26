@@ -18,35 +18,36 @@ Generic options:\n\
 qtOptions = "\
 Qt options:\n\
 \n\
-  --display <displayname>   Use the X-server display 'displayname'\n\
-  --session <sessionId>     Restore the application for the given 'sessionId'\n\
-  --cmap                    Causes the application to install a private color\n\
+  -display <displayname>   Use the X-server display 'displayname'\n\
+  -session <sessionId>     Restore the application for the given 'sessionId'\n\
+  -cmap                    Causes the application to install a private color\n\
                             map on an 8-bit display\n\
-  --ncols <count>           Limits the number of colors allocated in the color\n\
+  -ncols <count>           Limits the number of colors allocated in the color\n\
                             cube on an 8-bit display, if the application is\n\
                             using the QApplication::ManyColor color\n\
                             specification\n\
-  --nograb                  tells Qt to never grab the mouse or the keyboard\n\
-  --dograb                  running under a debugger can cause an implicit\n\
+  -nograb                  tells Qt to never grab the mouse or the keyboard\n\
+  -dograb                  running under a debugger can cause an implicit\n\
                             -nograb, use -dograb to override\n\
-  --sync                    switches to synchronous mode for debugging\n\
-  --fn, --font <fontname>   defines the application font\n\
-  --bg, --background <color> sets the default background color and an\n\
+  -sync                    switches to synchronous mode for debugging\n\
+  -fn, --font <fontname>   defines the application font\n\
+  -bg, --background <color> sets the default background color and an\n\
                             application palette (light and dark shades are\n\
                             calculated)\n\
-  --fg, --foreground <color> sets the default foreground color\n\
-  --btn, --button <color>   sets the default button color\n\
-  --name <name>             sets the application name\n\
-  --title <title>           sets the application title (caption)\n\
-  --visual TrueColor        forces the application to use a TrueColor visual on\n\
+  -fg, --foreground <color> sets the default foreground color\n\
+  -btn, --button <color>   sets the default button color\n\
+  -name <name>             sets the application name\n\
+  -title <title>           sets the application title (caption)\n\
+  -visual TrueColor        forces the application to use a TrueColor visual on\n\
                             an 8-bit display\n\
-  --inputstyle <inputstyle> sets XIM (X Input Method) input style. Possible\n\
+  -inputstyle <inputstyle> sets XIM (X Input Method) input style. Possible\n\
                             values are onthespot, overthespot, offthespot and\n\
                             root\n\
-  --im <XIM server>         set XIM server\n\
-  --noxim                   disable XIM\n\
-  --reverse                 mirrors the whole layout of widgets\n\
-  --stylesheet <file.qss>   applies the Qt stylesheet to the application widgets\n\
-  --graphicssystem <system> use a different graphics system instead of the\n\
+  -im <XIM server>         set XIM server\n\
+  -noxim                   disable XIM\n\
+  -reverse                 mirrors the whole layout of widgets\n\
+  -style                    sets the application GUI style. Possible values are motif, windows, and platinum.\n\
+  -stylesheet <file.qss>   applies the Qt stylesheet to the application widgets\n\
+  -graphicssystem <system> use a different graphics system instead of the\n\
                             default one, options are raster and opengl\n\
                             (experimental)\n"
