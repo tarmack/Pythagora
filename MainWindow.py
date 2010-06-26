@@ -16,7 +16,7 @@
 # limitations under the License.
 #-------------------------------------------------------------------------------
 from PyQt4.QtCore import SIGNAL, QTimer
-from PyQt4.QtGui import QSystemTrayIcon, QLabel, QHeaderView, QMenu, QIcon, QTabBar
+from PyQt4.QtGui import QSystemTrayIcon, QLabel, QHeaderView, QMenu, QIcon
 from PyQt4 import uic
 from time import time
 import sys
@@ -69,7 +69,7 @@ class View(auxilia.Actions):
         self.view.serverLabel = QLabel('Not connected')
         self.view.numSongsLabel = QLabel('Songs')
         self.view.playTimeLabel = QLabel('playTime')
-        self.view.statusTabs = QTabBar()
+        self.view.statusTabs = auxilia.StatusTabBar()
         self.view.statusTabs.addTab(auxilia.PIcon("media-playlist-repeat"), 'Current Playlist')
         self.view.statusTabs.addTab(auxilia.PIcon("network-workgroup"), 'Shoutcast')
         self.view.statusTabs.setShape(1)

@@ -18,8 +18,8 @@
 import locale
 import os
 import re
-from PyQt4.QtCore import SIGNAL, Qt, QObject, QEvent
-from PyQt4.QtGui import QAction, QWidgetAction, QToolButton
+from PyQt4.QtCore import SIGNAL, Qt, QObject, QEvent, QTimer
+from PyQt4.QtGui import QAction, QWidgetAction, QToolButton, QTabBar
 
 locale.setlocale(locale.LC_ALL, "")
 
@@ -251,3 +251,33 @@ def PIcon(icon):
     except ImportError:
         from PyQt4.QtGui import QIcon
         return QIcon('icons/%s.png' % icon)
+
+class StatusTabBar(QTabBar):
+    def __init__(self):
+        QTabBar.__init__(self)
+        self.tabTimer = QTimer()
+        self.connect(self.tabTimer, SIGNAL('timeout()'), self.__selectTab)
+        self.setAcceptDrops(True)
+
+    def dragEnterEvent(self, event):
+        '''Starts timer on enter and sets first position.'''
+        self.tabPos = event.pos()
+        event.accept()
+        self.tabTimer.start(500)
+
+    def dragLeaveEvent(self, event):
+        '''If the mouse leaves the tabWidget stop the timer.'''
+        self.tabTimer.stop()
+
+    def dragMoveEvent(self, event):
+        '''Keep track of the mouse and change the position, restarts the timer when moved.'''
+        # TODO: Set threshold for movement.
+        self.tabPos = event.pos()
+        self.tabTimer.start()
+
+    def __selectTab(self):
+        '''Changes the view to the tab where the mouse was hovering above.'''
+        index = self.tabAt(self.tabPos)
+        self.setCurrentIndex(index)
+        self.tabTimer.stop()
+
