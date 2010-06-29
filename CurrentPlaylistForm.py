@@ -286,6 +286,7 @@ class CurrentPlaylistForm(auxilia.DragNDrop):
         self.idlist = []
         self.version = 0
         self.playing = -1
+        self.currentPlayTime = 0
         self.reload()
 
     def __scrollList(self, beforeScroll=None):
