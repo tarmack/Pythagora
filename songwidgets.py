@@ -74,12 +74,6 @@ class TrackWidget(QTreeWidgetItem):
         self.setToolTip(1, "Artist:\t %s\nAlbum:\t %s\nFile:\t %s"\
                 % (auxilia.songArtist(song), song.get('album', ''), song['file']))
 
-class fileWidget(QTreeWidgetItem):
-    '''Widget used for displaying the filesystem tree.'''
-    def __init__(self, name):
-        QTreeWidgetItem.__init__(self)
-        self.setText(0,name)
-
 class LongSongWidget(QTreeWidgetItem):
     '''Lays out a song in a three-column tree widget: artist, title, album.
     Used in PlaylistForm.'''

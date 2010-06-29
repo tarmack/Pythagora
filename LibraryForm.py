@@ -16,6 +16,7 @@
 # limitations under the License.
 #-------------------------------------------------------------------------------
 from PyQt4.QtCore import SIGNAL, Qt
+from PyQt4.QtGui import QTreeWidgetItem
 from time import time
 import operator
 
@@ -154,7 +155,7 @@ class LibraryForm(auxilia.Actions):
             update = False
             self.view.filesystemTree.setUpdatesEnabled(False)
         for name in filelist.keys():
-            item = songwidgets.fileWidget(name)
+            item = QTreeWidgetItem([name])
             parent.addChild(item)
             self.__loadFileSystemView(filelist[name], item)
         parent.sortChildren(0, 0)
