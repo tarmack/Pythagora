@@ -31,8 +31,12 @@ def songArtist(song):
 
 def songTime(song):
     stime = int(song.get('time', '0'))
+    thour = stime / 3600
+    stime -= thour * 3600
     tmin = stime / 60
     tsec = stime - tmin * 60
+    if thour > 0:
+        return '%i:%02i:%02i' % (thour, tmin, tsec)
     return '%i:%02i' % (tmin, tsec)
 
 def cmpUnicode(a, b):
@@ -233,6 +237,9 @@ class DragNDrop:
                 else:
                     pathlist.append(path[:-1])
         self.addDrop(pathlist, pos)
+
+    def dropURL(self, event, pos):
+        event.accept()
 
     def __buildList(self, event, key):
         fileList = []
