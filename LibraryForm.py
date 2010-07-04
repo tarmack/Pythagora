@@ -91,10 +91,20 @@ class LibraryForm(auxilia.Actions):
                 self.mainSongList.append(song)
                 album = song.get('album','?')
                 artist = auxilia.songArtist(song)
-                self.artistdict[artist] = self.artistdict.get(artist, [])+[song]
-                self.albumdict[album] = self.albumdict.get(album, [])+[song]
-                if not artist in self.albumlist.get(album, []):
-                    self.albumlist[album] = self.albumlist.get(album, [])+[artist]
+                if type(artist) == list:
+                    for name in artist:
+                        self.artistdict[artist] = self.artistdict.get(artist, [])+[song]
+                else:
+                    self.artistdict[artist] = self.artistdict.get(artist, [])+[song]
+                if type(album) == list:
+                    for name in album:
+                        self.albumdict[album] = self.albumdict.get(album, [])+[song]
+                        if not artist in self.albumlist.get(album, []):
+                            self.albumlist[album] = self.albumlist.get(album, [])+[artist]
+                else:
+                    self.albumdict[album] = self.albumdict.get(album, [])+[song]
+                    if not artist in self.albumlist.get(album, []):
+                        self.albumlist[album] = self.albumlist.get(album, [])+[artist]
 
                 # Build the file system tree.
                 fslist = filesystemlist
