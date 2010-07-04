@@ -91,20 +91,10 @@ class LibraryForm(auxilia.Actions):
                 self.mainSongList.append(song)
                 album = song.get('album','?')
                 artist = auxilia.songArtist(song)
-                if type(artist) == list:
-                    for name in artist:
-                        self.artistdict[artist] = self.artistdict.get(artist, [])+[song]
-                else:
-                    self.artistdict[artist] = self.artistdict.get(artist, [])+[song]
-                if type(album) == list:
-                    for name in album:
-                        self.albumdict[album] = self.albumdict.get(album, [])+[song]
-                        if not artist in self.albumlist.get(album, []):
-                            self.albumlist[album] = self.albumlist.get(album, [])+[artist]
-                else:
-                    self.albumdict[album] = self.albumdict.get(album, [])+[song]
-                    if not artist in self.albumlist.get(album, []):
-                        self.albumlist[album] = self.albumlist.get(album, [])+[artist]
+                appendToList(self.artistdict, artist, song)
+                appendToList(self.albumdict, album, song)
+                if not artist in self.albumlist.get(album, []):
+                    appendToList(self.albumlist, album, artist)
 
                 # Build the file system tree.
                 fslist = filesystemlist
@@ -317,4 +307,15 @@ class LibraryForm(auxilia.Actions):
     def __clearPlayTrack(self):
         self.mpdclient.clear()
         self.__addPlayTrack()
+
+
+def appendToList(listDict, key, value):
+    if type(value) != list:
+        value = [value]
+    if type(key) == list:
+        for part in key:
+            listDict[part] = listDict.get(part, []) + value
+    else:
+        listDict[key] = listDict.get(key, []) + value
+
 
