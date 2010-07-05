@@ -93,8 +93,7 @@ class LibraryForm(auxilia.Actions):
                 artist = auxilia.songArtist(song)
                 appendToList(self.artistdict, artist, song)
                 appendToList(self.albumdict, album, song)
-                if not artist in self.albumlist.get(album, []):
-                    appendToList(self.albumlist, album, artist)
+                appendToList(self.albumlist, album, artist, True)
 
                 # Build the file system tree.
                 fslist = filesystemlist
@@ -309,13 +308,21 @@ class LibraryForm(auxilia.Actions):
         self.__addPlayTrack()
 
 
-def appendToList(listDict, key, value):
+def appendToList(listDict, keys, value, deduplicate=False):
+    '''In place add value to listDict at key.
+    If any of them are lists the values in those lists are used as value and
+    key. Everything gets added to everything. The optional deduplicate makes
+    appendToList only add values that are not yet in the list.
+    '''
     if type(value) != list:
         value = [value]
-    if type(key) == list:
-        for part in key:
-            listDict[part] = listDict.get(part, []) + value
-    else:
-        listDict[key] = listDict.get(key, []) + value
+    if type(keys) != list:
+        keys = [keys]
+    for key in keys:
+        part = listDict.get(key, [])
+        if deduplicate:
+            # filter all that are already in there.
+            value = [x for x in value if x not in part]
+        listDict[key] = part + value
 
 
