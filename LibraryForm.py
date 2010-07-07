@@ -79,14 +79,16 @@ class LibraryForm(auxilia.Actions):
             self.view.emit(SIGNAL('reloadPlaylists()'))
             self.view.setCursor(Qt.WaitCursor)
             p = time()
+            t = time()
             self.mainSongList = []
             self.artistdict = {}
             self.albumdict = {}
             self.albumlist = {}
             filesystemlist = {}
             # parse the list and prepare it for loading in the library browser and the file system view.
+            self.mpdclient.iterate = True
             mainlist = self.mpdclient.listallinfo()
-            print 'library download took %.3f seconds' % (time() - p); t = time()
+            #print 'library download took %.3f seconds' % (time() - p); t = time()
             for song in (x for x in mainlist if 'file' in x):
                 self.mainSongList.append(song)
                 album = song.get('album','?')
@@ -112,6 +114,7 @@ class LibraryForm(auxilia.Actions):
             print 'load FS took %.3f seconds' % (time() - t)
             print 'library load took %.3f seconds' % (time() - p)
         finally:
+            self.mpdclient.iterate = False
             self.view.emit(SIGNAL('update'), ['player'])
             self.view.setCursor(Qt.ArrowCursor)
 
