@@ -167,7 +167,7 @@ class CurrentPlaylistForm(auxilia.DragNDrop):
             # If the playlist has shrunk, delete the songs from the end.
             last = int(status['playlistlength'])
             for x in range(last, self.view.currentList.count()):
-                self.view.currentList.takeItem(last)
+                self._takeItem(last)
 
             self.view.numSongsLabel.setText(status['playlistlength']+' Songs')
             self.__setPlayTime()
