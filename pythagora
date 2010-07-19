@@ -48,6 +48,7 @@ def main():
     app.setOrganizationName("Tarmack SW")
     #app.setOrganizationName("HardSoft")
     app.setApplicationName("Pythagora")
+    app.setKeyboardInputInterval(1600)
     view = Manager(app)
     signal.signal(signal.SIGINT, view.keyboardInterrupt)
     exit = app.exec_()
