@@ -1,18 +1,12 @@
 Pythagora is a frontend for MPD (musicpd.org). It is written in python and Qt4.
-The main goal is usability while not limiting the user in his options. It aims
-to have zero configuration. Although some things just need to be set by the
-user, most options are just remembered over sessions. This way there is no
+The main goal is usability while not limiting the user in his or her options.
+It aims to have zero configuration. Although some things just need to be set by
+the user, most options are just remembered over sessions. This way there is no
 hassle reconfiguring if your habits might ever change.
 
-For some functionality Pythagora relies on PyKDE4 mainly clear buttons on text
-boxes and themed icons. It should run without PyKDE4 and fall back to default
-icons.
-
-I called it Pythagora, after Pythagoras the famous mathematician who found the
-relation between different tones and octaves. One could say he found the
-arithmetics in music, while a computer playing music is music comming from
-arithmetics. I ditched the last s to make is sound a bit better and loosen the
-relation with the old Greek a bit.
+For some functionality Pythagora relies on PyKDE4 this is mainly fot clear
+buttons on text boxes and themed icons. It should run without PyKDE4 and fall
+back to default icons.
 
 Dependencies:
 
