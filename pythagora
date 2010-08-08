@@ -327,6 +327,9 @@ class Update:
     def stored_playlist(self, status):
         self.view.emit(SIGNAL('reloadPlaylists()'))
 
+    def database(self, status):
+        self.view.emit(SIGNAL('reloadLibrary()'))
+
     def setSongLabel(self, title='', artist='', album=''):
         self.view.trayIcon.setToolTip('<b><big>%s</big></b>\r\nby <big>%s</big>\r\nfrom <i>%s</i>' % (title, artist, album))
         self.view.songLabel.setText(title, artist, album)

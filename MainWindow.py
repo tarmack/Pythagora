@@ -63,6 +63,10 @@ class View(auxilia.Actions):
         self.view.songLabel = songwidgets.SongLabel()
         self.view.songLabel.setAcceptDrops(True)
         self.view.titleLayout.addWidget(self.view.songLabel)
+        # Create 'MDP' menu.
+        self.reloadLibrary = self.actionLibReload(self.view.menuMPD, self.__libReload)
+        self.updateLibrary = self.actionLibUpdate(self.view.menuMPD, self.mpdclient.update)
+        self.rescanLibrary = self.actionLibRescan(self.view.menuMPD, self.mpdclient.rescan)
         # Load all forms.
         self.createViews()
         # Fill Statusbar.
@@ -147,6 +151,10 @@ class View(auxilia.Actions):
         index = self.view.tabs.tabBar().tabAt(self.tabPos)
         self.view.tabs.setCurrentIndex(index)
         self.tabTimer.stop()
+
+    def __libReload(self):
+        self.view.emit(SIGNAL('reloadLibrary()'))
+
 #==============================================================================
 
     def createViews(self):

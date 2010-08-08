@@ -35,11 +35,6 @@ class LibraryForm(auxilia.Actions):
         self.config = config
         self.view.connect(self.view,SIGNAL('reloadLibrary()'),self.reload)
 
-        # Create 'MDP' menu.
-        self.reloadLibrary = self.actionLibReload(self.view.menuMPD, self.reload)
-        self.updateLibrary = self.actionLibUpdate(self.view.menuMPD, self.update)
-        self.rescanLibrary = self.actionLibRescan(self.view.menuMPD, self.rescan)
-
         # search and filter functions
         view.connect(view.artistView,SIGNAL('itemSelectionChanged()'),self.artistFilter)
         view.connect(view.albumView,SIGNAL('itemSelectionChanged()'),self.albumFilter)
@@ -237,18 +232,6 @@ class LibraryForm(auxilia.Actions):
     def update(self):
         '''update the library'''
         self.__scan(self.mpdclient.update())
-
-    def __scan(self, jobId):
-        '''Wait for the scan to finish, while waiting keep processing events.'''
-        self.view.setCursor(Qt.BusyCursor)
-        try:
-            while True:
-                self.app.processEvents()
-                status = self.mpdclient.status()
-                if status.get('updating_db',None) != jobId:
-                    break
-        finally:
-            self.reload()
 
     def addArtist(self):
         '''Add all songs from the currently selected artist into the current playlist'''
