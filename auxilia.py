@@ -21,6 +21,8 @@ import re
 from PyQt4.QtCore import SIGNAL, Qt, QObject, QEvent, QTimer
 from PyQt4.QtGui import QAction, QWidgetAction, QToolButton, QTabBar
 
+import shoutcast
+
 locale.setlocale(locale.LC_ALL, "")
 
 def songTitle(song):
@@ -239,7 +241,20 @@ class DragNDrop:
         self.addDrop(pathlist, pos)
 
     def dropURL(self, event, pos):
+        client = shoutcast.ShoutcastClient()
         event.accept()
+        item = event.source().selectedItems()[0]
+        if hasattr(item, 'station'):
+            item = item.station['id']
+        else:
+            print 'debug: bla;'
+            return False
+        if hasattr(item, 'urls'):
+            print 'debug: got urls'
+            urls = item.urls
+        else:
+            urls = client.getStation(item)
+        self.addDrop(urls, pos)
 
     def __buildList(self, event, key):
         fileList = []

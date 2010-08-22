@@ -32,9 +32,12 @@ a piece of shit.
     def __str__(self):
         return "Error (%d): %s" % (self.code,self.msg)
 
+
+BASEURL = 'yp.shoutcast.com'
+TUNEINBASE = '/sbin/tunein-station.pls'
+
 class ShoutcastClient():
     '''VERY Simple client for accessing Shoutcast streams.'''
-    BASEURL = 'shoutcast.com'
 
     def getGenereList(self):
         '''Get list of genres'''
@@ -63,24 +66,21 @@ A station is a dictionary containing the following attributes:
         xml = ET.XML(data)
         for element in xml:
             station = {}
-            if element.tag == 'tunein':
-                tuneinBase = element.attrib['base']
-            else:
+            if element.tag != 'tunein':
                 for n in ('br','ct','genre','id','lc','mt','name'):
                     station[n] = element.attrib[n]
                 stationlist.append(station)
         stationlist.sort(key=lambda item:item['name'], reverse=False)
-        return (tuneinBase,stationlist)
+        return stationlist
 
-    def getStation(self,tuneinBase,stationId):
+    def getStation(self, stationId):
         '''Get the HTTP URLs for the given station.
 
-Arguments: tuneinBase = the base URL to use
-           stationId = the ID of the station
+Arguments: stationId = the ID of the station
 
 Returns:    list of HTTP URLs for the station
 '''
-        data = self.__send__(tuneinBase + '?id=' + stationId)
+        data = self.__send__(TUNEINBASE + '?id=' + stationId)
         rtn = []
         for line in data.split('\n'):
             if line[:4] == 'File':
@@ -93,14 +93,12 @@ Returns:    list of HTTP URLs for the station
         xml = ET.XML(data)
         for element in xml:
             station = {}
-            if element.tag == 'tunein':
-                tuneinBase = element.attrib['base']
-            else:
+            if element.tag != 'tunein':
                 for n in ('br','ct','genre','id','lc','mt','name'):
                     station[n] = element.attrib[n]
                 stationlist.append(station)
         stationlist.sort(key=lambda item:item['name'], reverse=False)
-        return (tuneinBase,stationlist)
+        return stationlist
 
 
     def getCurrentTrack(self,stationName):
@@ -114,7 +112,7 @@ Returns:    list of HTTP URLs for the station
                 return element.attrib['ct']
 
     def __send__(self,request,timeout=20):
-        conn = httplib.HTTPConnection(self.BASEURL, timeout=timeout)
+        conn = httplib.HTTPConnection(BASEURL, timeout=timeout)
         conn.request('GET',request)
         response = conn.getresponse()
         if response.status > 202:

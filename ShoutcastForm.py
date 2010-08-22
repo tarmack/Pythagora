@@ -22,6 +22,7 @@ from xml.etree import ElementTree as ET
 import os
 
 import shoutcast
+import songwidgets
 from auxilia import Actions
 
 class ShoutcastForm(Actions):
@@ -63,6 +64,13 @@ class ShoutcastForm(Actions):
         self.actionRemove(self.view.bookmarkList, self.bookmarkList.delete)
 
         self.view.bookmarkList.dropEvent = self.dropEvent
+        self.view.bookmarkList.dragEnterEvent = self.dragEnterEvent
+
+    def dragEnterEvent(self, event):
+        source = event.source()
+        if source == self.view.genreList:
+            if isinstance(source.selectedItems()[0], songwidgets.ShoutCastStationWidget):
+                event.accept()
 
     def dropEvent(self, event):
         event.setDropAction(Qt.CopyAction)
@@ -86,6 +94,7 @@ class ShoutcastForm(Actions):
                 self.stationTree.stations = {}
             except Exception,e:
                 QMessageBox(QMessageBox.Critical,'Shoutcast Error',str(e),QMessageBox.Ok,self.view).exec_()
+                raise
             self.adding = False
             self.view.setCursor(Qt.ArrowCursor)
 
@@ -94,14 +103,13 @@ class ShoutcastForm(Actions):
         patern = unicode(patern)
         if patern == '':
             self.stationTree.search = False
-            self.reload()
+            self.__loadGenres()
             return
         self.stationTree.search = True
         self.view.setCursor(Qt.WaitCursor)
         try:
-            (tuneinBase,stationlist) = self.client.getSearch(patern)
+            stationlist = self.client.getSearch(patern)
             # cache it, then add to the tree
-            self.stationTree.stations['search'] = (tuneinBase,stationlist)
             self.view.genreList.clear()
             self.stationTree.loadStations(stationlist)
         except Exception,e:
@@ -113,18 +121,16 @@ class ShoutcastForm(Actions):
         '''Figure out what to do when something's selected in the list'''
         current = self.view.genreList.currentItem()
         # child node - it's a station
-        if current.parent() != None and not self.stationTree.search:
+        if current.parent() != None or self.stationTree.search:
             return
 
         genre = str(current.text(0))
 
         # not already loaded
-        if not genre in self.stationTree.stations.keys():
+        if current.childCount() <= 0:
             self.view.setCursor(Qt.WaitCursor)
             try:
-                (tuneinBase,stationlist) = self.client.getStationsForGenre(genre)
-                # cache it, then add to the tree
-                self.stationTree.stations[genre] = (tuneinBase,stationlist)
+                stationlist = self.client.getStationsForGenre(genre)
                 self.stationTree.loadStations(stationlist)
             except Exception,e:
                 print 'error: ', str(e)
@@ -134,8 +140,8 @@ class ShoutcastForm(Actions):
 
     def __previewStation(self, item=None):
         '''Play the currently selected station.'''
-        (tuneinBase,station) = self.stationTree.currentStation()
-        urls = self.client.getStation(tuneinBase,station['id'])
+        station = self.stationTree.currentStation()
+        urls = self.client.getStation(station['id'])
         station['urls'] = urls
         self.mpd.stop()
         self.mpd.clear()
@@ -153,9 +159,9 @@ class ShoutcastForm(Actions):
 
     def __saveStation(self):
         '''Bookmark the currently selected station.'''
-        (tuneinBase,station) = self.stationTree.currentStation()
+        station = self.stationTree.currentStation()
         if station.get('urls',None) == None:
-            urls = self.client.getStation(tuneinBase,station['id'])
+            urls = self.client.getStation(station['id'])
             station['urls'] = urls
         self.bookmarkList.addStation(station)
 
@@ -182,29 +188,29 @@ class StationTree():
             gw = QTreeWidgetItem([genre])
             self.view.genreList.addTopLevelItem(gw)
 
-    def loadStations(self,stationlist):
+    def loadStations(self, stationlist):
         '''Append the stations to the currently selected genre.'''
         current = self.view.genreList.currentItem()
         if current == None:
             current = self.view.genreList.invisibleRootItem()
         for station in stationlist:
-            current.addChild(QTreeWidgetItem([station['name']]))
+            current.addChild(songwidgets.ShoutCastStationWidget(station))
 
     def currentStation(self):
         '''Figure out and return the current station and the base URL for it.'''
         current = self.view.genreList.currentItem()
         # parent node - genre, bleah
-        if current.parent() == None and not self.search:
-            return None
-        name = str(current.text(0))
-        if self.search:
-            genre = 'search'
-        else:
-            genre = str(current.parent().text(0))
-        (tuneinBase,stationlist) = self.stations[genre]
-        for station in stationlist:
+        parent = current.parent()
+        if parent == None:
+            if not self.search:
+                return None
+            else:
+                parent = self.view.genreList.invisibleRootItem()
+        name = str(current.text())
+        for i in xrange(parent.childCount()):
+            station = parent.child(i).station
             if station['name'] == name:
-                return (tuneinBase,station)
+                return station
         return None
 
 
@@ -220,7 +226,9 @@ class BookmarkList():
         if os.path.isfile(self.bookmarkFile):
             self.xml = ET.parse(self.bookmarkFile)
             for element in self.xml.getiterator('station'):
-                self.view.bookmarkList.addItem(element.attrib['name'])
+                widget = songwidgets.ShoutCastBookmarkWidget(element.attrib)
+                widget.urls = self.getStationFiles(element.attrib['name'])
+                self.view.bookmarkList.addItem(widget)
         # start it ourselves
         else:
             try:
@@ -239,13 +247,15 @@ class BookmarkList():
                 return station
         return None
 
-    def getStationFiles(self):
+    def getStationFiles(self, name=None):
         '''Get the URLs for the currently selected station.'''
-        name = str(self.view.bookmarkList.currentItem().text())
+        if name == None:
+            name = str(self.view.bookmarkList.currentItem().text())
         station = self.__getStation(name)
         rtn = []
         for url in station.getiterator('url'):
             rtn.append(url.text)
+            print 'debug: ', url.text
         return rtn
 
     def addStation(self,station):
@@ -257,7 +267,7 @@ class BookmarkList():
             element = ET.Element('station')
             stations = self.xml.find('stations')
             stations.append(element)
-            self.view.bookmarkList.addItem(station['name'])
+            self.view.bookmarkList.addItem(songwidgets.ShoutCastBookmarkWidget(station))
         # in both cases, set data and save
         for key in station.keys():
             if key != 'urls':

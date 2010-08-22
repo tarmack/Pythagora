@@ -252,9 +252,14 @@ class CurrentPlaylistForm(auxilia.DragNDrop):
             self.dropPlaylist(event, toPos)
         elif source == self.view.filesystemTree:
             self.dropFile(event, toPos)
+        elif source == self.view.genreList:
+            self.dropURL(event, toPos)
+        elif source == self.view.bookmarkList:
+            self.dropURL(event, toPos)
 
     def addDrop(self, itemList, toPos):
         try:
+            print 'debug: adding', itemList
             self.view.setCursor(Qt.WaitCursor)
             self.mpdclient.command_list_ok_begin()
             for song in itemList:

@@ -85,6 +85,23 @@ class LongSongWidget(QTreeWidgetItem):
         self.setText(1,auxilia.songTitle(song))
         self.setText(2,song.get('album',''))
 
+class ShoutCastStationWidget(QTreeWidgetItem):
+    '''Gives us in item storage of the station information this is needed to tune in to the station.'''
+    def __init__(self, station):
+        QTreeWidgetItem.__init__(self)
+        self.station = station
+        self.setText(0, station['name'])
+
+    def text(self):
+        return self.station['name']
+
+class ShoutCastBookmarkWidget(QListWidgetItem):
+    '''Gives us in item storage of the station information this is needed to tune in to the station.'''
+    def __init__(self, station):
+        QListWidgetItem.__init__(self)
+        self.station = station
+        self.setText(station['name'])
+
 class SongLabel(QLabel):
     title = 'title'
     artist = 'artist'

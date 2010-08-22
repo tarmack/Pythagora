@@ -122,6 +122,10 @@ class PlaylistForm(auxilia.DragNDrop, auxilia.Actions):
             self.dropPlaylist(event, toPos)
         elif source == self.view.filesystemTree:
             self.dropFile(event, toPos)
+        elif source == self.view.genreList:
+            self.dropURL(event, toPos)
+        elif source == self.view.bookmarkList:
+            self.dropURL(event, toPos)
 
 
     def addDrop(self, itemList, toPos):

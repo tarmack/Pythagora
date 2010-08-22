@@ -1121,7 +1121,7 @@
                <enum>QFrame::Plain</enum>
               </property>
               <property name="dragDropMode">
-               <enum>QAbstractItemView::DropOnly</enum>
+               <enum>QAbstractItemView::DragDrop</enum>
               </property>
               <property name="selectionMode">
                <enum>QAbstractItemView::SingleSelection</enum>
