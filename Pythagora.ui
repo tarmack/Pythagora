@@ -428,15 +428,6 @@
                    <attribute name="headerStretchLastSection">
                     <bool>false</bool>
                    </attribute>
-                   <attribute name="headerDefaultSectionSize">
-                    <number>60</number>
-                   </attribute>
-                   <attribute name="headerVisible">
-                    <bool>false</bool>
-                   </attribute>
-                   <attribute name="headerStretchLastSection">
-                    <bool>false</bool>
-                   </attribute>
                    <column>
                     <property name="text">
                      <string>Track</string>
@@ -932,6 +923,9 @@
                  <property name="checkable">
                   <bool>true</bool>
                  </property>
+                 <property name="flat">
+                  <bool>true</bool>
+                 </property>
                 </widget>
                </item>
                <item>
@@ -959,6 +953,9 @@
                    <normaloff>icons/media-playlist-shuffle.png</normaloff>icons/media-playlist-shuffle.png</iconset>
                  </property>
                  <property name="checkable">
+                  <bool>true</bool>
+                 </property>
+                 <property name="flat">
                   <bool>true</bool>
                  </property>
                 </widget>
@@ -1010,9 +1007,6 @@
               <property name="animated">
                <bool>true</bool>
               </property>
-              <attribute name="headerVisible">
-               <bool>false</bool>
-              </attribute>
               <attribute name="headerVisible">
                <bool>false</bool>
               </attribute>
