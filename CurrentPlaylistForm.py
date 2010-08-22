@@ -221,13 +221,13 @@ class CurrentPlaylistForm(auxilia.DragNDrop):
             toPos = self.view.currentList.row(self.view.currentList.itemAt(event.pos()))
         else:
             toPos = -1
-        print toPos
+        print 'debug: drop on position ', toPos
         if source == self.view.currentList:
             event.accept()
             # Move the songs to the new position.
             itemList = self.view.currentList.selectedItems()
             itemList.sort(key=self.view.currentList.row)
-            print [unicode(x.text()) for x in itemList]
+            print 'debug: ', [unicode(x.text()) for x in itemList]
             if toPos < itemList[-1].song['pos']:
                 # We moved up, reverse the list.
                 itemList.reverse()
@@ -237,7 +237,7 @@ class CurrentPlaylistForm(auxilia.DragNDrop):
                 if self.view.currentList.row(item) < toPos:
                     # Item moved down, reduce target index.
                     toPos -= 1
-                print "move ", unicode(item.text()), "to", toPos
+                print "debug: move ", unicode(item.text()), "to", toPos
                 self.mpdclient.moveid(item.song['id'], toPos)
             self.view.emit(SIGNAL('playlistChanged()'))
         elif source == self.view.songList:
