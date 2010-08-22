@@ -282,7 +282,7 @@ class Update:
                     if 'time' in self.currentsong:
                         self.setProgress(self.time + 1)
                     else:
-                        self.setProgress(self.time, 0)
+                        self.setProgress(self.time + 1, 0)
             except Exception, e:
                 print 'error: updateProgress error', e
 
