@@ -25,6 +25,7 @@ import auxilia
 
 APPNAME = 'pythagora'
 NOCOVER = 'icons/audio-x-generic.png'
+STREAMICON = 'icons/audio-x-stream.png'
 APIKEY = 'c01e19f763d7bd5adc905bd7456cf80d'
 SECONDS_BETWEEN_REQUESTS = 0.2
 
@@ -61,6 +62,8 @@ class Retriever:
         a picture of the artist.'''
         # comment out the next line to disable icon fetching.
         #return NOCOVER
+        if song['file'].startswith('http://'):
+            return STREAMICON
         cover = None
         cover = self.getFolderImage(song)
         if not cover:
