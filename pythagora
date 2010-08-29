@@ -294,6 +294,7 @@ class Update:
             self.__setPlayPauseState(status['state'])
         # if we're stopped, just call it quits
         if status['state'] == 'stop':
+            self.lastSongId = 0
             self.setProgress(0, 0)
             self.view.emit(SIGNAL('currentSong'), None)
             self.setSongLabel('Connected to %s.' % self.config.server[0])
