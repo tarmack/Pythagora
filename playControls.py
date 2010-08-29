@@ -62,9 +62,11 @@ class PlayControls:
         self.mpdclient.crossfade(value)
 
     def volumeUp(self, value=2):
+        print 'debug: volup'
         self.setVolume(self.currentVolume + value)
 
     def volumeDown(self, value=2):
+        print 'debug: voldown'
         self.setVolume(self.currentVolume - value)
 
     def setVolume(self,value):

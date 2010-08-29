@@ -17,7 +17,7 @@
 # limitations under the License.
 #-------------------------------------------------------------------------------
 from PyQt4.QtCore import QTimer, SIGNAL, Qt
-from PyQt4.QtGui import QApplication, QWidget, QSystemTrayIcon
+from PyQt4.QtGui import QApplication, QWidget, QSystemTrayIcon, QKeySequence
 
 import sys
 import socket
@@ -26,7 +26,7 @@ import signal
 import mpdextended as mpd
 import playControls
 import configuration
-from MainWindow import View
+import MainWindow
 import auxilia
 
 #============== Long term TODO's ==============================================
@@ -56,7 +56,7 @@ def main():
 #===============================================================================
 # Creates and links up the management display items.
 #===============================================================================
-class Manager(View):
+class Manager(MainWindow.View):
     '''Creates and links up the management display items.'''
     oldVolume = 0
     misses = 0
@@ -67,14 +67,13 @@ class Manager(View):
         self.idleTimer = QTimer()
         self.idleTimer.setSingleShot(True)
         self.config = configuration.Configuration()
-        View.__init__(self, self.config, self.mpdclient, app)
+        MainWindow.View.__init__(self, self.config, self.mpdclient, app)
         self.playControls = playControls.PlayControls(self.mpdclient)
         self.update = Update(self.view, self.mpdclient, self.config, self.playControls)
         if not self.__connectMPD():
             self.config.showConfiguration(self.view, True)
         self.__connectSignals()
         # Overload some methods.
-        self.view.keyPressEvent = self.KeyPressEvent
         self.view.progress.mouseReleaseEvent = self.songSeek
         self.view.trayIcon.event = self.trayEvent
 
@@ -85,6 +84,13 @@ class Manager(View):
         self.view.progress.dropEvent = self.__topDrop
         self.view.songLabel.dropEvent = self.__topDrop
 
+        # Set global shortcuts if KDE is available otherwise overload keyPressEvent.
+        if MainWindow.KDE:
+            from PyKDE4.kdeui import KActionCollection
+            self.KActionCollection = KActionCollection
+            self.setGlobalShortcuts()
+        else:
+            self.view.keyPressEvent = self.KeyPressEvent
 
     def connectTo(self, action):
         name = unicode(action.text())
@@ -129,6 +135,33 @@ class Manager(View):
             elif event.key() == Qt.Key_VolumeMute:
                 self.playControls.toggleMute()
         else: QWidget.keyPressEvent(self.view, event)
+
+    def setGlobalShortcuts(self):
+        self.playAction = self.__setGlobalShortcut(
+                "Play/Pause", "Play/pause", Qt.CTRL + Qt.Key_MediaPlay, self.playControls.playPause)
+        self.stopAction = self.__setGlobalShortcut(
+                "Stop", "Stop playing", Qt.CTRL + Qt.Key_MediaStop, self.playControls.stop)
+        self.backAction = self.__setGlobalShortcut(
+                "Back", "Play previous song", Qt.CTRL + Qt.Key_MediaPrevious, self.playControls.back)
+        self.forwardAction = self.__setGlobalShortcut(
+                "Forward", "Play next song", Qt.CTRL + Qt.Key_MediaNext, self.playControls.forward)
+        self.volumeUpAction = self.__setGlobalShortcut(
+                "Volume Up", "Volume up", Qt.CTRL + Qt.Key_VolumeUp, self.playControls.volumeUp)
+        self.volumeDownAction = self.__setGlobalShortcut(
+                "Volume Down", "Volume down", Qt.CTRL + Qt.Key_VolumeDown, self.playControls.volumeDown)
+        self.muteAction = self.__setGlobalShortcut(
+                "Mute", "Mute/unmute", Qt.CTRL + Qt.Key_VolumeMute, self.playControls.toggleMute)
+
+    def __setGlobalShortcut(self, name, helpText, keys, connectTo):
+        print 'debug: Registering global shortcut for %s as %s.' % (name, str(keys))
+        action = self.KActionCollection(self.view).addAction(name)
+        action.setHelpText(helpText)
+        short = action.shortcut()
+        short.setPrimary(QKeySequence(keys))
+        action.setShortcut(short)
+        action.setGlobalShortcut(short)
+        self.view.connect(action, SIGNAL("triggered()"), connectTo)
+        return action
 
     def __update(self):
         if self.mpdclient._idle:
