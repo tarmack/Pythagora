@@ -81,7 +81,6 @@ class CurrentPlaylistForm(auxilia.DragNDrop):
         # Overload keyPressEvent, remap the base implementation to call if we have a key wo don't handle.
         self.view.currentList.keyPressEvent = self.keyPressEvent
 
-        view.connect(self.view.currentList,SIGNAL('indexesMoved(constQModelIndexList&)'),doprint)
         view.connect(self.view.currentList,SIGNAL('itemSelectionChanged()'),self._setEditing)
         view.connect(self.view.currentList.verticalScrollBar(), SIGNAL('valueChanged(int)'), self._setEditing)
         view.connect(self.view.keepPlayingVisible,SIGNAL('clicked()'),self.__scrollList)
@@ -384,7 +383,4 @@ class CurrentPlaylistForm(auxilia.DragNDrop):
 
     def _setEditing(self, i=0):
         self.editing = time()
-
-def doprint(foo='foo'):
-    print 'debug: doprint', repr(foo)
 
