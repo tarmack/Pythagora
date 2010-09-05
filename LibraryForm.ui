@@ -40,12 +40,12 @@
            <string>Artist</string>
           </property>
           <property name="buddy">
-           <cstring>artistSearch</cstring>
+           <cstring>artistSearchField</cstring>
           </property>
          </widget>
         </item>
         <item row="0" column="1">
-         <widget class="KLineEdit" name="artistSearch">
+         <widget class="KLineEdit" name="artistSearchField">
           <property name="trapEnterKeyEvent" stdset="0">
            <bool>true</bool>
           </property>
@@ -106,7 +106,7 @@
          </widget>
         </item>
         <item row="0" column="1">
-         <widget class="KLineEdit" name="albumSearch">
+         <widget class="KLineEdit" name="albumSearchField">
           <property name="trapEnterKeyEvent" stdset="0">
            <bool>true</bool>
           </property>
@@ -127,7 +127,7 @@
            <string>Album</string>
           </property>
           <property name="buddy">
-           <cstring>albumSearch</cstring>
+           <cstring>albumSearchField</cstring>
           </property>
          </widget>
         </item>
@@ -151,12 +151,12 @@
           <string>Tracks</string>
          </property>
          <property name="buddy">
-          <cstring>trackSearch</cstring>
+          <cstring>trackSearchField</cstring>
          </property>
         </widget>
        </item>
        <item row="0" column="1">
-        <widget class="KLineEdit" name="trackSearch">
+        <widget class="KLineEdit" name="trackSearchField">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
            <horstretch>0</horstretch>

@@ -16,53 +16,77 @@
 # limitations under the License.
 #-------------------------------------------------------------------------------
 from PyQt4.QtCore import SIGNAL, Qt
-from PyQt4.QtGui import QTreeWidgetItem
+from PyQt4.QtGui import QTreeWidgetItem, QHeaderView, QWidget
+from PyQt4 import uic
 from time import time
 import operator
 
 import songwidgets
 import auxilia
 
-class LibraryForm(auxilia.Actions):
+class LibraryForm(auxilia.Actions, QWidget):
     '''List and controls for the full "library" of music known to the server.
        Note that this does not actually manage the filesystem or tags or covers.
        There are many other programs that do that exceedingly well already.
     '''
     def __init__(self, view, app, mpdclient, config):
+        QWidget.__init__(self)
         self.app = app
         self.view = view
         self.mpdclient = mpdclient
         self.config = config
+        # Load and place the Library form.
+        try:
+            if self.view.KDE:
+                uic.loadUi('LibraryForm.ui', self)
+            else: raise
+        except:
+            uic.loadUi('LibraryForm.ui.Qt', self)
+        self.trackView.header().setResizeMode(1, QHeaderView.Stretch)
+        self.view.libraryForm = self
+        self.view.tabs.addTab(self, auxilia.PIcon('server-database.png'), '&Library')
+        # Load and place the FileSystem form.
+        try:
+            if self.view.KDE:
+                uic.loadUi('FileSystemForm.ui', self)
+            else: raise
+        except:
+            uic.loadUi('FileSystemForm.ui.Qt', self)
+        self.view.filesystemTree = self.filesystemTree
+        self.view.tabs.addTab(self.filesystemTree, auxilia.PIcon('folder-sound.png'), 'F&ileSystem')
+
+        self.libSplitter_1.setSizes(config.libSplit1)
+        self.libSplitter_2.setSizes(config.libSplit2)
         self.view.connect(self.view,SIGNAL('reloadLibrary()'),self.reload)
 
         # search and filter functions
-        view.connect(view.artistView,SIGNAL('itemSelectionChanged()'),self.artistFilter)
-        view.connect(view.albumView,SIGNAL('itemSelectionChanged()'),self.albumFilter)
+        self.connect(self.artistView,SIGNAL('itemSelectionChanged()'),self.artistFilter)
+        self.connect(self.albumView,SIGNAL('itemSelectionChanged()'),self.albumFilter)
 
-        view.connect(view.artistSearch,SIGNAL('textEdited(QString)'),self.artistSearch)
-        view.connect(view.albumSearch,SIGNAL('textEdited(QString)'),self.albumSearch)
-        view.connect(view.trackSearch,SIGNAL('textEdited(QString)'),self.trackSearch)
+        self.connect(self.artistSearchField,SIGNAL('textEdited(QString)'),self.artistSearch)
+        self.connect(self.albumSearchField,SIGNAL('textEdited(QString)'),self.albumSearch)
+        self.connect(self.trackSearchField,SIGNAL('textEdited(QString)'),self.trackSearch)
 
         # Double click actions.
-        view.connect(view.artistView,SIGNAL('itemDoubleClicked(QListWidgetItem*)'),self.addArtist)
-        view.connect(view.albumView,SIGNAL('itemDoubleClicked(QListWidgetItem*)'),self.addAlbum)
-        view.connect(view.trackView,SIGNAL('itemDoubleClicked(QTreeWidgetItem*,int)'),self.addTrack)
+        self.connect(self.artistView,SIGNAL('itemDoubleClicked(QListWidgetItem*)'),self.addArtist)
+        self.connect(self.albumView,SIGNAL('itemDoubleClicked(QListWidgetItem*)'),self.addAlbum)
+        self.connect(self.trackView,SIGNAL('itemDoubleClicked(QTreeWidgetItem*,int)'),self.addTrack)
 
         # Create context menu's.
         #=======================================================================
 
         # Create the actions for each window.
-        self.artistPlayAdd = self.actionPlayAdd(self.view.artistView, self.__addPlayArtist)
-        self.artistPlayReplace = self.actionPlayReplace(self.view.artistView, self.__clearPlayArtist)
-        self.artistAdd = self.actionAddSongs(self.view.artistView, self.addArtist)
+        self.artistPlayAdd = self.actionPlayAdd(self.artistView, self.__addPlayArtist)
+        self.artistPlayReplace = self.actionPlayReplace(self.artistView, self.__clearPlayArtist)
+        self.artistAdd = self.actionAddSongs(self.artistView, self.addArtist)
 
-        self.albumPlayAdd = self.actionPlayAdd(self.view.albumView, self.__addPlayAlbum)
-        self.albumPlayReplace = self.actionPlayReplace(self.view.albumView, self.__clearPlayAlbum)
-        self.albumAdd = self.actionAddSongs(self.view.albumView, self.addAlbum)
+        self.albumPlayAdd = self.actionPlayAdd(self.albumView, self.__addPlayAlbum)
+        self.albumPlayReplace = self.actionPlayReplace(self.albumView, self.__clearPlayAlbum)
+        self.albumAdd = self.actionAddSongs(self.albumView, self.addAlbum)
 
-        self.trackPlayAdd = self.actionPlayAdd(self.view.trackView, self.__addPlayTrack)
-        self.trackPlayReplace = self.actionPlayReplace(self.view.trackView, self.__clearPlayTrack)
-        self.trackAdd = self.actionAddSongs(self.view.trackView, self.addTrack)
+        self.trackPlayAdd = self.actionPlayAdd(self.trackView, self.__addPlayTrack)
+        self.trackPlayReplace = self.actionPlayReplace(self.trackView, self.__clearPlayTrack)
+        self.trackAdd = self.actionAddSongs(self.trackView, self.addTrack)
 
         #=======================================================================
 
@@ -114,56 +138,56 @@ class LibraryForm(auxilia.Actions):
             self.view.setCursor(Qt.ArrowCursor)
 
     def __loadArtistView(self):
-        self.view.artistView.clear()
-        self.view.artistView.setUpdatesEnabled(False)
+        self.artistView.clear()
+        self.artistView.setUpdatesEnabled(False)
         artists = self.artistdict.keys()
         artists.sort(auxilia.cmpUnicode)
-        self.view.artistView.addItems(artists)
-        self.view.artistView.insertItem(0, '--all--')
-        self.artistSearch(self.view.artistSearch.text())
-        self.view.artistView.setUpdatesEnabled(True)
+        self.artistView.addItems(artists)
+        self.artistView.insertItem(0, '--all--')
+        self.artistSearch(self.artistSearchField.text())
+        self.artistView.setUpdatesEnabled(True)
 
     def __loadAlbumView(self, albumlist):
         '''Reloads the list with the list presented'''
-        self.view.albumView.clear()
-        self.view.albumView.setUpdatesEnabled(False)
+        self.albumView.clear()
+        self.albumView.setUpdatesEnabled(False)
         for (album, artists) in sorted(albumlist.iteritems(), auxilia.cmpUnicode, operator.itemgetter(0)):
             albumWidget = songwidgets.simpleWidget(album, artists)
-            self.view.albumView.addItem(albumWidget)
-        self.view.albumView.insertItem(0, '--all--')
-        self.albumSearch(self.view.albumSearch.text())
-        self.view.albumView.setUpdatesEnabled(True)
+            self.albumView.addItem(albumWidget)
+        self.albumView.insertItem(0, '--all--')
+        self.albumSearch(self.albumSearchField.text())
+        self.albumView.setUpdatesEnabled(True)
 
     def __loadTracksView(self, tracks):
-        self.view.trackView.clear()
-        self.view.trackView.setUpdatesEnabled(False)
+        self.trackView.clear()
+        self.trackView.setUpdatesEnabled(False)
         for track in tracks:
             trackWidget = songwidgets.TrackWidget(track)
-            self.view.trackView.addTopLevelItem(trackWidget)
-        if self.view.trackSearch.text() != '':
-            self.trackSearch(self.view.trackSearch.text())
-        self.view.trackView.setUpdatesEnabled(True)
+            self.trackView.addTopLevelItem(trackWidget)
+        if self.trackSearchField.text() != '':
+            self.trackSearch(self.trackSearchField.text())
+        self.trackView.setUpdatesEnabled(True)
 
     def __loadFileSystemView(self, filelist, parent=None):
         update = True
         if not parent:
-            self.view.filesystemTree.clear()
-            parent = self.view.filesystemTree.invisibleRootItem()
+            self.filesystemTree.clear()
+            parent = self.filesystemTree.invisibleRootItem()
             update = False
-            self.view.filesystemTree.setUpdatesEnabled(False)
+            self.filesystemTree.setUpdatesEnabled(False)
         for name in filelist.keys():
             item = QTreeWidgetItem([name])
             parent.addChild(item)
             self.__loadFileSystemView(filelist[name], item)
         parent.sortChildren(0, 0)
         if not update:
-            self.view.filesystemTree.setUpdatesEnabled(True)
+            self.filesystemTree.setUpdatesEnabled(True)
 
 
     def artistFilter(self):
         songlist = []
         albumlist = {}
-        artists = self.view.artistView.selectedItems()
+        artists = self.artistView.selectedItems()
         if len(artists) < 1:
             self.__loadAlbumView(self.albumlist)
             self.__loadTracksView(self.mainSongList)
@@ -171,7 +195,7 @@ class LibraryForm(auxilia.Actions):
         for artist in artists:
             artist = unicode(artist.text())
             if artist == '--all--':
-                if '--all--' in (unicode(x.text()) for x in self.view.albumView.selectedItems()):
+                if '--all--' in (unicode(x.text()) for x in self.albumView.selectedItems()):
                     self.__loadTracksView(self.mainSongList)
                 self.__loadAlbumView(self.albumlist)
                 return
@@ -189,8 +213,8 @@ class LibraryForm(auxilia.Actions):
 
     def albumFilter(self):
         songlist = []
-        albums = self.view.albumView.selectedItems()
-        artists = [unicode(artist.text()) for artist in self.view.artistView.selectedItems()]
+        albums = self.albumView.selectedItems()
+        artists = [unicode(artist.text()) for artist in self.artistView.selectedItems()]
         if len(albums) < 1:
             self.__loadTracksView(self.mainSongList)
             return
@@ -206,15 +230,15 @@ class LibraryForm(auxilia.Actions):
         self.__loadTracksView(songlist)
 
     def artistSearch(self, key):
-        self.__search(key, self.view.artistView)
+        self.__search(key, self.artistView)
 
     def albumSearch(self, key):
-        self.__search(key, self.view.albumView)
+        self.__search(key, self.albumView)
 
     def trackSearch(self, key):
-        hits = self.view.trackView.findItems(str(key), (Qt.MatchContains|Qt.MatchWrap), 1)[:]
-        for x in xrange(self.view.trackView.topLevelItemCount()):
-            self.view.trackView.topLevelItem(x).setHidden(True)
+        hits = self.trackView.findItems(str(key), (Qt.MatchContains|Qt.MatchWrap), 1)[:]
+        for x in xrange(self.trackView.topLevelItemCount()):
+            self.trackView.topLevelItem(x).setHidden(True)
         for hit in hits:
             hit.setHidden(False)
 
@@ -235,11 +259,11 @@ class LibraryForm(auxilia.Actions):
 
     def addArtist(self):
         '''Add all songs from the currently selected artist into the current playlist'''
-        return self.__addSongSet('artist', self.view.artistView.selectedItems())
+        return self.__addSongSet('artist', self.artistView.selectedItems())
 
     def addAlbum(self):
         '''Add all songs from the currently selected album into the current playlist'''
-        return self.__addSongSet('album', self.view.albumView.selectedItems())
+        return self.__addSongSet('album', self.albumView.selectedItems())
 
     def __addSongSet(self, key, selection):
         first = None
@@ -254,7 +278,7 @@ class LibraryForm(auxilia.Actions):
     def addTrack(self):
         '''Add all selected songs into the current playlist'''
         first = None
-        for item in self.view.trackView.selectedItems():
+        for item in self.trackView.selectedItems():
             self.mpdclient.add(item.song['file'])
             if not first:
                 first = self.mpdclient.playlistid()[-1]['id']

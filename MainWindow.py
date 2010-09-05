@@ -16,7 +16,7 @@
 # limitations under the License.
 #-------------------------------------------------------------------------------
 from PyQt4.QtCore import SIGNAL, QTimer
-from PyQt4.QtGui import QSystemTrayIcon, QLabel, QHeaderView, QMenu, QIcon
+from PyQt4.QtGui import QSystemTrayIcon, QLabel, QMenu, QIcon
 from PyQt4 import uic
 from time import time
 import sys
@@ -53,13 +53,13 @@ class View(auxilia.Actions):
             else: raise
         except:
             self.view = uic.loadUi('Pythagora.ui.Qt')
+        self.view.KDE = KDE
         self.view.setWindowTitle('Pythagora')
         self.view.setWindowIcon(appIcon)
         # Set attributes not set trough xml file.
         self.view.back.setIcon(auxilia.PIcon("media-skip-backward"))
         self.view.stop.setIcon(auxilia.PIcon("media-playback-stop"))
         self.view.forward.setIcon(auxilia.PIcon("media-skip-forward"))
-        self.view.trackView.header().setResizeMode(1, QHeaderView.Stretch)
         self.view.songLabel = songwidgets.SongLabel()
         self.view.songLabel.setAcceptDrops(True)
         self.view.titleLayout.addWidget(self.view.songLabel)
@@ -105,9 +105,6 @@ class View(auxilia.Actions):
         self.view.resize(configuration.mgrSize)
         self.view.splitter.setSizes(configuration.mgrSplit)
         self.view.scSplitter.setSizes(configuration.mgrScSplit)
-        self.view.libSplitter_1.setSizes(configuration.libSplit1)
-        self.view.libSplitter_2.setSizes(configuration.libSplit2)
-        self.view.playlistSplitter.setSizes(configuration.playlistSplit)
         self.view.statusTabs.setCurrentIndex(configuration.showShoutcast)
         self.view.tabs.setCurrentIndex(configuration.tabsIndex)
         self.view.keepPlayingVisible.setChecked(configuration.keepPlayingVisible)
@@ -159,9 +156,9 @@ class View(auxilia.Actions):
 
     def createViews(self):
         '''Set up our different view handlers.'''
-        self.playlists = PlaylistForm.PlaylistForm(self.view, self.app, self.mpdclient)
         self.currentList = CurrentPlaylistForm.CurrentPlaylistForm(self.view, self.app, self.mpdclient, self.config)
         self.liberry = LibraryForm.LibraryForm(self.view, self.app, self.mpdclient, self.config)
+        self.playlists = PlaylistForm.PlaylistForm(self.view, self.app, self.mpdclient, self.config)
         self.shoutcast = ShoutcastForm.ShoutcastForm(self.view, self.app, self.mpdclient, self.config.scBookmarkFile)
 
     def shutdown(self):
