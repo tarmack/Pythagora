@@ -98,7 +98,6 @@ class View(QMainWindow, auxilia.Actions):
         # Apply configuration.
         self.resize(configuration.mgrSize)
         self.splitter.setSizes(configuration.mgrSplit)
-        self.scSplitter.setSizes(configuration.mgrScSplit)
         self.statusTabs.setCurrentIndex(configuration.showShoutcast)
         self.tabs.setCurrentIndex(configuration.tabsIndex)
 
@@ -152,11 +151,10 @@ class View(QMainWindow, auxilia.Actions):
         self.currentList = CurrentPlaylistForm.CurrentPlaylistForm(self, self.app, self.mpdclient, self.config)
         self.libraryForm = LibraryForm.LibraryForm(self, self.app, self.mpdclient, self.config)
         self.playlistsForm = PlaylistForm.PlaylistForm(self, self.app, self.mpdclient, self.config)
-        #self.shoutcast = ShoutcastForm.ShoutcastForm(self, self.app, self.mpdclient, self.config.scBookmarkFile)
+        self.shoutcast = ShoutcastForm.ShoutcastForm(self, self.app, self.mpdclient, self.config)
 
     def shutdown(self):
         self.shuttingDown = True
-        self.timer.stop()
         self.app.processEvents()
         try:
             self.mpdclient.close()
@@ -192,7 +190,7 @@ class View(QMainWindow, auxilia.Actions):
         mapped and show if not.
         '''
         if reason == QSystemTrayIcon.MiddleClick:
-            self.playControls.playPause()
+            self.playerForm.play.emit(SIGNAL('clicked(bool)'), True)
         if KDE:
             info = KWindowSystem.windowInfo( self.winId(), NET.XAWMState | NET.WMState | ((2**32)/2), NET.WM2ExtendedStrut)
             mapped = bool(info.mappingState() == NET.Visible and not info.isMinimized())

@@ -51,7 +51,6 @@ class LibraryForm(auxilia.Actions, QWidget):
             else: raise
         except:
             uic.loadUi('FileSystemForm.ui.Qt', self)
-        self.view.filesystemTree = self.filesystemTree
         self.view.tabs.addTab(self.filesystemTree, auxilia.PIcon('folder-sound'), 'F&ileSystem')
 
         self.libSplitter_1.setSizes(config.libSplit1)

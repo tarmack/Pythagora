@@ -16,7 +16,8 @@
 # limitations under the License.
 #-------------------------------------------------------------------------------
 from PyQt4.QtCore import SIGNAL, Qt
-from PyQt4.QtGui import QMessageBox, QTreeWidgetItem, QKeySequence, QListWidget
+from PyQt4.QtGui import QWidget, QMessageBox, QTreeWidgetItem, QKeySequence, QListWidget
+from PyQt4 import uic
 
 from xml.etree import ElementTree as ET
 import os
@@ -25,7 +26,7 @@ import shoutcast
 import songwidgets
 from auxilia import Actions
 
-class ShoutcastForm(Actions):
+class ShoutcastForm(QWidget, Actions):
     '''Grab Shoutcast streams and save them as "bookmarks" - and play them on
        the currently selected server.
 
@@ -35,52 +36,63 @@ class ShoutcastForm(Actions):
     '''
     stations = {}
 
-    def __init__(self, view, app, mpdclient, bookmarkFile):
+    def __init__(self, view, app, mpdclient, config):
+        QWidget.__init__(self)
         self.view = view
+        try:
+            if self.view.KDE:
+                uic.loadUi('ShoutCastForm.ui', self)
+            else: raise
+        except:
+            raise
+            uic.loadUi('ShoutCastForm.ui.Qt', self)
+        self.view.stackedWidget.addWidget(self)
+        self.scSplitter.setSizes(config.mgrScSplit)
         self.adding = False
         self.search = False
-        self.stationTree = StationTree(view)
+        self.stationTree = StationTree(self)
 
-        self.bookmarkList = BookmarkList(view, os.path.expanduser(bookmarkFile))
-        self.bookmarkList.reload()
+        self.bookMarkList = BookmarkList(self, os.path.expanduser(config.scBookmarkFile))
+        self.bookMarkList.reload()
 
         self.client = shoutcast.ShoutcastClient()
         self.mpd = mpdclient
 
         # connect to the lists and buttons
-        view.connect(self.view.reloadGenres, SIGNAL('clicked()'), self.__loadGenres)
-        view.connect(self.view.scSearch, SIGNAL('returnPressed(QString)'), self.__loadSearch)
+        self.connect(self.reloadGenres, SIGNAL('clicked()'), self.__loadGenres)
+        self.connect(self.scSearch, SIGNAL('returnPressed(QString)'), self.__loadSearch)
 
-        view.connect(self.view.genreList, SIGNAL('itemSelectionChanged()'), self.__treeSelect)
-        view.connect(self.view.genreList, SIGNAL('itemDoubleClicked(QTreeWidgetItem*,int)'), self.__previewStation)
-        view.connect(self.view.bookmarkList, SIGNAL('itemDoubleClicked(QListWidgetItem*)'), self.__play)
-        view.connect(self.view.saveStation, SIGNAL('clicked()'), self.__saveStation)
+        self.connect(self.genreList, SIGNAL('itemSelectionChanged()'), self.__treeSelect)
+        self.connect(self.genreList, SIGNAL('itemDoubleClicked(QTreeWidgetItem*,int)'), self.__previewStation)
+        self.connect(self.bookmarkList, SIGNAL('itemDoubleClicked(QListWidgetItem*)'), self.__play)
+        self.connect(self.saveStation, SIGNAL('clicked()'), self.__saveStation)
+        self.connect(self.previewStation, SIGNAL('clicked()'), self.__previewStation)
 
-        # Add conext menu's
-        self.actionPreview(self.view.genreList, self.__previewStation)
-        self.actionBookmark(self.view.genreList, self.__saveStation)
-        self.actionScReload(self.view.genreList, self.__loadGenres)
-        self.actionPlayBM(self.view.bookmarkList, self.__play)
-        self.actionRemove(self.view.bookmarkList, self.bookmarkList.delete)
+        # Add context menu's
+        self.actionPreview(self.genreList, self.__previewStation)
+        self.actionBookmark(self.genreList, self.__saveStation)
+        self.actionScReload(self.genreList, self.__loadGenres)
+        self.actionPlayBM(self.bookmarkList, self.__play)
+        self.actionRemove(self.bookmarkList, self.bookMarkList.delete)
 
-        self.view.bookmarkList.dropEvent = self.dropEvent
-        self.view.bookmarkList.dragEnterEvent = self.dragEnterEvent
+        self.bookmarkList.dropEvent = self.dropEvent
+        self.bookmarkList.dragEnterEvent = self.dragEnterEvent
 
     def dragEnterEvent(self, event):
         source = event.source()
-        if source == self.view.genreList:
+        if source == self.genreList:
             if isinstance(source.selectedItems()[0], songwidgets.ShoutCastStationWidget):
                 event.accept()
 
     def dropEvent(self, event):
         event.setDropAction(Qt.CopyAction)
         source = event.source()
-        if source == self.view.genreList:
+        if source == self.genreList:
             event.accept()
             self.__saveStation()
 
     def reload(self):
-        self.bookmarkList.reload()
+        self.bookMarkList.reload()
 
     def __loadGenres(self):
         '''Retrieve the genres.'''
@@ -110,7 +122,7 @@ class ShoutcastForm(Actions):
         try:
             stationlist = self.client.getSearch(patern)
             # cache it, then add to the tree
-            self.view.genreList.clear()
+            self.genreList.clear()
             self.stationTree.loadStations(stationlist)
         except Exception,e:
             print 'error: ', str(e)
@@ -119,7 +131,7 @@ class ShoutcastForm(Actions):
 
     def __treeSelect(self):
         '''Figure out what to do when something's selected in the list'''
-        current = self.view.genreList.currentItem()
+        current = self.genreList.currentItem()
         # child node - it's a station
         if current.parent() != None or self.stationTree.search:
             return
@@ -153,7 +165,7 @@ class ShoutcastForm(Actions):
         '''Play the currently selected bookmarked station.'''
         self.mpd.stop()
         self.mpd.clear()
-        for url in self.bookmarkList.getStationFiles():
+        for url in self.bookMarkList.getStationFiles():
             self.mpd.add(url)
         self.mpd.play()
 
@@ -163,7 +175,7 @@ class ShoutcastForm(Actions):
         if station.get('urls',None) == None:
             urls = self.client.getStation(station['id'])
             station['urls'] = urls
-        self.bookmarkList.addStation(station)
+        self.bookMarkList.addStation(station)
 
 
 class StationTree():
