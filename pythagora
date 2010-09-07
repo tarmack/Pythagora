@@ -56,7 +56,7 @@ def main():
 #===============================================================================
 # Creates and links up the management display items.
 #===============================================================================
-class Manager(MainWindow.View):
+class Manager():
     '''Creates and links up the management display items.'''
     oldVolume = 0
     misses = 0
@@ -67,22 +67,22 @@ class Manager(MainWindow.View):
         self.idleTimer = QTimer()
         self.idleTimer.setSingleShot(True)
         self.config = configuration.Configuration()
-        MainWindow.View.__init__(self, self.config, self.mpdclient, app)
+        self.view = MainWindow.View(self.config, self.mpdclient, app)
         self.playControls = playControls.PlayControls(self.mpdclient)
         self.update = Update(self.view, self.mpdclient, self.config, self.playControls)
         if not self.__connectMPD():
             self.config.showConfiguration(self.view, True)
         self.__connectSignals()
         # Overload some methods.
-        self.view.progress.mouseReleaseEvent = self.songSeek
+        self.view.playerForm.progress.mouseReleaseEvent = self.songSeek
         self.view.trayIcon.event = self.trayEvent
 
         self.timer.start(1000)
 
-        self.view.progress.dragEnterEvent = self.__topEnter
-        self.view.songLabel.dragEnterEvent = self.__topEnter
-        self.view.progress.dropEvent = self.__topDrop
-        self.view.songLabel.dropEvent = self.__topDrop
+        self.view.playerForm.progress.dragEnterEvent = self.__topEnter
+        self.view.playerForm.songLabel.dragEnterEvent = self.__topEnter
+        self.view.playerForm.progress.dropEvent = self.__topDrop
+        self.view.playerForm.songLabel.dropEvent = self.__topDrop
 
         # Set global shortcuts if KDE is available otherwise overload keyPressEvent.
         if MainWindow.KDE:
@@ -106,7 +106,7 @@ class Manager(MainWindow.View):
     def callback(self, changes):
         '''Remember, this is executed from another thread.'''
         print 'debug: called back with "%s"' % changes
-        if self.shuttingDown:
+        if self.view.shuttingDown:
             print 'debug: callback aborted, application is closing down.'
             return
         if 'ConnectionError' in changes:
@@ -169,10 +169,10 @@ class Manager(MainWindow.View):
         elif not self.app.closingDown():
             if not self.mpdclient._sock:
                 self.__connectMPD()
-        self.currentList.loadIcons()
+        self.view.currentList.loadIcons()
 
     def __connectMPD(self):
-        if self.shuttingDown:
+        if self.view.shuttingDown:
             return True
         self.update.setProgress(0, 0)
         self.update.lastSongId = None
@@ -249,7 +249,7 @@ class Manager(MainWindow.View):
             return False
 
     def __runIdle(self):
-        if not self.shuttingDown and self.mpdclient.connected():
+        if not self.view.shuttingDown and self.mpdclient.connected():
             self.mpdclient.idleThread(self.callback, timeout=10)
 
     def __topEnter(self, event):
@@ -350,12 +350,12 @@ class Update:
     def mixer(self, status):
         volumeStatus = int(status['volume'])
         self.playControls.currentVolume = volumeStatus
-        self.view.volume.setValue(volumeStatus)
+        self.view.playerForm.volume.setValue(volumeStatus)
 
     def options(self, status):
-        self.view.repeatButton.setChecked(bool(int(status['repeat'])))
-        self.view.randomButton.setChecked(bool(int(status['random'])))
-        self.view.crossFade.setValue(int(status['xfade']))
+        self.view.currentList.repeatButton.setChecked(bool(int(status['repeat'])))
+        self.view.currentList.randomButton.setChecked(bool(int(status['random'])))
+        self.view.currentList.crossFade.setValue(int(status['xfade']))
 
     def stored_playlist(self, status):
         self.view.emit(SIGNAL('reloadPlaylists()'))
@@ -365,40 +365,40 @@ class Update:
 
     def setSongLabel(self, title='', artist='', album=''):
         self.view.trayIcon.setToolTip('<b><big>%s</big></b>\r\nby <big>%s</big>\r\nfrom <i>%s</i>' % (title, artist, album))
-        self.view.songLabel.setText(title, artist, album)
+        self.view.playerForm.songLabel.setText(title, artist, album)
 
     def setProgress(self, cs, ss=None):
         ''' Moves the progress indicator to the correct position,
             calculate the timestamps and puts them in place.
         '''
         if ss is None:
-            ss = self.view.progress.maximum()
+            ss = self.view.playerForm.progress.maximum()
         curTime = int(cs)
         songTime = int(ss)
         if songTime <= 0:
-            self.view.progress.setValue(0)
-            self.view.progress.setFormat(formatTime(curTime))
+            self.view.playerForm.progress.setValue(0)
+            self.view.playerForm.progress.setFormat(formatTime(curTime))
         else:
-            self.view.progress.setMaximum(songTime)
-            self.view.progress.setValue(curTime)
-            self.view.progress.setFormat('/'.join((formatTime(curTime), formatTime(songTime))))
+            self.view.playerForm.progress.setMaximum(songTime)
+            self.view.playerForm.progress.setValue(curTime)
+            self.view.playerForm.progress.setFormat('/'.join((formatTime(curTime), formatTime(songTime))))
         self.time = curTime
 
     def clearForms(self):
-        self.view.artistView.clear()
-        self.view.albumView.clear()
-        self.view.trackView.clear()
-        self.view.filesystemTree.clear()
-        self.view.playlistList.clear()
-        self.view.songList.clear()
+        self.view.libraryForm.artistView.clear()
+        self.view.libraryForm.albumView.clear()
+        self.view.libraryForm.trackView.clear()
+        self.view.libraryForm.filesystemTree.clear()
+        self.view.playlistsForm.playlistList.clear()
+        self.view.playlistsForm.songList.clear()
 
     def __setPlayPauseState(self,state):
         if state == 'play':
-            self.view.play.setIcon(self.pauseIcon)
+            self.view.playerForm.play.setIcon(self.pauseIcon)
             self.view.trayIcon.setIcon(self.pauseIcon)
             self.state = 'play'
         else:
-            self.view.play.setIcon(self.startIcon)
+            self.view.playerForm.play.setIcon(self.startIcon)
             self.view.trayIcon.setIcon(self.startIcon)
             self.state = 'stop'
 

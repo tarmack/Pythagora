@@ -14,6 +14,9 @@
    <string>Form</string>
   </property>
   <layout class="QHBoxLayout" name="horizontalLayout_2">
+   <property name="margin">
+    <number>0</number>
+   </property>
    <item>
     <widget class="QGroupBox" name="currentGroup">
      <property name="sizePolicy">
@@ -26,6 +29,9 @@
       <string>Current Playlist</string>
      </property>
      <layout class="QVBoxLayout" name="verticalLayout_4" stretch="0,0,0">
+      <property name="margin">
+       <number>0</number>
+      </property>
       <item>
        <widget class="QListWidget" name="currentList">
         <property name="contextMenuPolicy">

@@ -47,8 +47,7 @@ class PlaylistForm(QWidget, auxilia.DragNDrop, auxilia.Actions):
             else: raise
         except:
             uic.loadUi('PlaylistsForm.ui.Qt', self)
-        self.view.playlistsForm = self
-        self.view.tabs.addTab(self, auxilia.PIcon('document-multiple.png'), '&PlayLists')
+        self.view.tabs.addTab(self, auxilia.PIcon('document-multiple'), '&PlayLists')
         self.playlistSplitter.setSizes(config.playlistSplit)
 
         # top bit

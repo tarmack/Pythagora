@@ -16,7 +16,7 @@
 # limitations under the License.
 #-------------------------------------------------------------------------------
 from PyQt4.QtCore import SIGNAL, QTimer
-from PyQt4.QtGui import QSystemTrayIcon, QLabel, QMenu, QIcon
+from PyQt4.QtGui import QMainWindow, QSystemTrayIcon, QLabel, QMenu, QIcon, QWidget
 from PyQt4 import uic
 from time import time
 import sys
@@ -40,8 +40,10 @@ except ImportError:
 #       ^ Probably impossible ^ (maybe just hard when compositing with windowpreviews is enabled)
 # TODO: Make splitter sizes of not shown parts be rememberd correctly.
 
-class View(auxilia.Actions):
+class View(QMainWindow, auxilia.Actions):
     def __init__(self, configuration, mpdclient, app):
+        QMainWindow.__init__(self)
+        self.app = app
         self.focus = time()
         self.shuttingDown = False
         self.config = configuration
@@ -49,70 +51,60 @@ class View(auxilia.Actions):
         appIcon = QIcon('icons/Pythagora.png')
         try:
             if KDE:
-                self.view = uic.loadUi('Pythagora.ui')
+                uic.loadUi('Pythagora.ui', self)
             else: raise
         except:
-            self.view = uic.loadUi('Pythagora.ui.Qt')
-        self.view.KDE = KDE
-        self.view.setWindowTitle('Pythagora')
-        self.view.setWindowIcon(appIcon)
-        # Set attributes not set trough xml file.
-        self.view.back.setIcon(auxilia.PIcon("media-skip-backward"))
-        self.view.stop.setIcon(auxilia.PIcon("media-playback-stop"))
-        self.view.forward.setIcon(auxilia.PIcon("media-skip-forward"))
-        self.view.songLabel = songwidgets.SongLabel()
-        self.view.songLabel.setAcceptDrops(True)
-        self.view.titleLayout.addWidget(self.view.songLabel)
+            uic.loadUi('Pythagora.ui.Qt', self)
+        self.KDE = KDE
+        self.setWindowTitle('Pythagora')
+        self.setWindowIcon(appIcon)
         # Create 'MDP' menu.
-        self.reloadLibrary = self.actionLibReload(self.view.menuMPD, self.__libReload)
-        self.updateLibrary = self.actionLibUpdate(self.view.menuMPD, self.mpdclient.update)
-        self.rescanLibrary = self.actionLibRescan(self.view.menuMPD, self.mpdclient.rescan)
+        self.reloadLibrary = self.actionLibReload(self.menuMPD, self.__libReload)
+        self.updateLibrary = self.actionLibUpdate(self.menuMPD, self.mpdclient.update)
+        self.rescanLibrary = self.actionLibRescan(self.menuMPD, self.mpdclient.rescan)
         # Load all forms.
         self.createViews()
         # Fill Statusbar.
-        self.view.serverLabel = QLabel('Not connected')
-        self.view.numSongsLabel = QLabel('Songs')
-        self.view.playTimeLabel = QLabel('playTime')
-        self.view.statusTabs = auxilia.StatusTabBar()
-        self.view.statusTabs.addTab(auxilia.PIcon("media-playlist-repeat"), 'Current Playlist')
-        self.view.statusTabs.addTab(auxilia.PIcon("network-workgroup"), 'Shoutcast')
-        self.view.statusTabs.setShape(1)
-        self.view.statusbar.addWidget(self.view.statusTabs)
-        self.view.statusbar.addWidget(self.view.serverLabel)
-        self.view.statusbar.addPermanentWidget(self.view.numSongsLabel)
-        self.view.statusbar.addPermanentWidget(self.view.playTimeLabel)
-        self.view.connect(self.view.statusTabs, SIGNAL('currentChanged(int)'), self.view.stackedWidget.setCurrentIndex)
-        self.view.connect(self.view.currentBottom, SIGNAL('clicked()'), self.__togglePlaylistTools)
+        self.serverLabel = QLabel('Not connected')
+        self.numSongsLabel = QLabel('Songs')
+        self.playTimeLabel = QLabel('playTime')
+        self.statusTabs = auxilia.StatusTabBar()
+        self.statusTabs.addTab(auxilia.PIcon("media-playlist-repeat"), 'Current Playlist')
+        self.statusTabs.addTab(auxilia.PIcon("network-workgroup"), 'Shoutcast')
+        self.statusTabs.setShape(1)
+        self.statusbar.addWidget(self.statusTabs)
+        self.statusbar.addWidget(self.serverLabel)
+        self.statusbar.addPermanentWidget(self.numSongsLabel)
+        self.statusbar.addPermanentWidget(self.playTimeLabel)
+        self.connect(self.statusTabs, SIGNAL('currentChanged(int)'), self.stackedWidget.setCurrentIndex)
 
-        self.view.connect(self.view.menuConnect, SIGNAL('aboutToShow()'), self.__buildConnectTo)
-        self.view.connect(self.view.actionExit,SIGNAL('triggered()'),self.app.quit)
-        self.view.connect(self.view.actionSettings,SIGNAL('triggered()'),self.showConfig)
+        self.connect(self.menuConnect, SIGNAL('aboutToShow()'), self.__buildConnectTo)
+        self.connect(self.actionExit,SIGNAL('triggered()'),self.app.quit)
+        self.connect(self.actionSettings,SIGNAL('triggered()'),self.showConfig)
 
 
         # Set up trayicon and menu.
-        self.trayMenu = QMenu('Pythagora MPD client', self.view)
+        self.trayMenu = QMenu('Pythagora MPD client', self)
         self.trayMenu.addAction(self.menuTitle(appIcon, 'Pythagora'))
-        self.trayMenu.addMenu(self.view.menuConnect)
-        self.trayMenu.addAction(self.view.actionSettings)
+        self.trayMenu.addMenu(self.menuConnect)
+        self.trayMenu.addAction(self.actionSettings)
         self.HideResoreAction = self.actionHideRestore(self.trayMenu, self.__toggleHideRestore)
-        self.trayMenu.addAction(self.view.actionExit)
-        self.view.trayIcon = QSystemTrayIcon(appIcon, self.view)
-        self.view.trayIcon.setContextMenu(self.trayMenu)
-        self.view.connect(self.view.trayIcon, SIGNAL('activated(QSystemTrayIcon::ActivationReason)'), self.__toggleHideRestore)
-        self.view.trayIcon.show()
+        self.trayMenu.addAction(self.actionExit)
+        self.trayIcon = QSystemTrayIcon(appIcon, self)
+        self.trayIcon.setContextMenu(self.trayMenu)
+        self.connect(self.trayIcon, SIGNAL('activated(QSystemTrayIcon::ActivationReason)'), self.__toggleHideRestore)
+        self.trayIcon.show()
 
         # Apply configuration.
-        self.view.resize(configuration.mgrSize)
-        self.view.splitter.setSizes(configuration.mgrSplit)
-        self.view.scSplitter.setSizes(configuration.mgrScSplit)
-        self.view.statusTabs.setCurrentIndex(configuration.showShoutcast)
-        self.view.tabs.setCurrentIndex(configuration.tabsIndex)
-        self.view.keepPlayingVisible.setChecked(configuration.keepPlayingVisible)
-        self.__togglePlaylistTools(configuration.playlistControls)
+        self.resize(configuration.mgrSize)
+        self.splitter.setSizes(configuration.mgrSplit)
+        self.scSplitter.setSizes(configuration.mgrScSplit)
+        self.statusTabs.setCurrentIndex(configuration.showShoutcast)
+        self.tabs.setCurrentIndex(configuration.tabsIndex)
 
-        self.view.closeEvent = self.closeEvent
-        self.view.connect(self.app,SIGNAL('aboutToQuit()'),self.shutdown)
-        self.view.show()
+        self.closeEvent = self.closeEvent
+        self.connect(self.app,SIGNAL('aboutToQuit()'),self.shutdown)
+        self.show()
 
 #==============================================================================
 # Code for switching tabs on drag & drop. (__init__() continues)
@@ -120,12 +112,12 @@ class View(auxilia.Actions):
 
         # Instantiate timer
         self.tabTimer = QTimer()
-        self.view.connect(self.tabTimer, SIGNAL('timeout()'), self.__selectTab)
+        self.connect(self.tabTimer, SIGNAL('timeout()'), self.__selectTab)
 
         # Overload the default dragEvents. (none?)
-        self.view.tabs.dragLeaveEvent = self.dragLeaveEvent
-        self.view.tabs.dragEnterEvent = self.dragEnterEvent
-        self.view.tabs.dragMoveEvent = self.dragMoveEvent
+        self.tabs.dragLeaveEvent = self.dragLeaveEvent
+        self.tabs.dragEnterEvent = self.dragEnterEvent
+        self.tabs.dragMoveEvent = self.dragMoveEvent
 
     def dragEnterEvent(self, event):
         '''Starts timer on enter and sets first position.'''
@@ -145,21 +137,22 @@ class View(auxilia.Actions):
 
     def __selectTab(self):
         '''Changes the view to the tab where the mouse was hovering above.'''
-        index = self.view.tabs.tabBar().tabAt(self.tabPos)
-        self.view.tabs.setCurrentIndex(index)
+        index = self.tabs.tabBar().tabAt(self.tabPos)
+        self.tabs.setCurrentIndex(index)
         self.tabTimer.stop()
 
     def __libReload(self):
-        self.view.emit(SIGNAL('reloadLibrary()'))
+        self.emit(SIGNAL('reloadLibrary()'))
 
 #==============================================================================
 
     def createViews(self):
         '''Set up our different view handlers.'''
-        self.currentList = CurrentPlaylistForm.CurrentPlaylistForm(self.view, self.app, self.mpdclient, self.config)
-        self.liberry = LibraryForm.LibraryForm(self.view, self.app, self.mpdclient, self.config)
-        self.playlists = PlaylistForm.PlaylistForm(self.view, self.app, self.mpdclient, self.config)
-        self.shoutcast = ShoutcastForm.ShoutcastForm(self.view, self.app, self.mpdclient, self.config.scBookmarkFile)
+        self.playerForm = PlayerForm(self, self.app, self.mpdclient, self.config)
+        self.currentList = CurrentPlaylistForm.CurrentPlaylistForm(self, self.app, self.mpdclient, self.config)
+        self.libraryForm = LibraryForm.LibraryForm(self, self.app, self.mpdclient, self.config)
+        self.playlistsForm = PlaylistForm.PlaylistForm(self, self.app, self.mpdclient, self.config)
+        #self.shoutcast = ShoutcastForm.ShoutcastForm(self, self.app, self.mpdclient, self.config.scBookmarkFile)
 
     def shutdown(self):
         self.shuttingDown = True
@@ -172,39 +165,26 @@ class View(auxilia.Actions):
         except:
             pass
         if self.config:
-            self.config.mgrSize = self.view.size()
-            self.config.showShoutcast = self.view.stackedWidget.currentIndex()
-            self.config.tabsIndex = self.view.tabs.currentIndex()
-            self.config.keepPlayingVisible = bool(self.view.keepPlayingVisible.checkState())
-            self.config.playlistControls = bool(self.view.playlistTools.isVisible())
-            self.config.mgrSplit = self.view.splitter.sizes()
-            self.config.mgrScSplit = self.view.scSplitter.sizes()
-            self.config.libSplit1 = self.view.libSplitter_1.sizes()
-            self.config.libSplit2 = self.view.libSplitter_2.sizes()
-            self.config.playlistSplit = self.view.playlistSplitter.sizes()
+            self.config.mgrSize = self.size()
+            self.config.showShoutcast = self.stackedWidget.currentIndex()
+            self.config.tabsIndex = self.tabs.currentIndex()
+            self.config.keepPlayingVisible = bool(self.keepPlayingVisible.checkState())
+            self.config.playlistControls = bool(self.playlistTools.isVisible())
+            self.config.mgrSplit = self.splitter.sizes()
+            self.config.mgrScSplit = self.scSplitter.sizes()
+            self.config.libSplit1 = self.libSplitter_1.sizes()
+            self.config.libSplit2 = self.libSplitter_2.sizes()
+            self.config.playlistSplit = self.playlistSplitter.sizes()
             self.config.save()
         print 'debug: shutdown finished'
 
     def showConfig(self):
-        self.config.showConfiguration(self.view)
+        self.config.showConfiguration(self)
 
     def closeEvent(self, event):
         '''Catch MainWindow's close event so we can hide it instead.'''
         self.__toggleHideRestore()
         event.ignore()
-
-    def __togglePlaylistTools(self, value=None):
-        text = ('Show Playlist Tools', 'Hide Playlist Tools')
-        if value == None:
-            if self.view.playlistTools.isVisible():
-                self.view.playlistTools.setVisible(False)
-            else:
-                self.view.playlistTools.setVisible(True)
-            value = self.view.playlistTools.isVisible()
-        else:
-            self.view.playlistTools.setVisible(value)
-        self.view.currentBottom.setArrowType(int(value)+1)
-        self.view.currentBottom.setText(text[value])
 
     def __toggleHideRestore(self, reason=None):
         '''Show or hide the window based on some parameters. We can detect
@@ -214,31 +194,50 @@ class View(auxilia.Actions):
         if reason == QSystemTrayIcon.MiddleClick:
             self.playControls.playPause()
         if KDE:
-            info = KWindowSystem.windowInfo( self.view.winId(), NET.XAWMState | NET.WMState | ((2**32)/2), NET.WM2ExtendedStrut)
+            info = KWindowSystem.windowInfo( self.winId(), NET.XAWMState | NET.WMState | ((2**32)/2), NET.WM2ExtendedStrut)
             mapped = bool(info.mappingState() == NET.Visible and not info.isMinimized())
             if not reason or reason == QSystemTrayIcon.Trigger:
                 if not mapped:
                     self.HideResoreAction.setText('Hide')
-                    self.view.show()
-                elif not reason or KWindowSystem.activeWindow() == self.view.winId():
+                    self.show()
+                elif not reason or KWindowSystem.activeWindow() == self.winId():
                     self.HideResoreAction.setText('Show')
-                    self.view.hide()
+                    self.hide()
                 else:
-                    self.view.activateWindow()
-                    self.view.raise_()
+                    self.activateWindow()
+                    self.raise_()
         else:
-            if self.view.isVisible():
-                self.view.hide()
-            else: self.view.show()
+            if self.isVisible():
+                self.hide()
+            else: self.show()
 
 
     def __buildConnectTo(self):
-        self.view.menuConnect.clear()
-        self.view.menuConnect.addAction(auxilia.PIcon('dialog-cancel'), 'None (disconnect)')
+        self.menuConnect.clear()
+        self.menuConnect.addAction(auxilia.PIcon('dialog-cancel'), 'None (disconnect)')
         connected = self.mpdclient.connected()
         for server in self.config.knownHosts:
             if connected and self.config.server and self.config.server[0] == server:
                 icon = auxilia.PIcon('network-connect')
             else: icon = auxilia.PIcon('network-disconnect')
-            self.view.menuConnect.addAction(icon, server)
+            self.menuConnect.addAction(icon, server)
 
+class PlayerForm(QWidget):
+    def __init__(self, view, app, mpdclient, config):
+        QWidget.__init__(self)
+        self.view = view
+        try:
+            if self.view.KDE:
+                uic.loadUi('PlayerForm.ui', self)
+            else: raise
+        except:
+            uic.loadUi('PlayerForm.ui.Qt', self)
+        self.playerForm = self
+        self.view.topLayout.addWidget(self)
+        # Set attributes not set trough xml file.
+        self.back.setIcon(auxilia.PIcon("media-skip-backward"))
+        self.stop.setIcon(auxilia.PIcon("media-playback-stop"))
+        self.forward.setIcon(auxilia.PIcon("media-skip-forward"))
+        self.songLabel = songwidgets.SongLabel()
+        self.songLabel.setAcceptDrops(True)
+        self.titleLayout.addWidget(self.songLabel)

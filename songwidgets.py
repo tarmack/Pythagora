@@ -111,6 +111,7 @@ class SongLabel(QLabel):
     parts = ('title', 'by', 'artist', 'from_', 'album')
     def __init__(self):
         QLabel.__init__(self)
+        self.setAlignment(Qt.AlignBottom)
         self.byFont = self.font()
         self.from_Font = self.byFont
         self.titleFont = self.font()

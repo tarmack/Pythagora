@@ -163,20 +163,20 @@ class Actions:
 
     def __addAction(self, action, parent, slot):
         parent.addAction(action)
-        self.view.connect(action, SIGNAL('triggered()'), slot)
+        self.connect(action, SIGNAL('triggered()'), slot)
 
     def menuTitle(self, icon, text):
         self.eventEater = EventEater()
-        buttonaction = QAction(self.view)
+        buttonaction = QAction(self)
         font = buttonaction.font()
         font.setBold(True)
         buttonaction.setFont(font)
         buttonaction.setText(text)
         buttonaction.setIcon(icon)
 
-        action = QWidgetAction(self.view)
+        action = QWidgetAction(self)
         action.setObjectName('trayMenuTitle')
-        titleButton = QToolButton(self.view)
+        titleButton = QToolButton(self)
         titleButton.installEventFilter(self.eventEater)
         titleButton.setDefaultAction(buttonaction)
         titleButton.setDown(True)

@@ -43,8 +43,7 @@ class LibraryForm(auxilia.Actions, QWidget):
         except:
             uic.loadUi('LibraryForm.ui.Qt', self)
         self.trackView.header().setResizeMode(1, QHeaderView.Stretch)
-        self.view.libraryForm = self
-        self.view.tabs.addTab(self, auxilia.PIcon('server-database.png'), '&Library')
+        self.view.tabs.addTab(self, auxilia.PIcon('server-database'), '&Library')
         # Load and place the FileSystem form.
         try:
             if self.view.KDE:
@@ -53,7 +52,7 @@ class LibraryForm(auxilia.Actions, QWidget):
         except:
             uic.loadUi('FileSystemForm.ui.Qt', self)
         self.view.filesystemTree = self.filesystemTree
-        self.view.tabs.addTab(self.filesystemTree, auxilia.PIcon('folder-sound.png'), 'F&ileSystem')
+        self.view.tabs.addTab(self.filesystemTree, auxilia.PIcon('folder-sound'), 'F&ileSystem')
 
         self.libSplitter_1.setSizes(config.libSplit1)
         self.libSplitter_2.setSizes(config.libSplit2)
