@@ -141,66 +141,6 @@
     <string>Settings</string>
    </property>
   </action>
-  <action name="currentMenuPlay">
-   <property name="icon">
-    <iconset>
-     <normaloff>icons/media-playback-start.png</normaloff>icons/media-playback-start.png</iconset>
-   </property>
-   <property name="text">
-    <string>Play</string>
-   </property>
-   <property name="toolTip">
-    <string>Play song</string>
-   </property>
-  </action>
-  <action name="currentMenuRemove">
-   <property name="icon">
-    <iconset>
-     <normaloff>icons/list-remove.png</normaloff>icons/list-remove.png</iconset>
-   </property>
-   <property name="text">
-    <string>Remove from list</string>
-   </property>
-   <property name="toolTip">
-    <string>Remove song from the playlist.</string>
-   </property>
-  </action>
-  <action name="currentMenuClear">
-   <property name="icon">
-    <iconset>
-     <normaloff>icons/page-simple.png</normaloff>icons/page-simple.png</iconset>
-   </property>
-   <property name="text">
-    <string>Clear list</string>
-   </property>
-   <property name="toolTip">
-    <string>Clear the current playlist.</string>
-   </property>
-  </action>
-  <action name="currentMenuSave">
-   <property name="icon">
-    <iconset>
-     <normaloff>icons/document-save-as.png</normaloff>icons/document-save-as.png</iconset>
-   </property>
-   <property name="text">
-    <string>Save playlist</string>
-   </property>
-   <property name="toolTip">
-    <string>Save the current playlist.</string>
-   </property>
-  </action>
-  <action name="currentMenuCrop">
-   <property name="icon">
-    <iconset>
-     <normaloff>icons/project-development-close.png</normaloff>icons/project-development-close.png</iconset>
-   </property>
-   <property name="text">
-    <string>Crop Playlist</string>
-   </property>
-   <property name="toolTip">
-    <string>Remove all but the selected songs from the playlist.</string>
-   </property>
-  </action>
  </widget>
  <resources/>
  <connections/>
