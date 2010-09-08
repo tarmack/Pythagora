@@ -16,7 +16,7 @@
 # limitations under the License.
 #-------------------------------------------------------------------------------
 from PyQt4.QtCore import SIGNAL, Qt
-from PyQt4.QtGui import QTreeWidgetItem, QHeaderView, QWidget
+from PyQt4.QtGui import QHeaderView, QWidget
 from PyQt4 import uic
 from time import time
 import operator
@@ -140,7 +140,8 @@ class LibraryForm(auxilia.Actions, QWidget):
         self.artistView.setUpdatesEnabled(False)
         artists = self.artistdict.keys()
         artists.sort(auxilia.cmpUnicode)
-        self.artistView.addItems(artists)
+        for artist in artists:
+            self.artistView.addItem(songwidgets.ArtistWidget(artist))
         self.artistView.insertItem(0, '--all--')
         self.artistSearch(self.artistSearchField.text())
         self.artistView.setUpdatesEnabled(True)
@@ -150,7 +151,7 @@ class LibraryForm(auxilia.Actions, QWidget):
         self.albumView.clear()
         self.albumView.setUpdatesEnabled(False)
         for (album, artists) in sorted(albumlist.iteritems(), auxilia.cmpUnicode, operator.itemgetter(0)):
-            albumWidget = songwidgets.simpleWidget(album, artists)
+            albumWidget = songwidgets.AlbumWidget(album, artists)
             self.albumView.addItem(albumWidget)
         self.albumView.insertItem(0, '--all--')
         self.albumSearch(self.albumSearchField.text())
@@ -174,7 +175,7 @@ class LibraryForm(auxilia.Actions, QWidget):
             update = False
             self.filesystemTree.setUpdatesEnabled(False)
         for name in filelist.keys():
-            item = QTreeWidgetItem([name])
+            item = songwidgets.FilesystemWidget(name)
             parent.addChild(item)
             self.__loadFileSystemView(filelist[name], item)
         parent.sortChildren(0, 0)

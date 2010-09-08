@@ -167,7 +167,7 @@ class PlaylistForm(QWidget, auxilia.DragNDrop, auxilia.Actions):
         playlists = [x['playlist'] for x in self.mpdclient.lsinfo() if 'playlist' in x]
         playlists.sort(auxilia.cmpUnicode)
         for l in playlists:
-            self.playlistList.addItem(l)
+            self.playlistList.addItem(songwidgets.PlaylistWidget(l))
 
         self.currentPlaylist = plname
         self.__getPlaylist(plname)
@@ -244,7 +244,7 @@ class PlaylistForm(QWidget, auxilia.DragNDrop, auxilia.Actions):
                         , 'New Playlist')
                 if ok != True:
                     return self.currentPlaylist
-            self.playlistList.addItem(name)
+            self.playlistList.addItem(songwidgets.PlaylistWidget(name))
             try:
                 self.playlistList.setCurrentItem(self.playlistList.findItems(name, Qt.MatchExactly)[0])
             except:

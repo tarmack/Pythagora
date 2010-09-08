@@ -20,6 +20,8 @@ from PyQt4.QtGui import QListWidgetItem, QTreeWidgetItem, QBrush, QColor, QLabel
         , QFontMetrics, QPainter, QLinearGradient, QPalette, QPen
 
 import auxilia
+import shoutcast
+import os
 
 # TODO: Don't show 'by' and 'from' in SongLabel if that part is missing.
 
@@ -28,7 +30,7 @@ import auxilia
 # stuff with.
 #===============================================================================
 
-class FullTreeWidget(QListWidgetItem):
+class CurrentListWidget(QListWidgetItem):
     '''Song, album, cover in a tree widget item'''
     # Used in CurrentPlaylistForm
     def __init__(self, song, oneLine=False):
@@ -56,12 +58,27 @@ class FullTreeWidget(QListWidgetItem):
         self.setFont(font)
         self.setBackground(brush)
 
-class simpleWidget(QListWidgetItem):
+    def getDrag(self, mpdclient):
+        return [self.song]
+
+class AlbumWidget(QListWidgetItem):
     '''Simple for album in library view.'''
     def __init__(self, text, tooltip):
         QListWidgetItem.__init__(self)
         self.setText(text)
         self.setToolTip('\n'.join(tooltip))
+
+    def getDrag(self, mpdclient):
+        return mpdclient.find('album', self.text())
+
+class ArtistWidget(QListWidgetItem):
+    '''Simple widget for artists in library view.'''
+    def __init__(self, text):
+        QListWidgetItem.__init__(self)
+        self.setText(text)
+
+    def getDrag(self, mpdclient):
+        return mpdclient.find('artist', self.text())
 
 class TrackWidget(QTreeWidgetItem):
     '''Track widget used in library track view.'''
@@ -74,6 +91,36 @@ class TrackWidget(QTreeWidgetItem):
         self.setToolTip(1, "Artist:\t %s\nAlbum:\t %s\nFile:\t %s"\
                 % (auxilia.songArtist(song), song.get('album', ''), song['file']))
 
+    def getDrag(self, mpdclient):
+        return [self.song]
+
+class FilesystemWidget(QTreeWidgetItem):
+    '''Widget used in the filesystem tree.'''
+    def __init__(self, text):
+        QTreeWidgetItem.__init__(self)
+        self.setText(0, text)
+
+    def getDrag(self, mpdclient, path=''):
+        text = unicode(self.text(0))
+        if path == '':
+            path = text
+        else:
+            path = os.path.join(text, path)
+        parent = self.parent()
+        if parent:
+            return parent.getDrag(mpdclient, path)
+        else:
+            return [song for song in mpdclient.listall(path) if 'file' in song]
+
+class PlaylistWidget(QListWidgetItem):
+    '''Widget used in the stored playlist list.'''
+    def __init__(self, text):
+        QListWidgetItem.__init__(self)
+        self.setText(text)
+
+    def getDrag(self, mpdclient):
+        return mpdclient.listplaylistinfo(self.text())
+
 class LongSongWidget(QTreeWidgetItem):
     '''Lays out a song in a three-column tree widget: artist, title, album.
     Used in PlaylistForm.'''
@@ -85,6 +132,9 @@ class LongSongWidget(QTreeWidgetItem):
         self.setText(1,auxilia.songTitle(song))
         self.setText(2,song.get('album',''))
 
+    def getDrag(self, mpdclient):
+        return [self.song]
+
 class ShoutCastStationWidget(QTreeWidgetItem):
     '''Gives us in item storage of the station information this is needed to tune in to the station.'''
     def __init__(self, station):
@@ -95,12 +145,21 @@ class ShoutCastStationWidget(QTreeWidgetItem):
     def text(self):
         return self.station['name']
 
+    def getDrag(self, mpdclient):
+        client = shoutcast.ShoutcastClient()
+        item = self.station['id']
+        urls = client.getStation(item)
+        return [{'file': url} for url in urls]
+
 class ShoutCastBookmarkWidget(QListWidgetItem):
     '''Gives us in item storage of the station information this is needed to tune in to the station.'''
     def __init__(self, station):
         QListWidgetItem.__init__(self)
         self.station = station
         self.setText(station['name'])
+
+    def getDrag(self, mpdclient):
+        return [{'file': url} for url in self.urls]
 
 class SongLabel(QLabel):
     title = 'title'
