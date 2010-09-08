@@ -15,7 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #-------------------------------------------------------------------------------
-from PyQt4.QtCore import SIGNAL, QTimer
+from PyQt4.QtCore import SIGNAL, QTimer, Qt
 from PyQt4.QtGui import QMainWindow, QSystemTrayIcon, QLabel, QMenu, QIcon, QWidget
 from PyQt4 import uic
 from time import time
@@ -240,6 +240,7 @@ class PlayerForm(QWidget):
         self.songLabel = songwidgets.SongLabel()
         self.setAcceptDrops(True)
         self.titleLayout.addWidget(self.songLabel)
+        self.progress.mouseReleaseEvent = self.songSeek
 
     def dragEnterEvent(self, event):
         if hasattr(event.source().selectedItems()[0], 'getDrag'):
@@ -249,3 +250,12 @@ class PlayerForm(QWidget):
         event.accept()
         self.view.currentList.dropEvent(event, clear=True)
         self.mpdclient.play()
+
+    def songSeek(self, event):
+        if event.button() == Qt.LeftButton:
+            status = self.mpdclient.currentsong()
+            time = status.get('time', None)
+            if time is not None:
+                value = float(event.x()) / int(self.progress.geometry().width())
+                self.mpdclient.seekid(status['id'], int(int(time) * value))
+

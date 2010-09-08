@@ -74,7 +74,6 @@ class Manager():
             self.config.showConfiguration(self.view, True)
         self.__connectSignals()
         # Overload some methods.
-        self.view.playerForm.progress.mouseReleaseEvent = self.songSeek
         self.view.trayIcon.event = self.trayEvent
 
         self.timer.start(1000)
@@ -225,14 +224,6 @@ class Manager():
                         self.lastSongId = None
                         self.view.play.setIcon(self.startIcon)
             self.errorCount += 1
-
-    def songSeek(self, event):
-        if event.button() == Qt.LeftButton:
-            status = self.mpdclient.currentsong()
-            time = status.get('time', None)
-            if time is not None:
-                value = float(event.x()) / int(self.view.progress.geometry().width())
-                self.mpdclient.seekid(status['id'], int(int(time) * value))
 
     def trayEvent(self, event):
         if event.type() == 31: # enum: QEvent.wheel
