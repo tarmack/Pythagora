@@ -79,11 +79,6 @@ class Manager():
 
         self.timer.start(1000)
 
-        self.view.playerForm.progress.dragEnterEvent = self.__topEnter
-        self.view.playerForm.songLabel.dragEnterEvent = self.__topEnter
-        self.view.playerForm.progress.dropEvent = self.__topDrop
-        self.view.playerForm.songLabel.dropEvent = self.__topDrop
-
         # Set global shortcuts if KDE is available otherwise overload keyPressEvent.
         if MainWindow.KDE:
             from PyKDE4.kdeui import KActionCollection
@@ -251,16 +246,6 @@ class Manager():
     def __runIdle(self):
         if not self.view.shuttingDown and self.mpdclient.connected():
             self.mpdclient.idleThread(self.callback, timeout=10)
-
-    def __topEnter(self, event):
-        if event.source() != self.view.currentList:
-            event.accept()
-
-    def __topDrop(self, event):
-        event.accept()
-        self.mpdclient.clear()
-        self.currentList.dropEvent(event, append=True)
-        self.mpdclient.play()
 
     def __connectSignals(self):
         self.playControls.connectSignals(self.view)

@@ -224,6 +224,7 @@ class PlayerForm(QWidget):
     def __init__(self, view, app, mpdclient, config):
         QWidget.__init__(self)
         self.view = view
+        self.mpdclient = mpdclient
         try:
             if self.view.KDE:
                 uic.loadUi('PlayerForm.ui', self)
@@ -237,5 +238,14 @@ class PlayerForm(QWidget):
         self.stop.setIcon(auxilia.PIcon("media-playback-stop"))
         self.forward.setIcon(auxilia.PIcon("media-skip-forward"))
         self.songLabel = songwidgets.SongLabel()
-        self.songLabel.setAcceptDrops(True)
+        self.setAcceptDrops(True)
         self.titleLayout.addWidget(self.songLabel)
+
+    def dragEnterEvent(self, event):
+        if hasattr(event.source().selectedItems()[0], 'getDrag'):
+            event.accept()
+
+    def dropEvent(self, event):
+        event.accept()
+        self.view.currentList.dropEvent(event, clear=True)
+        self.mpdclient.play()
