@@ -174,7 +174,7 @@ class CurrentPlaylistForm(QWidget, auxilia.DragNDrop, auxilia.Actions):
                     self._insertItem(song['pos'], item)
                 else:
                     # If the song is not in the parallel or the 'hold on to' list. Just insert a new item at the correct position.
-                    item = songwidgets.FullTreeWidget(song, oneLine)
+                    item = songwidgets.CurrentListWidget(song, oneLine)
                     self._insertItem(song['pos'], item)
                 # select the song again if needed.
                 if song['id'] in self.selection: item.setSelected(True)
