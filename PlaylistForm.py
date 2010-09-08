@@ -57,11 +57,13 @@ class PlaylistForm(QWidget, auxilia.DragNDrop, auxilia.Actions):
         self.connect(self.deleteButton,SIGNAL('clicked()'),self.__deleteList)
 
         # overload dropEvent()
+        self.newButton.dragEnterEvent = self.dragEnterEvent
         self.newButton.dropEvent = self.newListDropEvent
-        self.newButton.dragEnterEvent = self.newListDragEnterEvent
+        self.songList.dragEnterEvent = self.dragEnterEvent
         self.songList.dropEvent = self.songListDropEvent
+        self.playlistList.dragEnterEvent = self.dragEnterEvent
         self.playlistList.dropEvent = self.playlistListDropEvent
-        # overload keyPressEvent() and keep original
+        # overload keyPressEvent()
         self.playlistList.keyPressEvent = self.listKeyPressEvent
         self.songList.keyPressEvent = self.songKeyPressEvent
 
@@ -94,8 +96,9 @@ class PlaylistForm(QWidget, auxilia.DragNDrop, auxilia.Actions):
         else:
             QTreeWidget.keyPressEvent(self.songList, event)
 
-    def newListDragEnterEvent(self, event):
-        event.accept()
+    def dragEnterEvent(self, event):
+        if hasattr(event.source().selectedItems()[0], 'getDrag'):
+            event.accept()
 
     def newListDropEvent(self, event):
         print 'dropped new playlist'
@@ -109,6 +112,8 @@ class PlaylistForm(QWidget, auxilia.DragNDrop, auxilia.Actions):
     def songListDropEvent(self, event, toPos=None):
         event.setDropAction(Qt.CopyAction)
         source = event.source()
+        # FIXME: Internal move upwards reverses order.
+        # FIXME: Internal move downwards interleves moved with existing songs.
         if not toPos:
             toPos = self.songList.itemAt(event.pos())
             toPos = self.songList.indexFromItem(toPos).row()
@@ -121,41 +126,27 @@ class PlaylistForm(QWidget, auxilia.DragNDrop, auxilia.Actions):
                 self.mpdclient.playlistmove(self.currentPlaylist, songList.index(song), toPos)
                 if songList.index(song) < toPos:
                     toPos += 1
-        elif source == self.view.currentList:
-            self.dropSong(event, toPos)
-        elif source == self.view.artistView:
-            self.dropArtist(event, toPos)
-        elif source == self.view.albumView:
-            self.dropAlbum(event, toPos)
-        elif source == self.view.trackView:
-            self.dropSong(event, toPos)
-        elif source == self.playlistList:
-            self.dropPlaylist(event, toPos)
-        elif source == self.view.filesystemTree:
-            self.dropFile(event, toPos)
-        elif source == self.view.genreList:
-            self.dropURL(event, toPos)
-        elif source == self.view.bookmarkList:
-            self.dropURL(event, toPos)
-
-
-    def addDrop(self, itemList, toPos):
-        try:
-            self.view.setCursor(Qt.WaitCursor)
-            count = self.songList.topLevelItemCount()
-            if not self.currentPlaylist:
-                self.currentPlaylist = self.__newList()
-            self.mpdclient.command_list_ok_begin()
-            for i, song in enumerate(itemList):
-                self.mpdclient.playlistadd(self.currentPlaylist, song)
-                if toPos >= 0:
-                    self.mpdclient.playlistmove(self.currentPlaylist, count, toPos)
-                    toPos += 1
-                    count += 1
-            self.mpdclient.command_list_end()
-        finally:
-            self.view.setCursor(Qt.ArrowCursor)
-
+        else:
+            itemList = event.source().selectedItems()
+            itemList = [item.getDrag(self.mpdclient) for item in itemList]
+            try:
+                self.view.setCursor(Qt.WaitCursor)
+                count = self.songList.topLevelItemCount()
+                if not self.currentPlaylist:
+                    self.currentPlaylist = self.__newList()
+                self.mpdclient.command_list_ok_begin()
+                for item in itemList:
+                    for i, song in enumerate(item):
+                        self.mpdclient.playlistadd(self.currentPlaylist, song['file'])
+                        if toPos >= 0:
+                            self.mpdclient.playlistmove(self.currentPlaylist, count, toPos)
+                            toPos += 1
+                            count += 1
+            except:
+                raise
+            finally:
+                self.mpdclient.command_list_end()
+                self.view.setCursor(Qt.ArrowCursor)
 
     def reload(self):
         '''Reload the lists from the server'''
