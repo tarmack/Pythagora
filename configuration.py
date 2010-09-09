@@ -212,16 +212,20 @@ class Configuration:
                 os.makedirs(str(dir))
 
     def __selectMusicDir(self):
-        fd = QFileDialog(self.setup,'Shared Music Directory',self.setup.musicPath.text())
+        directory = os.path.expanduser(unicode(self.setup.musicPath.text()))
+        fd = QFileDialog(self.setup, 'Select: Shared Music Directory', directory)
         fd.setFileMode(QFileDialog.DirectoryOnly)
+        #fd.setOption(QFileDialog.DontUseNativeDialog, True)
         if fd.exec_() == 1:
             dir = str(fd.selectedFiles().first())
             self.setup.musicPath.setText(dir)
 
     def __selectPlDir(self):
-        fd = QFileDialog(self.setup,'Shared Playlist Directory',self.setup.scBookmarkFile.text())
+        directory = os.path.expanduser(unicode(self.setup.scBookmarkFile.text()))
+        fd = QFileDialog(self.setup, 'Select: ShoutCast Bookmark File', directory)
         fd.setNameFilter('XML files (*.xml)')
         fd.setDefaultSuffix('xml')
+        #fd.setOption(QFileDialog.DontUseNativeDialog, True)
         if fd.exec_() == 1:
             dir = str(fd.selectedFiles().first())
             self.setup.scBookmarkFile.setText(dir)
