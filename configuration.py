@@ -142,7 +142,7 @@ class Configuration:
 
         self.setup.connect(self.setup.serverTable, SIGNAL('cellChanged(int,int)'), self.__cellChanged)
         self.setup.connect(self.setup.musicDirButton,SIGNAL('clicked()'),self.__selectMusicDir)
-        self.setup.connect(self.setup.scFileButton,SIGNAL('clicked()'),self.__selectPlDir)
+        self.setup.connect(self.setup.scFileButton,SIGNAL('clicked()'),self.__selectBookmarkFile)
         self.setup.connect(self.setup.buttonBox, SIGNAL('accepted()'), self.__accept)
         if modal:
             self.setup.exec_()
@@ -220,7 +220,7 @@ class Configuration:
             dir = str(fd.selectedFiles().first())
             self.setup.musicPath.setText(dir)
 
-    def __selectPlDir(self):
+    def __selectBookmarkFile(self):
         directory = os.path.expanduser(unicode(self.setup.scBookmarkFile.text()))
         fd = QFileDialog(self.setup, 'Select: ShoutCast Bookmark File', directory)
         fd.setNameFilter('XML files (*.xml)')
