@@ -28,12 +28,13 @@ import LibraryForm
 import auxilia
 import songwidgets
 
-try:
-    if "--nokde" not in sys.argv:
+if "--nokde" not in sys.argv:
+    try:
         from PyKDE4.kdeui import KWindowSystem, NET
         KDE = True
-    else: KDE = False
-except ImportError:
+    except ImportError:
+        KDE = False
+else:
     KDE = False
 
 # TODO: Make window show if minimized when trayicon is clicked.
@@ -49,11 +50,9 @@ class View(QMainWindow, auxilia.Actions):
         self.config = configuration
         self.mpdclient = mpdclient
         appIcon = QIcon('icons/Pythagora.png')
-        try:
-            if KDE:
-                uic.loadUi('Pythagora.ui', self)
-            else: raise
-        except:
+        if KDE:
+            uic.loadUi('Pythagora.ui', self)
+        else:
             uic.loadUi('Pythagora.ui.Qt', self)
         self.KDE = KDE
         self.setWindowTitle('Pythagora')
@@ -225,11 +224,9 @@ class PlayerForm(QWidget):
         QWidget.__init__(self)
         self.view = view
         self.mpdclient = mpdclient
-        try:
-            if self.view.KDE:
-                uic.loadUi('PlayerForm.ui', self)
-            else: raise
-        except:
+        if self.view.KDE:
+            uic.loadUi('PlayerForm.ui', self)
+        else:
             uic.loadUi('PlayerForm.ui.Qt', self)
         self.playerForm = self
         self.view.topLayout.addWidget(self)

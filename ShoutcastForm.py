@@ -39,12 +39,9 @@ class ShoutcastForm(QWidget, Actions):
     def __init__(self, view, app, mpdclient, config):
         QWidget.__init__(self)
         self.view = view
-        try:
-            if self.view.KDE:
-                uic.loadUi('ShoutCastForm.ui', self)
-            else: raise
-        except:
-            raise
+        if self.view.KDE:
+            uic.loadUi('ShoutCastForm.ui', self)
+        else:
             uic.loadUi('ShoutCastForm.ui.Qt', self)
         self.view.stackedWidget.addWidget(self)
         self.scSplitter.setSizes(config.mgrScSplit)

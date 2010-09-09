@@ -41,11 +41,9 @@ class PlaylistForm(QWidget, auxilia.DragNDrop, auxilia.Actions):
         self.currentPlaylist = None
         self.view.connect(self.view,SIGNAL('reloadPlaylists()'),self.reload)
         # Load and place the stored playlists form.
-        try:
-            if self.view.KDE:
-                uic.loadUi('PlaylistsForm.ui', self)
-            else: raise
-        except:
+        if self.view.KDE:
+            uic.loadUi('PlaylistsForm.ui', self)
+        else:
             uic.loadUi('PlaylistsForm.ui.Qt', self)
         self.view.tabs.addTab(self, auxilia.PIcon('document-multiple'), '&PlayLists')
         self.playlistSplitter.setSizes(config.playlistSplit)

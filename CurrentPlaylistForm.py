@@ -44,11 +44,9 @@ class CurrentPlaylistForm(QWidget, auxilia.DragNDrop, auxilia.Actions):
         self.view = view
         self.mpdclient = mpdclient
         self.config = config
-        try:
-            if self.view.KDE:
-                uic.loadUi('CurrentListForm.ui', self)
-            else: raise
-        except:
+        if self.view.KDE:
+            uic.loadUi('CurrentListForm.ui', self)
+        else:
             uic.loadUi('CurrentListForm.ui.Qt', self)
         self.view.currentListLayout.addWidget(self)
 

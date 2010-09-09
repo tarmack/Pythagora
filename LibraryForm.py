@@ -36,20 +36,16 @@ class LibraryForm(auxilia.Actions, QWidget):
         self.mpdclient = mpdclient
         self.config = config
         # Load and place the Library form.
-        try:
-            if self.view.KDE:
-                uic.loadUi('LibraryForm.ui', self)
-            else: raise
-        except:
+        if self.view.KDE:
+            uic.loadUi('LibraryForm.ui', self)
+        else:
             uic.loadUi('LibraryForm.ui.Qt', self)
         self.trackView.header().setResizeMode(1, QHeaderView.Stretch)
         self.view.tabs.addTab(self, auxilia.PIcon('server-database'), '&Library')
         # Load and place the FileSystem form.
-        try:
-            if self.view.KDE:
-                uic.loadUi('FileSystemForm.ui', self)
-            else: raise
-        except:
+        if self.view.KDE:
+            uic.loadUi('FileSystemForm.ui', self)
+        else:
             uic.loadUi('FileSystemForm.ui.Qt', self)
         self.view.tabs.addTab(self.filesystemTree, auxilia.PIcon('folder-sound'), 'F&ileSystem')
 
