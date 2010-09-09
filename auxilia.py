@@ -16,12 +16,9 @@
 # limitations under the License.
 #-------------------------------------------------------------------------------
 import locale
-import os
 import re
 from PyQt4.QtCore import SIGNAL, Qt, QObject, QEvent, QTimer
 from PyQt4.QtGui import QAction, QWidgetAction, QToolButton, QTabBar
-
-import shoutcast
 
 locale.setlocale(locale.LC_ALL, "")
 
@@ -191,80 +188,6 @@ class EventEater(QObject):
             return True
         return False
 
-
-class DragNDrop:
-    # TODO: large drops shoud give busy cursor.
-    def dropSong(self, event, pos):
-        event.accept()
-        itemList = [x.song['file'] for x in event.source().selectedItems()]
-        self.addDrop(itemList, pos)
-
-    def dropArtist(self, event, pos):
-        event.accept()
-        itemList = self.__buildList(event, 'artist')
-        self.addDrop(itemList, pos)
-
-    def dropAlbum(self, event, pos):
-        event.accept()
-        itemList = self.__buildList(event, 'album')
-        self.addDrop(itemList, pos)
-
-    def dropPlaylist(self, event, pos):
-        event.accept()
-        # Get the name of the droped playlist.
-        playlist = unicode(event.source().selectedItems()[0].text())
-        # Build a list of the songs.
-        itemList = (song['file'] for song in self.mpdclient.listplaylistinfo(playlist))
-        self.addDrop(itemList, pos)
-
-    def dropFile(self, event, pos):
-        pathlist = []
-        event.accept()
-        itemList = event.source().selectedItems()
-        #itemList = [unicode(x.text(0)) for x in source.selectedItems()]
-        for item in itemList:
-            # Select all chindren of parents.
-            if item.childCount():
-                itemList.extend([item.child(x) for x in xrange(item.childCount())])
-            # Extract the full path from the parents.
-            else:
-                path = ''
-                while item:
-                    try:
-                        text = unicode(item.text(0))
-                        path = os.path.join(text, path)
-                    except:
-                        pass
-                    item = item.parent()
-                else:
-                    pathlist.append(path[:-1])
-        self.addDrop(pathlist, pos)
-
-    def dropURL(self, event, pos):
-        client = shoutcast.ShoutcastClient()
-        event.accept()
-        item = event.source().selectedItems()[0]
-        if hasattr(item, 'station'):
-            item = item.station['id']
-        else:
-            print 'debug: bla;'
-            return False
-        if hasattr(item, 'urls'):
-            print 'debug: got urls'
-            urls = item.urls
-        else:
-            urls = client.getStation(item)
-        self.addDrop(urls, pos)
-
-    def __buildList(self, event, key):
-        fileList = []
-        selection = (unicode(x.text()) for x in event.source().selectedItems())
-        for value in selection:
-            songList = self.mpdclient.find(key, value)
-            songList.sort(cmpTracks, lambda song:song.get('track',''))
-            songList.sort(cmpUnicode, lambda song:song.get('album',''))
-            fileList.extend([x['file'] for x in songList])
-        return fileList
 
 def PIcon(icon):
     try:

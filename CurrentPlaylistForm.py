@@ -32,7 +32,7 @@ import iconretriever
 #===============================================================================
 # List and controls for the currently loaded playlist
 #===============================================================================
-class CurrentPlaylistForm(QWidget, auxilia.DragNDrop, auxilia.Actions):
+class CurrentPlaylistForm(QWidget, auxilia.Actions):
     '''List and controls for the currently loaded playlist'''
     updating = False
     editing = 0

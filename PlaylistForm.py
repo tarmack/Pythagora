@@ -31,7 +31,7 @@ import auxilia
 #==============================================================================
 # Display and manage the currently known playlists.
 #==============================================================================
-class PlaylistForm(QWidget, auxilia.DragNDrop, auxilia.Actions):
+class PlaylistForm(QWidget, auxilia.Actions):
     '''Display and manage the currently known playlists.'''
     def __init__(self, view, app, mpdclient, config):
         QWidget.__init__(self)
