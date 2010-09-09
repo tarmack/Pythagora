@@ -51,9 +51,9 @@ class View(QMainWindow, auxilia.Actions):
         self.mpdclient = mpdclient
         appIcon = QIcon('icons/Pythagora.png')
         if KDE:
-            uic.loadUi('Pythagora.ui', self)
+            uic.loadUi('ui/Pythagora.ui', self)
         else:
-            uic.loadUi('Pythagora.ui.Qt', self)
+            uic.loadUi('ui/Pythagora.ui.Qt', self)
         self.KDE = KDE
         self.setWindowTitle('Pythagora')
         self.setWindowIcon(appIcon)
@@ -225,9 +225,9 @@ class PlayerForm(QWidget):
         self.view = view
         self.mpdclient = mpdclient
         if self.view.KDE:
-            uic.loadUi('PlayerForm.ui', self)
+            uic.loadUi('ui/PlayerForm.ui', self)
         else:
-            uic.loadUi('PlayerForm.ui.Qt', self)
+            uic.loadUi('ui/PlayerForm.ui.Qt', self)
         self.playerForm = self
         self.view.topLayout.addWidget(self)
         # Set attributes not set trough xml file.

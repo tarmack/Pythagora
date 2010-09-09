@@ -45,9 +45,9 @@ class CurrentPlaylistForm(QWidget, auxilia.DragNDrop, auxilia.Actions):
         self.mpdclient = mpdclient
         self.config = config
         if self.view.KDE:
-            uic.loadUi('CurrentListForm.ui', self)
+            uic.loadUi('ui/CurrentListForm.ui', self)
         else:
-            uic.loadUi('CurrentListForm.ui.Qt', self)
+            uic.loadUi('ui/CurrentListForm.ui.Qt', self)
         self.view.currentListLayout.addWidget(self)
 
         self.retriever = iconretriever.ThreadedRetriever(config.musicPath)

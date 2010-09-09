@@ -37,16 +37,16 @@ class LibraryForm(auxilia.Actions, QWidget):
         self.config = config
         # Load and place the Library form.
         if self.view.KDE:
-            uic.loadUi('LibraryForm.ui', self)
+            uic.loadUi('ui/LibraryForm.ui', self)
         else:
-            uic.loadUi('LibraryForm.ui.Qt', self)
+            uic.loadUi('ui/LibraryForm.ui.Qt', self)
         self.trackView.header().setResizeMode(1, QHeaderView.Stretch)
         self.view.tabs.addTab(self, auxilia.PIcon('server-database'), '&Library')
         # Load and place the FileSystem form.
         if self.view.KDE:
-            uic.loadUi('FileSystemForm.ui', self)
+            uic.loadUi('ui/FileSystemForm.ui', self)
         else:
-            uic.loadUi('FileSystemForm.ui.Qt', self)
+            uic.loadUi('ui/FileSystemForm.ui.Qt', self)
         self.view.tabs.addTab(self.filesystemTree, auxilia.PIcon('folder-sound'), 'F&ileSystem')
 
         self.libSplitter_1.setSizes(config.libSplit1)

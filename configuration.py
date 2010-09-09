@@ -105,7 +105,7 @@ class Configuration:
     def showConfiguration(self, parent, modal=False):
         '''Display the configuration dialog and activate the changes.'''
         self.parent = parent
-        self.setup = uic.loadUi('Configuration.ui')
+        self.setup = uic.loadUi('ui/Configuration.ui')
         self.setup.setWindowTitle('Pythagora settings')
         self.setup.setWindowIcon(QIcon('Pythagora.png'))
         self.setup.setAttribute(Qt.WA_QuitOnClose, False)

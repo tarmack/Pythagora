@@ -40,9 +40,9 @@ class ShoutcastForm(QWidget, Actions):
         QWidget.__init__(self)
         self.view = view
         if self.view.KDE:
-            uic.loadUi('ShoutCastForm.ui', self)
+            uic.loadUi('ui/ShoutCastForm.ui', self)
         else:
-            uic.loadUi('ShoutCastForm.ui.Qt', self)
+            uic.loadUi('ui/ShoutCastForm.ui.Qt', self)
         self.view.stackedWidget.addWidget(self)
         self.scSplitter.setSizes(config.mgrScSplit)
         self.adding = False
