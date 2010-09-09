@@ -199,7 +199,6 @@ class PlaylistForm(QWidget, auxilia.DragNDrop, auxilia.Actions):
            Note: this operation clears the current playlist by default.
         '''
         state = self.mpdclient.status()['state']
-        self.view.currentList.clear()
         self.mpdclient.clear()
         self.__addList(state)
 
