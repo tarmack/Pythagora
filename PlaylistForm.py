@@ -190,7 +190,7 @@ class PlaylistForm(QWidget, auxilia.DragNDrop, auxilia.Actions):
         self.mpdclient.play()
 
     def __addPlayList(self):
-        last = int(self.mpdclient.status['playlistlength'])
+        last = int(self.mpdclient.status()['playlistlength'])
         self.__addList()
         self.mpdclient.play(last)
 
@@ -258,7 +258,7 @@ class PlaylistForm(QWidget, auxilia.DragNDrop, auxilia.Actions):
 
 
     def __addPlaySong(self):
-        last = int(self.mpdclient.status['playlistlength'])
+        last = int(self.mpdclient.status()['playlistlength'])
         self.__addSong()
         self.mpdclient.play(last)
 
