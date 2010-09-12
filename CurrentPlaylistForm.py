@@ -51,7 +51,6 @@ class CurrentPlaylistForm(QWidget, auxilia.Actions):
         self.view.currentListLayout.addWidget(self)
 
         self.retriever = iconretriever.ThreadedRetriever(config.musicPath)
-        #self.version = int(self.mpdclient.status()['playlist'])
         if config.oneLinePlaylist:
             self.oneLinePlaylist.setChecked(True)
             self.currentList.setIconSize(QSize(16, 16))
@@ -62,9 +61,6 @@ class CurrentPlaylistForm(QWidget, auxilia.Actions):
         self.version = 0
         self.idlist = []
         self.trackKey = ''
-        #self.timer = QTimer()
-        #self.timer.setSingleShot(True)
-        #view.connect(self.timer,SIGNAL('timeout()'),self.__search)
         self.view.connect(self.view, SIGNAL('playlistChanged()'), self.reload)
         self.view.connect(self.view, SIGNAL('resetCurrentList()'), self.__resetCurrentList)
         self.view.connect(self.view, SIGNAL('currentSong'), self.setPlaying)
@@ -237,7 +233,7 @@ class CurrentPlaylistForm(QWidget, auxilia.Actions):
         if not clear:
             toPos = self.currentList.row(self.currentList.itemAt(event.pos()))
         else:
-            self.mpdclient.clear()
+            self.mpdclient.send('clear')
             toPos = -1
         print 'debug: drop on position ', toPos
         if event.source() == self.currentList:
@@ -261,7 +257,7 @@ class CurrentPlaylistForm(QWidget, auxilia.Actions):
                 # Item moved down, reduce target index.
                 toPos -= 1
             print "debug: move ", unicode(item.text()), "to", toPos
-            self.mpdclient.moveid(item.song['id'], toPos)
+            self.mpdclient.send('moveid', (item.song['id'], toPos))
 
     def __drop(self, event, toPos):
         event.accept()
@@ -270,16 +266,16 @@ class CurrentPlaylistForm(QWidget, auxilia.Actions):
         try:
             print 'debug: adding', itemList
             self.view.setCursor(Qt.WaitCursor)
-            self.mpdclient.command_list_ok_begin()
+            self.mpdclient.send('command_list_ok_begin')
             for item in itemList:
                 for song in item:
                     if toPos < 0:
-                        self.mpdclient.add(song['file'])
+                        self.mpdclient.send('add', (song['file'],))
                     else:
-                        self.mpdclient.addid(song['file'], toPos)
+                        self.mpdclient.send('addid', (song['file'], toPos))
                         toPos += 1
         finally:
-            self.mpdclient.command_list_end()
+            self.mpdclient.send('command_list_end')
             self.editing = time()
             self.view.setCursor(Qt.ArrowCursor)
 
@@ -329,14 +325,14 @@ class CurrentPlaylistForm(QWidget, auxilia.Actions):
         (name,ok) = QInputDialog.getItem(self,'Save Playlist','Enter or select the playlist name',playlists,0,True)
         if ok == True:
             if name in playlists:
-                self.mpdclient.rm(name)
-            self.mpdclient.save(name)
+                self.mpdclient.send('rm', (name,))
+            self.mpdclient.send('save', (name,))
             self.view.emit(SIGNAL('reloadPlaylists()'))
 
     def __clearCurrent(self):
         '''Clear the current playlist'''
-        self.mpdclient.stop()
-        self.mpdclient.clear()
+        self.mpdclient.send('stop')
+        self.mpdclient.send('clear')
         self.reload()
 
     def __removeSelected(self):
@@ -352,13 +348,13 @@ class CurrentPlaylistForm(QWidget, auxilia.Actions):
         self.__removeSongs(idlist)
 
     def __removeSongs(self, itemList):
-        self.mpdclient.command_list_ok_begin()
+        self.mpdclient.send('command_list_ok_begin')
         for item in itemList:
             try:
-                self.mpdclient.deleteid(item.song['id'])
+                self.mpdclient.send('deleteid', (item.song['id'],))
             except Exception, e:
                 print e
-        self.mpdclient.command_list_end()
+        self.mpdclient.send('command_list_end')
         self.currentList.setCurrentRow(-1)
         self.view.emit(SIGNAL('playlistChanged()'))
         self.setPlaying(int(self.mpdclient.status().get('song', -1)))
@@ -367,7 +363,7 @@ class CurrentPlaylistForm(QWidget, auxilia.Actions):
         self.__playSong(self.currentList.selectedItems())
 
     def __playSong(self, item):
-        self.mpdclient.playid(self.currentList.currentItem().song['id'])
+        self.mpdclient.send('playid', (self.currentList.currentItem().song['id'],))
         self.setPlaying(self.currentList.row(item))
 
     def __setPlayTime(self):
