@@ -20,7 +20,6 @@ from PyQt4.QtCore import QTimer, SIGNAL, Qt
 from PyQt4.QtGui import QApplication, QWidget, QSystemTrayIcon, QKeySequence
 
 import sys
-import socket
 import signal
 
 import mpdextended as mpd
@@ -62,17 +61,18 @@ class Manager():
     misses = 0
     def __init__(self, app):
         self.app = app
+        self.firstConnect = True
         self.mpdclient = mpd.MPDClient()
         self.timer = QTimer()
         self.idleTimer = QTimer()
         self.idleTimer.setSingleShot(True)
+        self.idleTimer.setInterval(0)
         self.config = configuration.Configuration()
         self.view = MainWindow.View(self.config, self.mpdclient, app)
         self.playControls = playControls.PlayControls(self.mpdclient)
         self.update = Update(self.view, self.mpdclient, self.config, self.playControls)
-        if not self.__connectMPD():
-            self.config.showConfiguration(self.view, True)
         self.__connectSignals()
+        self.__connectMPD()
         # Overload some methods.
         self.view.trayIcon.event = self.trayEvent
 
@@ -103,10 +103,14 @@ class Manager():
         if self.view.shuttingDown:
             print 'debug: callback aborted, application is closing down.'
             return
-        if 'ConnectionError' in changes:
-            self.view.emit(SIGNAL('ConnectionError'))
-        else:
+        if type(changes) == list:
             self.view.emit(SIGNAL('update'), changes)
+        elif isinstance(changes, Exception):
+            print 'debug: idle callback - got exception: ', changes
+            try:
+                raise changes
+            except:
+                self.view.emit(SIGNAL('ConnectionError'))
         # The slots will be executed asynchronously so we use a timer to
         # schedule the next idle call after all events have been processed.
         if self.idleTimer.timerId() < 0:
@@ -161,7 +165,7 @@ class Manager():
         if self.mpdclient._idle:
             self.update.progress()
         elif not self.app.closingDown():
-            if not self.mpdclient._sock:
+            if not self.mpdclient.connected():
                 self.__connectMPD()
         self.view.currentList.loadIcons()
 
@@ -173,43 +177,50 @@ class Manager():
         if self.mpdclient.connected():
             self.mpdclient.close()
             self.mpdclient.disconnect()
-        socket.setdefaulttimeout(1)
         server = self.config.server
-        try:
-            if not server:
-                self.update.setSongLabel('Not connected')
-                self.view.serverLabel.setText('Not connected')
-                self.update.clearForms()
-                self.update.currentsong = {}
-                self.idleTimer.setInterval(10000)
-                return None
-            else:
-                self.view.setCursor(Qt.WaitCursor)
-                self.view.serverLabel.setText('Connecting to %s' % server[0])
-                self.mpdclient.connect(server[1], int(server[2]))
-                if len(server) > 3 and server[3] != '':
-                    self.mpdclient.password(server[3])
-                self.update.currentsong = self.mpdclient.currentsong()
-                self.view.serverLabel.setText('Connected to %s' % server[0])
-                self.idleTimer.setInterval(0)
-                self.update.update(['player', 'mixer', 'options'])
-                self.misses = 0
-                self.errorCount = 0
-                return True
-        except Exception, e:
-            self.update.setSongLabel('Could not connect to %s at %s (%s).' % (server[0], server[1], e))
+        if not server:
+            self.update.setSongLabel('Not connected')
+            self.view.serverLabel.setText('Not connected')
+            self.update.clearForms()
+            self.update.currentsong = {}
+            if self.firstConnect:
+                self.config.showConfiguration(self.view, True)
+        else:
+            self.view.setCursor(Qt.WaitCursor)
+            self.view.serverLabel.setText('Connecting to %s' % server[0])
+            self.mpdclient.connect(server[1], int(server[2]), self.__connectCallback)
+
+    def __connectCallback(self, x):
+        self.view.emit(SIGNAL('connectionTry'))
+
+    def __connectionTry(self):
+        print 'debug: tried to connect again :$'
+        if self.mpdclient.connected():
+            self.misses = 0
+            self.errorCount = 0
+            self.timer.setInterval(1000)
+            if len(self.config.server) > 3 and self.config.server[3] != '':
+                self.mpdclient.send('password', (self.config.server[3],))
+            self.view.serverLabel.setText('Connected to %s' % self.config.server[0])
+            self.update.update(['player', 'mixer', 'options'])
+            self.view.emit(SIGNAL('resetCurrentList()'))
+            self.view.emit(SIGNAL('reloadLibrary()'))
+            if self.idleTimer.timerId() < 0:
+                self.idleTimer.start()
+        else:
+            self.update.setSongLabel('Could not connect to %s at %s.' % (self.config.server[0], self.config.server[1]))
             self.view.serverLabel.setText('Not connected')
             self.update.clearForms()
             self.update.currentsong = {}
             self.misses += 1
-            return False
-        finally:
-            print 'debug: tried to connect again :$'
-            self.view.emit(SIGNAL('resetCurrentList()'))
-            self.view.emit(SIGNAL('reloadLibrary()'))
-            self.view.setCursor(Qt.ArrowCursor)
-            if self.idleTimer.timerId() < 0:
-                self.idleTimer.start()
+            self.timer.setInterval(1000*self.misses)
+            if self.firstConnect:
+                self.firstConnect = False
+                self.config.showConfiguration(self.view, True)
+        self.view.setCursor(Qt.ArrowCursor)
+        self.firstConnect = False
+
+
 
     def _error(self):
         if self.config.server:
@@ -236,7 +247,7 @@ class Manager():
 
     def __runIdle(self):
         if not self.view.shuttingDown and self.mpdclient.connected():
-            self.mpdclient.idleThread(self.callback, timeout=10)
+            self.mpdclient.send('idle', ([], 10), self.callback)
 
     def __connectSignals(self):
         self.playControls.connectSignals(self.view)
@@ -246,6 +257,7 @@ class Manager():
         self.view.connect(self.idleTimer, SIGNAL("timeout()"), self.__runIdle)
         self.view.connect(self.view, SIGNAL('reconnect()'), self.__connectMPD)
         self.view.connect(self.view, SIGNAL('ConnectionError()'), self._error)
+        self.view.connect(self.view, SIGNAL('connectionTry'), self.__connectionTry)
 
     def keyboardInterrupt(self, signum, frame):
         print 'debug: KeyboardInterrupt'
@@ -272,8 +284,9 @@ class Update:
 
     def update(self, changes):
         try:
-            status = self.mpdclient.status()
-            self.errorCount = 0
+            if self.mpdclient.connected():
+                status = self.mpdclient.status()
+                self.errorCount = 0
         except Exception, e:
             print 'error: update error', e
             self.view.emit(SIGNAL('ConnectionError()'))
