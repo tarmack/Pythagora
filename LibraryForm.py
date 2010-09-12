@@ -246,11 +246,11 @@ class LibraryForm(auxilia.Actions, QWidget):
 
     def rescan(self):
         '''rescan the library'''
-        self.__scan(self.mpdclient.rescan())
+        self.mpdclient.send('rescan')
 
     def update(self):
         '''update the library'''
-        self.__scan(self.mpdclient.update())
+        self.mpdclient.send('update')
 
     def addArtist(self):
         '''Add all songs from the currently selected artist into the current playlist'''
@@ -264,7 +264,7 @@ class LibraryForm(auxilia.Actions, QWidget):
         first = None
         for item in selection:
             for song in self.mpdclient.find(key,unicode(item.text())):
-                self.mpdclient.add(song['file'])
+                self.mpdclient.send('add', (song['file'],))
                 if not first:
                     first = self.mpdclient.playlistid()[-1]['id']
         self.view.emit(SIGNAL('playlistChanged()'))
@@ -274,7 +274,7 @@ class LibraryForm(auxilia.Actions, QWidget):
         '''Add all selected songs into the current playlist'''
         first = None
         for item in self.trackView.selectedItems():
-            self.mpdclient.add(item.song['file'])
+            self.mpdclient.send('add', (item.song['file'],))
             if not first:
                 first = self.mpdclient.playlistid()[-1]['id']
         self.view.emit(SIGNAL('playlistChanged()'))
@@ -283,33 +283,33 @@ class LibraryForm(auxilia.Actions, QWidget):
 
     def __addPlayArtist(self):
         try:
-            self.mpdclient.playid(self.addArtist())
+            self.mpdclient.send('playid', (self.addArtist(),))
         except:
             pass
 
     def __clearPlayArtist(self):
-        self.mpdclient.clear()
+        self.mpdclient.send('clear')
         self.__addPlayArtist()
 
     def __addPlayAlbum(self):
         try:
-            self.mpdclient.playid(self.addAlbum())
+            self.mpdclient.send('playid', (self.addAlbum(),))
         except:
             pass
 
     def __clearPlayAlbum(self):
-        self.mpdclient.clear()
+        self.mpdclient.send('clear')
         self.__addPlayAlbum()
 
 
     def __addPlayTrack(self):
         try:
-            self.mpdclient.playid(self.addTrack())
+            self.mpdclient.send('playid', (self.addTrack(),))
         except:
             pass
 
     def __clearPlayTrack(self):
-        self.mpdclient.clear()
+        self.mpdclient.send('clear')
         self.__addPlayTrack()
 
 
