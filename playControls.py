@@ -26,54 +26,54 @@ class PlayControls:
         try:
             state = self.mpdclient.status()['state']
             if state == 'play':
-                self.mpdclient.pause(1)
+                self.mpdclient.send('pause', (1,))
             elif state == 'pause':
-                self.mpdclient.pause(0)
+                self.mpdclient.send('pause', (0,))
             else:
-                self.mpdclient.play()
+                self.mpdclient.send('play')
         except:
             pass
 
     def back(self):
         try:
-            self.mpdclient.previous()
+            self.mpdclient.send('previous')
         except:
             pass
 
     def stop(self):
         try:
-            self.mpdclient.stop()
+            self.mpdclient.send('stop')
         except:
             pass
 
     def forward(self):
         try:
-            self.mpdclient.next()
+            self.mpdclient.send('next')
         except:
             pass
 
     def setRandom(self, value):
-        self.mpdclient.random(int(value))
+        self.mpdclient.send('random', (int(value),))
 
     def setRepeat(self, value):
-        self.mpdclient.repeat(int(value))
+        self.mpdclient.send('repeat', (int(value),))
 
     def setCrossFade(self, value):
-        self.mpdclient.crossfade(value)
+        self.mpdclient.send('crossfade', (value,))
 
     def volumeUp(self, value=2):
         print 'debug: volup'
-        self.setVolume(self.currentVolume + value)
+        self.mpdclient.send('volume', (value,))
 
     def volumeDown(self, value=2):
         print 'debug: voldown'
-        self.setVolume(self.currentVolume - value)
+        self.mpdclient.send('volume', (-value,))
 
     def setVolume(self,value):
         '''Change the volume'''
         if value != self.currentVolume:
             try:
-                self.mpdclient.volume(value - self.currentVolume)
+                self.mpdclient.send('volume', (value - self.currentVolume,))
             except:
                 pass
             self.currentVolume = value
