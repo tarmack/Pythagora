@@ -121,7 +121,7 @@ class PlaylistForm(QWidget, auxilia.Actions):
             print 'debug: ', itemList
             for song in itemList:
                 songList = self.mpdclient.listplaylistinfo(self.currentPlaylist)
-                self.mpdclient.playlistmove(self.currentPlaylist, songList.index(song), toPos)
+                self.mpdclient.send('playlistmove', (self.currentPlaylist, songList.index(song), toPos))
                 if songList.index(song) < toPos:
                     toPos += 1
         else:
@@ -132,18 +132,18 @@ class PlaylistForm(QWidget, auxilia.Actions):
                 count = self.songList.topLevelItemCount()
                 if not self.currentPlaylist:
                     self.currentPlaylist = self.__newList()
-                self.mpdclient.command_list_ok_begin()
+                self.mpdclient.send('command_list_ok_begin')
                 for item in itemList:
                     for i, song in enumerate(item):
-                        self.mpdclient.playlistadd(self.currentPlaylist, song['file'])
+                        self.mpdclient.send('playlistadd', (self.currentPlaylist, song['file']))
                         if toPos >= 0:
-                            self.mpdclient.playlistmove(self.currentPlaylist, count, toPos)
+                            self.mpdclient.send('playlistmove', (self.currentPlaylist, count, toPos))
                             toPos += 1
                             count += 1
             except:
                 raise
             finally:
-                self.mpdclient.command_list_end()
+                self.mpdclient.send('command_list_end')
                 self.view.setCursor(Qt.ArrowCursor)
 
     def reload(self):
@@ -187,19 +187,19 @@ class PlaylistForm(QWidget, auxilia.Actions):
 
     def __loadPlayList(self):
         self.__loadList()
-        self.mpdclient.play()
+        self.mpdclient.send('play')
 
     def __addPlayList(self):
         last = int(self.mpdclient.status()['playlistlength'])
         self.__addList()
-        self.mpdclient.play(last)
+        self.mpdclient.send('play', (last,))
 
     def __loadList(self):
         '''Load the currently selected playlist onto the server.
            Note: this operation clears the current playlist by default.
         '''
         state = self.mpdclient.status()['state']
-        self.mpdclient.clear()
+        self.mpdclient.send('clear')
         self.__addList(state)
 
     def __addList(self, state=None):
@@ -208,11 +208,11 @@ class PlaylistForm(QWidget, auxilia.Actions):
         if not state:
             state = self.mpdclient.status()['state']
         try:
-            self.mpdclient.load(unicode(self.playlistList.selectedItems()[0].text()))
+            self.mpdclient.send('load', (unicode(self.playlistList.selectedItems()[0].text()),))
         except:
             return
         if state == 'play':
-            self.mpdclient.play()
+            self.mpdclient.send('play')
 
     def __newList(self):
         '''Ask the user for a name for the new playlist'''
@@ -251,7 +251,7 @@ class PlaylistForm(QWidget, auxilia.Actions):
         resp = QMessageBox.question(self,'Delete Playlist','Are you sure you want to delete '+plname,QMessageBox.Yes|QMessageBox.No,QMessageBox.No)
         if resp == QMessageBox.Yes:
             try:
-                self.mpdclient.rm(plname)
+                self.mpdclient.send('rm', (plname,))
             except mpd.CommandError:
                 pass
             self.playlistList.takeItem(self.playlistList.row(item))
@@ -260,27 +260,27 @@ class PlaylistForm(QWidget, auxilia.Actions):
     def __addPlaySong(self):
         last = int(self.mpdclient.status()['playlistlength'])
         self.__addSong()
-        self.mpdclient.play(last)
+        self.mpdclient.send('play', (last,))
 
     def __clearPlaySong(self):
-        self.mpdclient.clear()
+        self.mpdclient.send('clear')
         self.__addPlaySong()
 
     def __addSong(self):
-        self.mpdclient.command_list_ok_begin()
+        self.mpdclient.send('command_list_ok_begin')
         try:
             for item in self.songList.selectedItems():
-                self.mpdclient.add(item.song['file'])
+                self.mpdclient.send('add', (item.song['file'],))
         finally:
-            self.mpdclient.command_list_end()
+            self.mpdclient.send('command_list_end')
 
     def __removeSong(self):
         itemlist = self.songList.selectedItems()
         itemlist.reverse()
-        self.mpdclient.command_list_ok_begin()
+        self.mpdclient.send('command_list_ok_begin')
         try:
             for item in itemlist:
-                self.mpdclient.playlistdelete(self.currentPlaylist, item.pos)
+                self.mpdclient.send('playlistdelete', (self.currentPlaylist, item.pos))
         finally:
-            self.mpdclient.command_list_end()
+            self.mpdclient.send('command_list_end')
 
