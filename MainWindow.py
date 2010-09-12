@@ -57,12 +57,12 @@ class View(QMainWindow, auxilia.Actions):
         self.KDE = KDE
         self.setWindowTitle('Pythagora')
         self.setWindowIcon(appIcon)
-        # Create 'MDP' menu.
-        self.reloadLibrary = self.actionLibReload(self.menuMPD, self.__libReload)
-        self.updateLibrary = self.actionLibUpdate(self.menuMPD, self.mpdclient.update)
-        self.rescanLibrary = self.actionLibRescan(self.menuMPD, self.mpdclient.rescan)
         # Load all forms.
         self.createViews()
+        # Create 'MDP' menu.
+        self.reloadLibrary = self.actionLibReload(self.menuMPD, self.__libReload)
+        self.updateLibrary = self.actionLibUpdate(self.menuMPD, self.libraryForm.update)
+        self.rescanLibrary = self.actionLibRescan(self.menuMPD, self.libraryForm.rescan)
         # Fill Statusbar.
         self.serverLabel = QLabel('Not connected')
         self.numSongsLabel = QLabel('Songs')
@@ -246,7 +246,7 @@ class PlayerForm(QWidget):
     def dropEvent(self, event):
         event.accept()
         self.view.currentList.dropEvent(event, clear=True)
-        self.mpdclient.play()
+        self.mpdclient.send('play')
 
     def songSeek(self, event):
         if event.button() == Qt.LeftButton:
@@ -254,5 +254,5 @@ class PlayerForm(QWidget):
             time = status.get('time', None)
             if time is not None:
                 value = float(event.x()) / int(self.progress.geometry().width())
-                self.mpdclient.seekid(status['id'], int(int(time) * value))
+                self.mpdclient.send('seekid', (status['id'], int(int(time) * value)))
 
