@@ -152,19 +152,19 @@ class ShoutcastForm(QWidget, Actions):
         station = self.stationTree.currentStation()
         urls = self.client.getStation(station['id'])
         station['urls'] = urls
-        self.mpd.stop()
-        self.mpd.clear()
+        self.mpd.send('stop')
+        self.mpd.send('clear')
         for url in urls:
-            self.mpd.add(url)
-        self.mpd.play()
+            self.mpd.send('add', (url,))
+        self.mpd.send('play')
 
     def __play(self, item=None):
         '''Play the currently selected bookmarked station.'''
-        self.mpd.stop()
-        self.mpd.clear()
+        self.mpd.send('stop')
+        self.mpd.send('clear')
         for url in self.bookMarkList.getStationFiles():
-            self.mpd.add(url)
-        self.mpd.play()
+            self.mpd.send('add', (url,))
+        self.mpd.send('play')
 
     def __saveStation(self):
         '''Bookmark the currently selected station.'''
