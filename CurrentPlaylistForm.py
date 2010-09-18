@@ -141,7 +141,7 @@ class CurrentPlaylistForm(QWidget, auxilia.Actions):
             else: return
             # Get the song id's of the selected songs.
             self.currentList.setUpdatesEnabled(False)
-            # FIXME: Swapping songs seems to confuse us and drop song items.
+            oldPos = int(plist[0]['pos'])
             for song in plist:
                 song['pos'] = int(song['pos'])
                 # if the song is in our parralel id list.
@@ -161,6 +161,14 @@ class CurrentPlaylistForm(QWidget, auxilia.Actions):
                     self._insertItem(song['pos'], item)
                 # if ist in our 'hold on to' list.
                 elif song['id'] in itemlist:
+                    if oldPos+1 < song['pos']:
+                        items = []
+                        for item in itemlist.values():
+                            if int(item.song['pos']) > oldPos and int(item.song['pos']) < song['pos']:
+                                items.append(item)
+                        items.sort(key=lambda x: x.song['pos'], reverse=True)
+                        for item in items:
+                            self._insertItem(oldPos+1, item)
                     # pick the item from the dict.
                     item = itemlist[song['id']]
                     # update the song atribute.
@@ -171,6 +179,7 @@ class CurrentPlaylistForm(QWidget, auxilia.Actions):
                     # If the song is not in the parallel or the 'hold on to' list. Just insert a new item at the correct position.
                     item = songwidgets.CurrentListWidget(song, oneLine)
                     self._insertItem(song['pos'], item)
+                oldPos = song['pos']
                 # select the song again if needed.
                 if song['id'] in self.selection: item.setSelected(True)
 
