@@ -42,18 +42,13 @@ class MPDClient():
 
     def __getattr__(self, command):
         if hasattr(self.connection, command):
-            return lambda *args: self.send(command, args, False)
+            return lambda *args: self.connection.doBlocking(command, args)
 
     def send(self, command, args=(), callback=None, callbackArgs=None):
         self.connection.send(command, args, callback, callbackArgs)
-        if callback == False:
-            value = self.connection.returnQueue.get()
-            if isinstance(value, Exception):
-                raise value
-            else:
-                return value
 
     def connect(self, server, port, callback=False, callbackArgs=None):
+        self.connection.abort = True
         self.connection = MPDThread(server, port, callback, callbackArgs)
 
     def connected(self):
@@ -76,17 +71,17 @@ class MPDThread(mpdunicode.MPDClient, threading.Thread):
         threading.Thread.__init__(self)
         self.daemon = True
         self.queue = Queue.Queue()
-        self.returnQueue = Queue.Queue(1)
         self._lock = threading.RLock()
         super(MPDThread, self).__init__()
         self.connecting = False
+        self.exit = False
+        self.abort = False
         if server != None:
             self.connecting = True
             self.send('connect', (server, port), callback, callbackArgs)
+            self.start()
 
     def send(self, command, args=(), callback=None, callbackArgs=None):
-        if not self.is_alive():
-            self.start()
         self.queue.put((command, args, callback, callbackArgs))
         if command != 'noidle' and self._idle:
             self._writecommand('noidle', [])
@@ -97,25 +92,41 @@ class MPDThread(mpdunicode.MPDClient, threading.Thread):
             print 'debug: got ', command, ' with arguments ', args, 'from queue.'
             try:
                 value = self.__do(command, args)
-            except mpdunicode.ConnectionError, e:
-                print 'debug: MPD thread - ConnectionError: ', e, '\n', sys.exc_info()
-                value = mpdunicode.ConnectionError(e)
-            except mpdunicode.CommandListError, e:
-                print 'debug: MPD thread - CommandListError: ', e, '\n', sys.exc_info()
-                value = mpdunicode.CommandListError(e)
             except Exception, e:
                 print 'debug: MPD thread - Exception: ', e, '\n', sys.exc_info()
-                value = sys.exc_info()[0]
+                value = sys.exc_info()[1]
+                self.exit = True
+            finally:
+                self.queue.task_done()
             if command == 'connect':
                 self.connecting = False
-            if callback == False:
-                self.returnQueue.put(value)
+            if self.abort:
+                self.exit = True
             elif callback == None:
-                continue
+                pass
             elif callbackArgs == None:
                 callback(value)
             else:
                 callback(value, *callbackArgs)
+            if self.exit:
+                try:
+                    self.__do('close', ())
+                    self.__do('disconnect', ())
+                except:
+                    pass
+                while not self.queue.empty():
+                    self.queue.get()
+                    self.queue.task_done()
+                sys.exit(1)
+
+    def doBlocking(self, command, args):
+        print 'debug: blocking on', command, ' with arguments ', args
+        if self.connecting:
+            raise mpdunicode.ConnectionError('Not connected yet.')
+        if command != 'noidle' and self._idle:
+            self._writecommand('noidle', [])
+        self.queue.join()
+        return self.__do(command, args)
 
     def __do(self, command, args):
         try:

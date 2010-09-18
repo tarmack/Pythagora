@@ -105,16 +105,16 @@ class Manager():
             return
         if type(changes) == list:
             self.view.emit(SIGNAL('update'), changes)
+            # The slots will be executed asynchronously so we use a timer to
+            # schedule the next idle call after all events have been processed.
+            if self.idleTimer.timerId() < 0:
+                self.idleTimer.start()
         elif isinstance(changes, Exception):
             print 'debug: idle callback - got exception: ', changes
             try:
                 raise changes
             except:
-                self.view.emit(SIGNAL('ConnectionError'))
-        # The slots will be executed asynchronously so we use a timer to
-        # schedule the next idle call after all events have been processed.
-        if self.idleTimer.timerId() < 0:
-            self.idleTimer.start()
+                self.view.emit(SIGNAL('ConnectionError()'))
 
     def KeyPressEvent(self, event):
         if event.modifiers() == Qt.ControlModifier:
@@ -169,12 +169,12 @@ class Manager():
                 self.__connectMPD()
         self.view.currentList.loadIcons()
 
-    def __connectMPD(self):
+    def __connectMPD(self, error=False):
         if self.view.shuttingDown:
             return True
         self.update.setProgress(0, 0)
         self.update.lastSongId = None
-        if self.mpdclient.connected():
+        if not error and self.mpdclient.connected():
             self.mpdclient.close()
             self.mpdclient.disconnect()
         server = self.config.server
@@ -223,18 +223,9 @@ class Manager():
 
 
     def _error(self):
+        print 'error: Lost connection to mpd server.'
         if self.config.server:
-            if self.errorCount > 0:
-                print 'error: Lost connection to mpd server.'
-                if not self.misses or (self.errorCount / self.misses) % 10 == 0:
-                    if self.__connectMPD():
-                        return
-                    else:
-                        # Let the user know we went wrong somewhere.
-                        self.setProgress(0, 0)
-                        self.lastSongId = None
-                        self.view.play.setIcon(self.startIcon)
-            self.errorCount += 1
+            self.__connectMPD(True)
 
     def trayEvent(self, event):
         if event.type() == 31: # enum: QEvent.wheel
@@ -246,6 +237,7 @@ class Manager():
             return False
 
     def __runIdle(self):
+        print 'debug: requesting idle.'
         if not self.view.shuttingDown and self.mpdclient.connected():
             self.mpdclient.send('idle', ([], 10), self.callback)
 
@@ -284,9 +276,8 @@ class Update:
 
     def update(self, changes):
         try:
-            if self.mpdclient.connected():
-                status = self.mpdclient.status()
-                self.errorCount = 0
+            status = self.mpdclient.status()
+            self.errorCount = 0
         except Exception, e:
             print 'error: update error', e
             self.view.emit(SIGNAL('ConnectionError()'))
