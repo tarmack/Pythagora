@@ -232,6 +232,8 @@ class CurrentPlaylistForm(QWidget, auxilia.Actions):
         event.setDropAction(Qt.CopyAction)
         if not clear:
             toPos = self.currentList.row(self.currentList.itemAt(event.pos()))
+            if toPos > 0:
+                toPos += self.currentList.dropIndicatorPosition()-1
         else:
             self.mpdclient.send('clear')
             toPos = -1
@@ -244,17 +246,14 @@ class CurrentPlaylistForm(QWidget, auxilia.Actions):
 
     def __internalMove(self, toPos):
         # Move the songs to the new position.
+        if toPos < 0:
+            toPos = self.currentList.count()
         itemList = self.currentList.selectedItems()
         itemList.sort(key=self.currentList.row)
         print 'debug: ', [unicode(x.text()) for x in itemList]
-        if toPos < itemList[-1].song['pos']:
-            # We moved up, reverse the list.
-            itemList.reverse()
-        if toPos < 0:
-            toPos = self.currentList.count()-1
+        itemList.reverse()
         for item in itemList:
             if self.currentList.row(item) < toPos:
-                # Item moved down, reduce target index.
                 toPos -= 1
             print "debug: move ", unicode(item.text()), "to", toPos
             self.mpdclient.send('moveid', (item.song['id'], toPos))
