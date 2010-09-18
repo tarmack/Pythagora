@@ -47,24 +47,13 @@ class MPDClient():
     def send(self, command, args=(), callback=None, callbackArgs=None):
         self.connection.send(command, args, callback, callbackArgs)
 
-    def connect(self, server, port, callback=False, callbackArgs=None):
+    def connect(self, server, port, callback=None, callbackArgs=None):
         self.connection.abort = True
         self.connection = MPDThread(server, port, callback, callbackArgs)
 
     def connected(self):
-        if self.connection.connecting:
-            return False
-        if self.connection._sock:
-            try:
-                self.ping()
-                return True
-            except:
-                try:
-                    self.disconnect()
-                except:
-                    pass
-                return False
-        else: return False
+        return self.connection.is_alive() and not self.connection.connecting
+
 
 class MPDThread(mpdunicode.MPDClient, threading.Thread):
     def __init__(self, server, port, callback, callbackArgs):
