@@ -26,6 +26,8 @@
 #-------------------------------------------------------------------------------
 from mpd import *
 
+ENCODING = 'utf-8'
+
 class MPDClient(MPDClient):
     ''' This proxy class wraps round the python-mpd module.
     It converts the dictionary values in the output to unicode
@@ -33,8 +35,7 @@ class MPDClient(MPDClient):
     support for some missing commands including the idle
     command and friends.
     '''
-    def __init__(self, code='utf-8'):
-        self.code = code
+    def __init__(self):
         self._idle = False
         super(MPDClient, self).__init__()
         self._commands.update({'rescan': self._getitem
@@ -76,13 +77,13 @@ class MPDClient(MPDClient):
     def _writecommand(self, command, args=[]):
         if self._idle and command not in ('idle', 'noidle'):
             raise ProtocolError('%s not allowed in idle mode.' % command)
-        args = [unicode(arg).encode(self.code) for arg in args]
+        args = [unicode(arg).encode(ENCODING) for arg in args]
         super(MPDClient, self)._writecommand(command, args)
 
     def _readitem(self, separator):
         item = super(MPDClient, self)._readitem(separator)
         if item:
-            item[1] = item[1].decode(self.code)
+            item[1] = item[1].decode(ENCODING)
         return item
 
     def _reset(self):
