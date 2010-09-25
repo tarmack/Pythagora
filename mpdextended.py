@@ -57,6 +57,8 @@ class MPDClient():
     def connected(self):
         return self.connection.is_alive() and not self.connection.connecting
 
+    def disconnect(self):
+        self.connection.abort = True
 
 class MPDThread(mpdunicode.MPDClient, threading.Thread):
     def __init__(self, server, port, callback, callbackArgs):

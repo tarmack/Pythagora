@@ -156,12 +156,7 @@ class View(QMainWindow, auxilia.Actions):
     def shutdown(self):
         self.shuttingDown = True
         self.app.processEvents()
-        try:
-            self.mpdclient.close()
-            self.mpdclient.disconnect()
-            print 'debug: called close'
-        except:
-            pass
+        self.mpdclient.disconnect()
         if self.config:
             self.config.mgrSize = self.size()
             self.config.showShoutcast = self.stackedWidget.currentIndex()
