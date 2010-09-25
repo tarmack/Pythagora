@@ -14,28 +14,34 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #------------------------------------------------------------------------------
-# This module is intended as an extension on the mpdunicode module. It can be
-# used to offload the mpd communication in a separate thread via the send
-# method.  It will execute the callback function given in the third argument
-# with the answer from the mpd server.
+# This module is intended as an extension on the mpdunicode or the python-mpd
+# module of J.A. Treuman. It can be used to offload the mpd communication in a
+# separate thread via the send method. It will execute the callback function
+# given in the 'callback' argument with the answer from the mpd server.
 # The callback function is run from the spawned thread so make sure it only
 # calls thread safe code, for instance set an event in your favorite event
 # handler.
 # The module maps the standard MPDClient methods, so you can still directly
-# call to the protocol methods and they will be blocking. Please note that it
-# is currently not safe to call blocking commands from multiple threads.
-# Also note that the threaded idle mode deviates from the protocol by
+# call to the protocol methods and they will block waiting for the results.
+# Please note that the threaded idle mode deviates from the protocol by
 # allowing any command while in idle mode. If the server is in idle mode any
 # command other than noidle will be transparently prepended with the noidle
 # command. This is done to make your life easier.
 #------------------------------------------------------------------------------
-import mpdunicode
+try:
+    import mpdunicode as mpd
+except ImportError:
+    import mpd
 import threading
 import Queue
 import sys
 
 class MPDClient():
-    '''This proxy class wraps round the mpdunicode module.
+    '''This proxy class wraps round the mpd(unicode) module. It supplies a
+    threaded interface to the mpd server on top of the normal methods in the
+    mpd module.
+    If an exception is raised in the spawned tread this exception is given as
+    the first argument to the callback function.
     '''
     def __init__(self):
         self.connection = MPDThread(None, None, None, None)
@@ -45,22 +51,45 @@ class MPDClient():
             if self.connected():
                 return lambda *args: self.connection.doBlocking(command, args)
             else:
-                raise mpdunicode.ConnectionError('Not connected.')
+                raise mpd.ConnectionError('Not connected.')
+        else:
+            raise AttributeError("'%s' object has no attribute '%s'" %
+                                 (self.__class__.__name__, command))
 
     def send(self, command, args=(), callback=None, callbackArgs=None):
+        '''Put the command on the command queue.
+        If supplied the callback argument is called with the results as its
+        first argument and additional arguments from the tuple given in
+        callbackArgs.
+        '''
         self.connection.send(command, args, callback, callbackArgs)
 
     def connect(self, server, port, callback=None, callbackArgs=None):
+        '''Spawn a new connection thread connected to server on port.
+        When a connection is established or an error occurred the function
+        given as callback is called.
+        '''
         self.connection.abort = True
         self.connection = MPDThread(server, port, callback, callbackArgs)
 
     def connected(self):
+        '''Returns True when the connection thread is running and has
+        established a connection.
+        '''
         return self.connection.is_alive() and not self.connection.connecting
 
     def disconnect(self):
+        '''Closes the current connection and exits the thread.
+        If a command is currently being executed the thread will exit after all
+        work for that command is done. It will discard any subsequent commands
+        in the queue.
+        '''
         self.connection.abort = True
 
-class MPDThread(mpdunicode.MPDClient, threading.Thread):
+class MPDThread(mpd.MPDClient, threading.Thread):
+    '''This class represents the interface thread to the mpd server.
+    '''
+    _idle = False
     def __init__(self, server, port, callback, callbackArgs):
         threading.Thread.__init__(self)
         self.daemon = True
@@ -76,6 +105,11 @@ class MPDThread(mpdunicode.MPDClient, threading.Thread):
             self.start()
 
     def send(self, command, args=(), callback=None, callbackArgs=None):
+        '''Put the command on the command queue.
+        If supplied the callback argument is called with the results as its
+        first argument and additional arguments from the tuple given in
+        callbackArgs.
+        '''
         self.queue.put((command, args, callback, callbackArgs))
         if command != 'noidle' and self._idle:
             self._writecommand('noidle', [])
@@ -86,7 +120,7 @@ class MPDThread(mpdunicode.MPDClient, threading.Thread):
             print 'debug: got ', command, ' with arguments ', args, 'from queue.'
             try:
                 value = self.__do(command, args)
-            except mpdunicode.CommandError, e:
+            except mpd.CommandError, e:
                 print 'debug: MPD thread - CommandError: ', e, '\n', sys.exc_info()
                 value = sys.exc_info()[1]
             except Exception, e:
@@ -117,9 +151,12 @@ class MPDThread(mpdunicode.MPDClient, threading.Thread):
                 sys.exit(1)
 
     def doBlocking(self, command, args):
+        '''Sends the command to the mpd server and blocks until the results are
+        available.
+        '''
         print 'debug: blocking on', command, ' with arguments ', args
         if self.connecting:
-            raise mpdunicode.ConnectionError('Not connected yet.')
+            raise mpd.ConnectionError('Not connected yet.')
         if command != 'noidle' and self._idle:
             self._writecommand('noidle', [])
         self.queue.join()
