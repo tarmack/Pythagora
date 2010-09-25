@@ -74,7 +74,7 @@
             </property>
             <property name="icon">
              <iconset>
-              <normaloff>icons/document-new.png</normaloff>icons/document-new.png</iconset>
+              <normaloff>../icons/document-new.png</normaloff>../icons/document-new.png</iconset>
             </property>
            </widget>
           </item>
@@ -97,7 +97,7 @@
             </property>
             <property name="icon">
              <iconset>
-              <normaloff>icons/edit-delete.png</normaloff>icons/edit-delete.png</iconset>
+              <normaloff>../icons/edit-delete.png</normaloff>../icons/edit-delete.png</iconset>
             </property>
            </widget>
           </item>
@@ -120,7 +120,7 @@
             </property>
             <property name="icon">
              <iconset>
-              <normaloff>icons/text-frame-link.png</normaloff>icons/text-frame-link.png</iconset>
+              <normaloff>../icons/text-frame-link.png</normaloff>../icons/text-frame-link.png</iconset>
             </property>
            </widget>
           </item>

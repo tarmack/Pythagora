@@ -126,7 +126,7 @@
   <action name="actionExit">
    <property name="icon">
     <iconset>
-     <normaloff>icons/application-exit.png</normaloff>icons/application-exit.png</iconset>
+     <normaloff>../icons/application-exit.png</normaloff>../icons/application-exit.png</iconset>
    </property>
    <property name="text">
     <string>Exit</string>
@@ -135,7 +135,7 @@
   <action name="actionSettings">
    <property name="icon">
     <iconset>
-     <normaloff>icons/configure.png</normaloff>icons/configure.png</iconset>
+     <normaloff>../icons/configure.png</normaloff>../icons/configure.png</iconset>
    </property>
    <property name="text">
     <string>Settings</string>
