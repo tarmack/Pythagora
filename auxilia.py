@@ -238,9 +238,11 @@ class StatusTabBar(QTabBar):
 
     def dragMoveEvent(self, event):
         '''Keep track of the mouse and change the position, restarts the timer when moved.'''
-        # TODO: Set threshold for movement.
-        self.tabPos = event.pos()
-        self.tabTimer.start()
+        tabPos = event.pos()
+        moved = tabPos.manhattanLength() - self.tabPos.manhattanLength()
+        if moved > 7 or moved < -7:
+            self.tabTimer.start(500)
+        self.tabPos = tabPos
 
     def __selectTab(self):
         '''Changes the view to the tab where the mouse was hovering above.'''
