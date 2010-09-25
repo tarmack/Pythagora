@@ -163,18 +163,17 @@ class Manager():
         return action
 
     def __update(self):
-        if self.mpdclient._idle:
+        if self.mpdclient.connected():
             self.update.progress()
-        self.view.currentList.loadIcons()
+            self.view.currentList.loadIcons()
+        else:
+            self.__connectMPD(error=True)
 
     def __connectMPD(self, error=False):
         if self.view.shuttingDown:
             return True
         self.update.setProgress(0, 0)
         self.update.lastSongId = None
-        if not error and self.mpdclient.connected():
-            self.mpdclient.close()
-            self.mpdclient.disconnect()
         server = self.config.server
         if not server:
             self.update.setSongLabel('Not connected')
@@ -187,11 +186,23 @@ class Manager():
             self.view.setCursor(Qt.WaitCursor)
             self.view.serverLabel.setText('Connecting to %s' % server[0])
             self.mpdclient.connect(server[1], int(server[2]), callback=
-                    lambda x: self.view.emit(SIGNAL('connectionTry')))
+                    lambda exc: self.view.emit(SIGNAL('connectionTry'), exc))
 
-    def __connectionTry(self):
+    def __connectionTry(self, exc):
         print 'debug: tried to connect again :$'
-        if self.mpdclient.connected():
+        self.view.emit(SIGNAL('resetCurrentList()'))
+        if isinstance(exc, Exception):
+            self.update.setSongLabel('Could not connect to %s at %s.' % (self.config.server[0], self.config.server[1]))
+            self.view.serverLabel.setText('Not connected')
+            self.update.clearForms()
+            self.update.currentsong = {}
+            self.misses += 1
+            self.misses = min(30, self.misses)
+            self.timer.setInterval(3000*self.misses)
+            if self.firstConnect:
+                self.firstConnect = False
+                self.config.showConfiguration(self.view, True)
+        else:
             self.misses = 0
             self.errorCount = 0
             self.timer.setInterval(1000)
@@ -199,16 +210,6 @@ class Manager():
                 self.mpdclient.send('password', (self.config.server[3],))
             self.view.serverLabel.setText('Connected to %s' % self.config.server[0])
             self.callback(['playlist', 'database', 'stored_playlist', 'player', 'mixer', 'options'])
-        else:
-            self.update.setSongLabel('Could not connect to %s at %s.' % (self.config.server[0], self.config.server[1]))
-            self.view.serverLabel.setText('Not connected')
-            self.update.clearForms()
-            self.update.currentsong = {}
-            self.misses += 1
-            self.timer.setInterval(1000*self.misses)
-            if self.firstConnect:
-                self.firstConnect = False
-                self.config.showConfiguration(self.view, True)
         self.view.setCursor(Qt.ArrowCursor)
         self.firstConnect = False
 
