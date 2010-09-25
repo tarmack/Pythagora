@@ -17,8 +17,17 @@
 #-------------------------------------------------------------------------------
 import locale
 import re
+import sys
 from PyQt4.QtCore import SIGNAL, Qt, QObject, QEvent, QTimer
-from PyQt4.QtGui import QAction, QWidgetAction, QToolButton, QTabBar
+from PyQt4.QtGui import QAction, QWidgetAction, QToolButton, QTabBar, QIcon
+
+try:
+    if "--nokde" in sys.argv:
+        raise ImportError
+    from PyKDE4.kdeui import KIcon
+    KDE = True
+except ImportError:
+    KDE = False
 
 locale.setlocale(locale.LC_ALL, "")
 
@@ -204,13 +213,10 @@ class EventEater(QObject):
             return True
         return False
 
-
 def PIcon(icon):
-    try:
-        from PyKDE4.kdeui import KIcon
+    if KDE:
         return KIcon(icon)
-    except ImportError:
-        from PyQt4.QtGui import QIcon
+    else:
         return QIcon('icons/%s.png' % icon)
 
 class StatusTabBar(QTabBar):
