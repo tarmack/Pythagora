@@ -165,7 +165,11 @@ class LibraryForm(auxilia.Actions, QWidget):
             update = False
             self.filesystemTree.setUpdatesEnabled(False)
         for name in filelist.keys():
-            item = songwidgets.FilesystemWidget(name)
+            if filelist[name] == {}:
+                icon = 'file'
+            else:
+                icon = 'directory'
+            item = songwidgets.FilesystemWidget(name, icon)
             parent.addChild(item)
             self.__loadFileSystemView(filelist[name], item)
         parent.sortChildren(0, 0)

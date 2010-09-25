@@ -96,9 +96,14 @@ class TrackWidget(QTreeWidgetItem):
 
 class FilesystemWidget(QTreeWidgetItem):
     '''Widget used in the filesystem tree.'''
-    def __init__(self, text):
+    def __init__(self, text, icon):
+        self.icons = {
+                'file': auxilia.PIcon('audio-x-generic'),
+                'directory': auxilia.PIcon('folder-sound')
+                }
         QTreeWidgetItem.__init__(self)
         self.setText(0, text)
+        self.setIcon(0, self.icons[icon])
 
     def getDrag(self, mpdclient, path=''):
         text = unicode(self.text(0))
