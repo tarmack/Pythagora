@@ -39,7 +39,7 @@ class PlaylistForm(QWidget, auxilia.Actions):
         self.view = view
         self.mpdclient = mpdclient
         self.currentPlaylist = None
-        self.view.connect(self.view,SIGNAL('reloadPlaylists()'),self.reload)
+        self.view.connect(self.view,SIGNAL('reloadPlaylists'),self.reload)
         # Load and place the stored playlists form.
         if self.view.KDE:
             uic.loadUi('ui/PlaylistsForm.ui', self)
@@ -49,10 +49,11 @@ class PlaylistForm(QWidget, auxilia.Actions):
         self.playlistSplitter.setSizes(config.playlistSplit)
 
         # top bit
-        self.connect(self.playlistList,SIGNAL('itemClicked(QListWidgetItem*)'),self.selectPlaylist)
+        self.connect(self.playlistList,SIGNAL('itemSelectionChanged()'),self.selectPlaylist)
         self.connect(self.newButton,SIGNAL('clicked()'),self.__newList)
         self.connect(self.loadButton,SIGNAL('clicked()'),self.__loadList)
         self.connect(self.deleteButton,SIGNAL('clicked()'),self.__deleteList)
+        self.connect(self, SIGNAL('showPlaylist'), self.__showPlaylist)
 
         # overload dropEvent()
         self.newButton.dragEnterEvent = self.dragEnterEvent
@@ -146,14 +147,14 @@ class PlaylistForm(QWidget, auxilia.Actions):
                 self.mpdclient.send('command_list_end')
                 self.view.setCursor(Qt.ArrowCursor)
 
-    def reload(self):
+    def reload(self, lsinfo):
         '''Reload the lists from the server'''
         try:
             plname = unicode(self.playlistList.selectedItems()[0].text())
         except:
             plname = None
         self.playlistList.clear()
-        playlists = [x['playlist'] for x in self.mpdclient.lsinfo() if 'playlist' in x]
+        playlists = [x['playlist'] for x in lsinfo if 'playlist' in x]
         playlists.sort(auxilia.cmpUnicode)
         for l in playlists:
             self.playlistList.addItem(songwidgets.PlaylistWidget(l))
@@ -161,7 +162,8 @@ class PlaylistForm(QWidget, auxilia.Actions):
         self.currentPlaylist = plname
         self.__getPlaylist(plname)
 
-    def selectPlaylist(self, item):
+    def selectPlaylist(self):
+        item = self.playlistList.selectedItems()[0]
         self.__getPlaylist(unicode(item.text()))
 
     def __getPlaylist(self, plname=None):
@@ -174,16 +176,17 @@ class PlaylistForm(QWidget, auxilia.Actions):
                 return
         else: self.playlistList.setCurrentItem(self.playlistList.findItems(plname, Qt.MatchExactly)[0])
         self.currentPlaylist = plname
+        self.mpdclient.send('listplaylistinfo', (plname,), callback=
+                lambda songlist: self.emit(SIGNAL('showPlaylist'), songlist))
 
-        try:
-            songList = self.mpdclient.listplaylistinfo(plname)
-            for i, song in enumerate(songList):
-                self.songList.addTopLevelItem(songwidgets.LongSongWidget(song, i))
-        except mpd.CommandError:
-            pass
-
+    def __showPlaylist(self, songlist):
+        if isinstance(songlist, Exception):
+            return
+        for i, song in enumerate(songlist):
+            self.songList.addTopLevelItem(songwidgets.LongSongWidget(song, i))
         for i in range(3):
             self.songList.resizeColumnToContents(i)
+
 
     def __loadPlayList(self):
         self.__loadList()
@@ -216,15 +219,13 @@ class PlaylistForm(QWidget, auxilia.Actions):
 
     def __newList(self):
         '''Ask the user for a name for the new playlist'''
-        playlists = [x['playlist'] for x in self.mpdclient.lsinfo() if 'playlist' in x]
-
         (name,ok) = QInputDialog.getText(self
                 , 'new Playlist'
                 , 'Please enter a name for the new playlist.'
                 , 0
                 , 'New Playlist')
         if ok == True:
-            while name in playlists:
+            while self.playlistList.findItems(name, Qt.MatchExactly):
                 (name,ok) = QInputDialog.getText(self
                         , 'new Playlist'
                         , 'The playlist %s already exists.\nPlease enter a different name' % name

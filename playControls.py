@@ -23,8 +23,11 @@ class PlayControls:
         self.mpdclient = mpdclient
 
     def playPause(self):
+        self.mpdclient.send('status', callback=self._playPause)
+
+    def _playPause(self, status):
         try:
-            state = self.mpdclient.status()['state']
+            state = status['state']
             if state == 'play':
                 self.mpdclient.send('pause', (1,))
             elif state == 'pause':

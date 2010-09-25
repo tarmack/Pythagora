@@ -51,7 +51,7 @@ class LibraryForm(auxilia.Actions, QWidget):
 
         self.libSplitter_1.setSizes(config.libSplit1)
         self.libSplitter_2.setSizes(config.libSplit2)
-        self.view.connect(self.view,SIGNAL('reloadLibrary()'),self.reload)
+        self.view.connect(self.view,SIGNAL('reloadLibrary'),self.reload)
 
         # search and filter functions
         self.connect(self.artistView,SIGNAL('itemSelectionChanged()'),self.artistFilter)
@@ -84,12 +84,11 @@ class LibraryForm(auxilia.Actions, QWidget):
 
         #=======================================================================
 
-    def reload(self):
-        if not self.config.server or not self.mpdclient.connected():
+    def reload(self, mainlist):
+        if not self.config.server:
             return
         try:
             # Emit signal to also reload playlists from server.
-            self.view.emit(SIGNAL('reloadPlaylists()'))
             self.view.setCursor(Qt.WaitCursor)
             p = time()
             t = time()
@@ -99,9 +98,6 @@ class LibraryForm(auxilia.Actions, QWidget):
             self.albumlist = {}
             filesystemlist = {}
             # parse the list and prepare it for loading in the library browser and the file system view.
-            self.mpdclient.iterate = True
-            mainlist = self.mpdclient.listallinfo()
-            #print 'library download took %.3f seconds' % (time() - p); t = time()
             for song in (x for x in mainlist if 'file' in x):
                 self.mainSongList.append(song)
                 album = song.get('album','?')
@@ -127,8 +123,6 @@ class LibraryForm(auxilia.Actions, QWidget):
             print 'load FS took %.3f seconds' % (time() - t)
             print 'library load took %.3f seconds' % (time() - p)
         finally:
-            self.mpdclient.iterate = False
-            self.view.emit(SIGNAL('update'), ['player'])
             self.view.setCursor(Qt.ArrowCursor)
 
     def __loadArtistView(self):

@@ -140,7 +140,8 @@ class View(QMainWindow, auxilia.Actions):
         self.tabTimer.stop()
 
     def __libReload(self):
-        self.emit(SIGNAL('reloadLibrary()'))
+        self.mpdclient.send('listallinfo', callback=
+                lambda mainlist: self.emit(SIGNAL('reloadLibrary'), mainlist))
 
 #==============================================================================
 
@@ -237,7 +238,8 @@ class PlayerForm(QWidget):
         self.songLabel = songwidgets.SongLabel()
         self.setAcceptDrops(True)
         self.titleLayout.addWidget(self.songLabel)
-        self.progress.mouseReleaseEvent = self.songSeek
+        self.progress.mouseReleaseEvent = self.mouseReleaseEvent
+        self.connect(self, SIGNAL('songSeek'), self.songSeek)
 
     def dragEnterEvent(self, event):
         if hasattr(event.source().selectedItems()[0], 'getDrag'):
@@ -248,11 +250,14 @@ class PlayerForm(QWidget):
         self.view.currentList.dropEvent(event, clear=True)
         self.mpdclient.send('play')
 
-    def songSeek(self, event):
+    def mouseReleaseEvent(self, event):
         if event.button() == Qt.LeftButton:
-            status = self.mpdclient.currentsong()
-            time = status.get('time', None)
-            if time is not None:
-                value = float(event.x()) / int(self.progress.geometry().width())
-                self.mpdclient.send('seekid', (status['id'], int(int(time) * value)))
+            position = float(event.x()) / int(self.progress.geometry().width())
+            self.mpdclient.send('currentsong', callback=
+                    lambda currentsong: self.emit(SIGNAL('songSeek'), currentsong, position))
+
+    def songSeek(self, currentsong, position):
+        time = int(currentsong.get('time', None))
+        if time is not None:
+            self.mpdclient.send('seekid', (currentsong['id'], int(time * position)))
 

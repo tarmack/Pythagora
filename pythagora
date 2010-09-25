@@ -104,7 +104,8 @@ class Manager():
             print 'debug: callback aborted, application is closing down.'
             return
         if type(changes) == list:
-            self.view.emit(SIGNAL('update'), changes)
+            self.mpdclient.send('status', callback=
+                    lambda status: self.view.emit(SIGNAL('update'), changes, status))
             # The slots will be executed asynchronously so we use a timer to
             # schedule the next idle call after all events have been processed.
             if self.idleTimer.timerId() < 0:
@@ -164,9 +165,6 @@ class Manager():
     def __update(self):
         if self.mpdclient._idle:
             self.update.progress()
-        elif not self.app.closingDown():
-            if not self.mpdclient.connected():
-                self.__connectMPD()
         self.view.currentList.loadIcons()
 
     def __connectMPD(self, error=False):
@@ -188,10 +186,8 @@ class Manager():
         else:
             self.view.setCursor(Qt.WaitCursor)
             self.view.serverLabel.setText('Connecting to %s' % server[0])
-            self.mpdclient.connect(server[1], int(server[2]), self.__connectCallback)
-
-    def __connectCallback(self, x):
-        self.view.emit(SIGNAL('connectionTry'))
+            self.mpdclient.connect(server[1], int(server[2]), callback=
+                    lambda x: self.view.emit(SIGNAL('connectionTry')))
 
     def __connectionTry(self):
         print 'debug: tried to connect again :$'
@@ -202,11 +198,7 @@ class Manager():
             if len(self.config.server) > 3 and self.config.server[3] != '':
                 self.mpdclient.send('password', (self.config.server[3],))
             self.view.serverLabel.setText('Connected to %s' % self.config.server[0])
-            self.update.update(['player', 'mixer', 'options'])
-            self.view.emit(SIGNAL('resetCurrentList()'))
-            self.view.emit(SIGNAL('reloadLibrary()'))
-            if self.idleTimer.timerId() < 0:
-                self.idleTimer.start()
+            self.callback(['playlist', 'database', 'stored_playlist', 'player', 'mixer', 'options'])
         else:
             self.update.setSongLabel('Could not connect to %s at %s.' % (self.config.server[0], self.config.server[1]))
             self.view.serverLabel.setText('Not connected')
@@ -219,8 +211,6 @@ class Manager():
                 self.config.showConfiguration(self.view, True)
         self.view.setCursor(Qt.ArrowCursor)
         self.firstConnect = False
-
-
 
     def _error(self):
         print 'error: Lost connection to mpd server.'
@@ -265,6 +255,7 @@ class Update:
     misses = 0
     errorCount = 0
     time = 0
+    currentsong = {}
     def __init__(self, view, mpdclient, config, playControls):
         self.pauseIcon = auxilia.PIcon("media-playback-pause")
         self.startIcon = auxilia.PIcon("media-playback-start")
@@ -273,15 +264,9 @@ class Update:
         self.config = config
         self.playControls = playControls
         self.view.connect(self.view, SIGNAL('update'), self.update)
+        self.view.connect(self.view, SIGNAL('currentSong'), self._currentsong)
 
-    def update(self, changes):
-        try:
-            status = self.mpdclient.status()
-            self.errorCount = 0
-        except Exception, e:
-            print 'error: update error', e
-            self.view.emit(SIGNAL('ConnectionError()'))
-            return
+    def update(self, changes, status):
         if changes:
             for change in changes:
                 getattr(self, change)(status)
@@ -299,7 +284,8 @@ class Update:
                 print 'error: updateProgress error', e
 
     def playlist(self, status):
-        self.view.emit(SIGNAL('playlistChanged()'))
+        self.mpdclient.send('plchanges', (self.view.currentList.version,), callback=
+                lambda plist: self.view.emit(SIGNAL('playlistChanged'), plist, status))
 
     def player(self, status):
         #try:
@@ -309,23 +295,22 @@ class Update:
         if status['state'] == 'stop':
             self.lastSongId = 0
             self.setProgress(0, 0)
-            self.view.emit(SIGNAL('currentSong'), None)
             self.setSongLabel('Connected to %s.' % self.config.server[0])
             return
+        if status['songid'] != self.lastSongId:
+            self.mpdclient.send('currentsong', callback=
+                    lambda currentsong: self.view.emit(SIGNAL('currentSong'), currentsong))
+        # format times
         cs, ss = status['time'].split(':')
         self.setProgress(cs, ss)
-        currentSong = int(status.get('song', None))
-        if status['songid'] != self.lastSongId:
-            self.view.emit(SIGNAL('currentSong'), currentSong)
-            self.currentsong = self.mpdclient.currentsong()
-            album = self.currentsong.get('album', 'Unknown')
-            self.shoutcastCount = 0
-            self.setSongLabel(auxilia.songTitle(self.currentsong), auxilia.songArtist(self.currentsong), album)
-            # format times
-            self.lastSongId = status['songid']
-
         # Check if volume chaged behind our back.
         self.mixer(status)
+
+    def _currentsong(self, currentsong):
+        album = currentsong.get('album', 'Unknown')
+        self.setSongLabel(auxilia.songTitle(currentsong), auxilia.songArtist(currentsong), album)
+        self.currentsong = currentsong
+        self.lastSongId = currentsong['id']
 
     def mixer(self, status):
         volumeStatus = int(status['volume'])
@@ -338,10 +323,12 @@ class Update:
         self.view.currentList.crossFade.setValue(int(status['xfade']))
 
     def stored_playlist(self, status):
-        self.view.emit(SIGNAL('reloadPlaylists()'))
+        self.mpdclient.send('lsinfo', callback=
+                lambda lsinfo: self.view.emit(SIGNAL('reloadPlaylists'), lsinfo))
 
     def database(self, status):
-        self.view.emit(SIGNAL('reloadLibrary()'))
+        self.mpdclient.send('listallinfo', callback=
+                lambda mainlist: self.view.emit(SIGNAL('reloadLibrary'), mainlist))
 
     def setSongLabel(self, title='', artist='', album=''):
         self.view.trayIcon.setToolTip('<b><big>%s</big></b>\r\nby <big>%s</big>\r\nfrom <i>%s</i>' % (title, artist, album))

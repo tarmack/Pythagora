@@ -42,7 +42,10 @@ class MPDClient():
 
     def __getattr__(self, command):
         if hasattr(self.connection, command):
-            return lambda *args: self.connection.doBlocking(command, args)
+            if self.connected():
+                return lambda *args: self.connection.doBlocking(command, args)
+            else:
+                raise mpdunicode.ConnectionError('Not connected.')
 
     def send(self, command, args=(), callback=None, callbackArgs=None):
         self.connection.send(command, args, callback, callbackArgs)
@@ -81,6 +84,9 @@ class MPDThread(mpdunicode.MPDClient, threading.Thread):
             print 'debug: got ', command, ' with arguments ', args, 'from queue.'
             try:
                 value = self.__do(command, args)
+            except mpdunicode.CommandError, e:
+                print 'debug: MPD thread - CommandError: ', e, '\n', sys.exc_info()
+                value = sys.exc_info()[1]
             except Exception, e:
                 print 'debug: MPD thread - Exception: ', e, '\n', sys.exc_info()
                 value = sys.exc_info()[1]

@@ -61,7 +61,7 @@ class CurrentPlaylistForm(QWidget, auxilia.Actions):
         self.version = 0
         self.idlist = []
         self.trackKey = ''
-        self.view.connect(self.view, SIGNAL('playlistChanged()'), self.reload)
+        self.view.connect(self.view, SIGNAL('playlistChanged'), self.reload)
         self.view.connect(self.view, SIGNAL('resetCurrentList()'), self.__resetCurrentList)
         self.view.connect(self.view, SIGNAL('currentSong'), self.setPlaying)
 
@@ -85,7 +85,6 @@ class CurrentPlaylistForm(QWidget, auxilia.Actions):
         self.connect(self.currentList.verticalScrollBar(), SIGNAL('valueChanged(int)'), self._setEditing)
         self.connect(self.keepPlayingVisible,SIGNAL('clicked()'),self.__scrollList)
         self.connect(self.oneLinePlaylist,SIGNAL('toggled(bool)'),self.__setOneLinePlaylist)
-        self.view.emit(SIGNAL('playlistChanged()'))
 
         # Menu for current playlist.
         # Create actions.
@@ -107,7 +106,8 @@ class CurrentPlaylistForm(QWidget, auxilia.Actions):
         self.currentList.addAction(self.currentMenuCrop)
 
 
-    def setPlaying(self, playing):
+    def setPlaying(self, currentsong):
+        playing = int(currentsong['pos'])
         print 'debug: setPlaying to ', playing
         beforeScroll = self.currentList.verticalScrollBar().value()
         item = self.currentList.item(self.playing)
@@ -122,25 +122,20 @@ class CurrentPlaylistForm(QWidget, auxilia.Actions):
         else: self.playing = -1
         self.__scrollList(beforeScroll)
 
-    def reload(self):
+    def reload(self, plist, status):
         '''Causes the current play list to be reloaded from the server'''
-        if not self.config.server or not self.mpdclient.connected():
+        if not self.config.server:
             return
         oneLine = self.config.oneLinePlaylist
         beforeScroll = self.currentList.verticalScrollBar().value()
         self.selection = [item.song['id'] for item in self.currentList.selectedItems()]
         itemlist = {}
-        try:
-            status = self.mpdclient.status()
-            version = int(status['playlist'])
-            if version > self.version:
-                try:
-                    plist = self.mpdclient.plchanges(self.version)
-                except:
-                    return
-            else: return
-            # Get the song id's of the selected songs.
-            self.currentList.setUpdatesEnabled(False)
+        version = int(status['playlist'])
+        if version <= self.version:
+            return
+        # Get the song id's of the selected songs.
+        self.currentList.setUpdatesEnabled(False)
+        if plist:
             oldPos = int(plist[0]['pos'])
             for song in plist:
                 song['pos'] = int(song['pos'])
@@ -183,25 +178,21 @@ class CurrentPlaylistForm(QWidget, auxilia.Actions):
                 # select the song again if needed.
                 if song['id'] in self.selection: item.setSelected(True)
 
-            # If the playlist has shrunk, delete the songs from the end.
-            last = int(status['playlistlength'])
-            for x in range(last, self.currentList.count()):
-                self._takeItem(last)
+        # If the playlist has shrunk, delete the songs from the end.
+        last = int(status['playlistlength'])
+        for x in range(last, self.currentList.count()):
+            self._takeItem(last)
 
-            self.view.numSongsLabel.setText(status['playlistlength']+' Songs')
-            self.__setPlayTime()
+        self.view.numSongsLabel.setText(status['playlistlength']+' Songs')
+        self.__setPlayTime()
 
-            self.currentList.setUpdatesEnabled(True)
-            self.__scrollList(beforeScroll)
-            self.version = version
-            self.setPlaying(int(status.get('song', -1)))
-            key = unicode(self.currentFilter.text())
-            if key != '':
-                self.trackSearch(key)
-        except Exception, e:
-            print 'error: currentlist update exception', e
-        finally:
-            self.currentList.setUpdatesEnabled(True)
+        self.__scrollList(beforeScroll)
+        self.version = version
+        self.setPlaying({'pos': status.get('song', -1)})
+        key = unicode(self.currentFilter.text())
+        if key != '':
+            self.trackSearch(key)
+        self.currentList.setUpdatesEnabled(True)
 
     def loadIcons(self):
         while self.retriever.icons:
@@ -307,7 +298,6 @@ class CurrentPlaylistForm(QWidget, auxilia.Actions):
         self.version = 0
         self.playing = -1
         self.currentPlayTime = 0
-        self.reload()
 
     def __scrollList(self, beforeScroll=None):
         editing = time() - self.editing
@@ -335,7 +325,6 @@ class CurrentPlaylistForm(QWidget, auxilia.Actions):
             if name in playlists:
                 self.mpdclient.send('rm', (name,))
             self.mpdclient.send('save', (name,))
-            self.view.emit(SIGNAL('reloadPlaylists()'))
 
     def __clearCurrent(self):
         '''Clear the current playlist'''
@@ -364,15 +353,12 @@ class CurrentPlaylistForm(QWidget, auxilia.Actions):
                 print e
         self.mpdclient.send('command_list_end')
         self.currentList.setCurrentRow(-1)
-        self.view.emit(SIGNAL('playlistChanged()'))
-        self.setPlaying(int(self.mpdclient.status().get('song', -1)))
 
     def __playFromMenu(self):
         self.__playSong(self.currentList.selectedItems())
 
     def __playSong(self, item):
         self.mpdclient.send('playid', (self.currentList.currentItem().song['id'],))
-        self.setPlaying(self.currentList.row(item))
 
     def __setPlayTime(self):
         songTime = self.currentPlayTime
@@ -396,6 +382,8 @@ class CurrentPlaylistForm(QWidget, auxilia.Actions):
             self.currentList.setIconSize(QSize(16, 16))
         else:
             self.currentList.setIconSize(QSize(32, 32))
+        self.mpdclient.send('status', callback=
+                lambda status: self.view.emit(SIGNAL('update'), ['playlist'], status))
 
     def __togglePlaylistTools(self, value=None):
         text = ('Show Playlist Tools', 'Hide Playlist Tools')
