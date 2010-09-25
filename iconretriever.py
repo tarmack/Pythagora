@@ -72,8 +72,8 @@ class Retriever:
                 return NOCOVER
             try:
                 artist = auxilia.songArtist(song)
-                album = song.get('album','')
-                if artist != '?':
+                album = auxilia.songAlbum(song)
+                if artist:
                     if album:
                         cover = self.getAlbumImage(artist,album)
                     if not cover:

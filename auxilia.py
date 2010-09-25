@@ -23,10 +23,26 @@ from PyQt4.QtGui import QAction, QWidgetAction, QToolButton, QTabBar
 locale.setlocale(locale.LC_ALL, "")
 
 def songTitle(song):
-    return song.get('title', song.get('name', song['file']))
+    value = song.get('title', song.get('name', song['file']))
+    return _getTextField(value)
 
-def songArtist(song):
-    return song.get('artist', song.get('performer', song.get('composer', '?')))
+def songArtist(song, alt=''):
+    value = song.get('artist', song.get('performer', song.get('composer', alt)))
+    return _getTextField(value)
+
+def songAlbum(song, alt=''):
+    value = song.get('album', alt)
+    return _getTextField(value)
+
+def songTrack(song, alt=''):
+    value = song.get('track', alt)
+    return _getTextField(value)
+
+def _getTextField(value):
+    if getattr(value, '__iter__', False):
+        return value[0]
+    else:
+        return value
 
 def songTime(song):
     stime = int(song.get('time', '0'))

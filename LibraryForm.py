@@ -100,8 +100,8 @@ class LibraryForm(auxilia.Actions, QWidget):
             # parse the list and prepare it for loading in the library browser and the file system view.
             for song in (x for x in mainlist if 'file' in x):
                 self.mainSongList.append(song)
-                album = song.get('album','?')
-                artist = auxilia.songArtist(song)
+                album = auxilia.songAlbum(song, 'None')
+                artist = auxilia.songArtist(song, 'Unknown')
                 appendToList(self.artistdict, artist, song)
                 appendToList(self.albumdict, album, song)
                 appendToList(self.albumlist, album, artist, True)
@@ -194,7 +194,7 @@ class LibraryForm(auxilia.Actions, QWidget):
                 #tup = (song.get('album', '?'), auxilia.songArtist(song))
                 #if not tup in albumlist:
                 #    albumlist.insert(0, tup)
-                album = song.get('album', '?')
+                album = auxilia.songAlbum(song, 'None')
                 if not artist in albumlist.get(album, []):
                     albumlist[album] = albumlist.get(album, [])+[artist]
         self.__loadAlbumView(albumlist)

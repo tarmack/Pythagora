@@ -308,8 +308,8 @@ class Update:
         self.mixer(status)
 
     def _currentsong(self, currentsong):
-        album = currentsong.get('album', 'Unknown')
-        self.setSongLabel(auxilia.songTitle(currentsong), auxilia.songArtist(currentsong), album)
+        album = auxilia.songAlbum(currentsong, 'Unknown')
+        self.setSongLabel(auxilia.songTitle(currentsong), auxilia.songArtist(currentsong, 'Unknown'), album)
         self.currentsong = currentsong
         self.lastSongId = currentsong['id']
 

@@ -41,7 +41,7 @@ class CurrentListWidget(QListWidgetItem):
             self.setText(auxilia.songArtist(song) + ' - ' + auxilia.songTitle(song))
         else:
             self.setText(auxilia.songTitle(song) + '\n' + auxilia.songArtist(song))
-        self.setToolTip("Album:\t %s\nTime:\t %s\nFile:\t %s" % (song.get('album', ''), str(auxilia.songTime(song)) , song['file']))
+        self.setToolTip("Album:\t %s\nTime:\t %s\nFile:\t %s" % (auxilia.songAlbum(song), str(auxilia.songTime(song)) , song['file']))
 
     def setIcon(self, icon):
         self.icon = bool(icon)
@@ -85,11 +85,11 @@ class TrackWidget(QTreeWidgetItem):
     def __init__(self, song):
         QTreeWidgetItem.__init__(self)
         self.song = song
-        self.setText(0,song.get('track', '#'))
+        self.setText(0,auxilia.songTrack(song))
         self.setText(1,auxilia.songTitle(song))
         self.setText(2,auxilia.songTime(song))
         self.setToolTip(1, "Artist:\t %s\nAlbum:\t %s\nFile:\t %s"\
-                % (auxilia.songArtist(song), song.get('album', ''), song['file']))
+                % (auxilia.songArtist(song), auxilia.songAlbum(song), song['file']))
 
     def getDrag(self, mpdclient):
         return [self.song]
@@ -128,9 +128,9 @@ class LongSongWidget(QTreeWidgetItem):
         QTreeWidgetItem.__init__(self)
         self.song = song
         self.pos = pos
-        self.setText(0,song.get('artist','?'))
+        self.setText(0,auxilia.songArtist(song))
         self.setText(1,auxilia.songTitle(song))
-        self.setText(2,song.get('album',''))
+        self.setText(2,auxilia.songAlbum(song))
 
     def getDrag(self, mpdclient):
         return [self.song]
