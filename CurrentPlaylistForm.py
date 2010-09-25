@@ -25,7 +25,6 @@ import songwidgets
 import auxilia
 import iconretriever
 
-# TODO: Consistent drop placing with indicator.
 # TODO: See if drag pixmap can be alpha blended. (probably impossible)
 # TODO: Make cover art download optional.
 

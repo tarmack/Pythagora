@@ -37,8 +37,6 @@ if "--nokde" not in sys.argv:
 else:
     KDE = False
 
-# TODO: Make window show if minimized when trayicon is clicked.
-#       ^ Probably impossible ^ (maybe just hard when compositing with windowpreviews is enabled)
 # TODO: Make splitter sizes of not shown parts be rememberd correctly.
 
 class View(QMainWindow, auxilia.Actions):

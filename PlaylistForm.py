@@ -23,9 +23,6 @@ import mpd
 import songwidgets
 import auxilia
 
-# TODO: Ask user if he wants to save the new/temp list if he selects another list.
-# TODO: PlaylistList context menu. add actions:
-#        * append to displayed playlist
 # TODO: Double click actions. playlistlist add to current.
 
 #==============================================================================

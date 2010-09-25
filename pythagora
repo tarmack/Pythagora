@@ -30,13 +30,11 @@ import auxilia
 
 #============== Long term TODO's ==============================================
 # TODO: notification on song change (http://mpd.wikia.com/wiki/Mpd_osd.py_(using_dbus)
-# TODO: Support default media buttons, probably with mod key. (halfway)
 # TODO: Make us resistant against connection flicker.
 # TODO: Use dbus to gain a new style KDE system tray icon.
 
 # TODO: Refactor stuff:
 #       * Method out stuff from __init_() in allot of classes.
-#       * Class out and maybe thread mpd communication.
 
 #==============================================================================
 
