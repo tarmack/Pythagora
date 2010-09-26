@@ -233,7 +233,7 @@ class PlayerForm(QWidget):
         self.songLabel = songwidgets.SongLabel()
         self.setAcceptDrops(True)
         self.titleLayout.addWidget(self.songLabel)
-        self.progress.mouseReleaseEvent = self.mouseReleaseEvent
+        self.progress.mouseReleaseEvent = self.__mouseReleaseEvent
         self.connect(self, SIGNAL('songSeek'), self.songSeek)
 
     def dragEnterEvent(self, event):
@@ -245,7 +245,7 @@ class PlayerForm(QWidget):
         self.view.currentList.dropEvent(event, clear=True)
         self.mpdclient.send('play')
 
-    def mouseReleaseEvent(self, event):
+    def __mouseReleaseEvent(self, event):
         if event.button() == Qt.LeftButton:
             position = float(event.x()) / int(self.progress.geometry().width())
             self.mpdclient.send('currentsong', callback=
