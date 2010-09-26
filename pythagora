@@ -330,8 +330,15 @@ class Update:
                 lambda mainlist: self.view.emit(SIGNAL('reloadLibrary'), mainlist))
 
     def setSongLabel(self, title='', artist='', album=''):
-        self.view.trayIcon.setToolTip('<b><big>%s</big></b>\r\nby <big>%s</big>\r\nfrom <i>%s</i>' % (title, artist, album))
         self.view.playerForm.songLabel.setText(title, artist, album)
+        if title:
+            title = '<b><big>%s</big></b>' % title
+        if artist:
+            artist = 'by <big>%s</big>' % artist
+        if album:
+            album = 'from <i>%s</i>' % album
+        label = '<br>'.join((item for item in (title, artist, album) if item))
+        self.view.trayIcon.setToolTip(label)
 
     def setProgress(self, cs, ss=None):
         ''' Moves the progress indicator to the correct position,
