@@ -19,23 +19,17 @@ from PyQt4.QtCore import SIGNAL
 class PlayControls:
     currentVolume = 0
     oldVolume = 0
+    state = ''
     def __init__(self, mpdclient):
         self.mpdclient = mpdclient
 
     def playPause(self):
-        self.mpdclient.send('status', callback=self._playPause)
-
-    def _playPause(self, status):
-        try:
-            state = status['state']
-            if state == 'play':
-                self.mpdclient.send('pause', (1,))
-            elif state == 'pause':
-                self.mpdclient.send('pause', (0,))
-            else:
-                self.mpdclient.send('play')
-        except:
-            pass
+        if self.state == 'play':
+            self.mpdclient.send('pause', (1,))
+        elif self.state == 'pause':
+            self.mpdclient.send('pause', (0,))
+        else:
+            self.mpdclient.send('play')
 
     def back(self):
         try:

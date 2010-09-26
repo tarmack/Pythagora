@@ -362,11 +362,11 @@ class Update:
         if state == 'play':
             self.view.playerForm.play.setIcon(self.pauseIcon)
             self.view.trayIcon.setIcon(self.pauseIcon)
-            self.state = 'play'
         else:
             self.view.playerForm.play.setIcon(self.startIcon)
             self.view.trayIcon.setIcon(self.startIcon)
-            self.state = 'stop'
+        self.state = state
+        self.playControls.state = self.state
 
 def formatTime(seconds):
     seconds = int(seconds)
