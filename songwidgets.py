@@ -16,7 +16,7 @@
 # limitations under the License.
 #-------------------------------------------------------------------------------
 from PyQt4.QtCore import Qt, QPointF
-from PyQt4.QtGui import QListWidgetItem, QTreeWidgetItem, QBrush, QColor, QLabel\
+from PyQt4.QtGui import QListWidgetItem, QTreeWidgetItem, QBrush, QLabel\
         , QFontMetrics, QPainter, QLinearGradient, QPalette, QPen
 
 import auxilia
@@ -51,12 +51,9 @@ class CurrentListWidget(QListWidgetItem):
         font = self.font()
         if playing:
             font.setWeight(75)
-            brush = QBrush(QColor(0, 0, 0, 0), Qt.SolidPattern)
         else:
             font.setWeight(50)
-            brush = QBrush(Qt.NoBrush)
         self.setFont(font)
-        self.setBackground(brush)
 
     def getDrag(self, mpdclient):
         return [self.song]
