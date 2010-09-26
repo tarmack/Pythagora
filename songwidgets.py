@@ -210,15 +210,12 @@ class SongLabel(QLabel):
         else: self.setToolTip('')
 
     def __write(self, text, font, pen):
-        if self.spaceLeft != self.contentsRect():
-            text = ' '+text
-        fm = QFontMetrics(font)
-        textRect = fm.tightBoundingRect(text)
+        width = QFontMetrics(font).width(text+' ')
         painter = QPainter(self)
         painter.setFont(font)
         painter.setPen(pen)
         painter.drawText(self.spaceLeft, Qt.AlignBottom, text)
-        self.spaceLeft.setLeft(self.spaceLeft.left() + textRect.width()) # move the left edge to the end of what we just painted.
+        self.spaceLeft.setLeft(self.spaceLeft.left() + width ) # move the left edge to the end of what we just painted.
 
     def __gradient(self):
         left = QPointF(self.contentsRect().topLeft())
