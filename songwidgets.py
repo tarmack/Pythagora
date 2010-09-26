@@ -170,14 +170,14 @@ class SongLabel(QLabel):
     title = 'title'
     artist = 'artist'
     album = 'album'
-    by = ' by '
-    from_ = ' from '
-    parts = ('title', 'by', 'artist', 'from_', 'album')
+    parts = ('title', 'artist', 'album')
+    prepends = {
+            'artist': 'by',
+            'album': 'from'
+            }
     def __init__(self):
         QLabel.__init__(self)
         self.setAlignment(Qt.AlignBottom)
-        self.byFont = self.font()
-        self.from_Font = self.byFont
         self.titleFont = self.font()
         self.titleFont.setPointSize(self.font().pointSize()+2)
         self.titleFont.setBold(True)
@@ -197,18 +197,31 @@ class SongLabel(QLabel):
         self.spaceLeft = self.contentsRect()
         for part in self.parts:
             font = getattr(self, '%sFont' % part)
-            text = getattr(self, part)+' '
-            fm = QFontMetrics(font)
-            textRect = fm.tightBoundingRect(text)
-            painter = QPainter(self)
-            painter.setFont(font)
-            painter.setPen(gradient)
-            painter.drawText(self.spaceLeft, Qt.AlignBottom, text)
-            self.spaceLeft.setLeft(self.spaceLeft.left() + textRect.width()) # move the left edge to the end of what we just painted.
+            text = getattr(self, part)
+            if text:
+                self.__write(self.prepends.get(part, ''), self.font(), gradient)
+            self.__write(text, font, gradient)
         if self.spaceLeft.width() <= 0:
-            tooltip = '<b><big>%s</big></b> by <big>%s</big> from <i>%s</i>' % (self.title, self.artist, self.album)
+            if self.title:
+                title = '<b><big>%s</big></b>' % self.title
+            if self.artist:
+                artist = 'by <big>%s</big>' % self.artist
+            if self.album:
+                album = 'from <i>%s</i>' % self.album
+            tooltip = '<br>'.join((item for item in (title, artist, album) if item))
             self.setToolTip(tooltip)
         else: self.setToolTip('')
+
+    def __write(self, text, font, pen):
+        if self.spaceLeft != self.contentsRect():
+            text = ' '+text
+        fm = QFontMetrics(font)
+        textRect = fm.tightBoundingRect(text)
+        painter = QPainter(self)
+        painter.setFont(font)
+        painter.setPen(pen)
+        painter.drawText(self.spaceLeft, Qt.AlignBottom, text)
+        self.spaceLeft.setLeft(self.spaceLeft.left() + textRect.width()) # move the left edge to the end of what we just painted.
 
     def __gradient(self):
         left = QPointF(self.contentsRect().topLeft())
