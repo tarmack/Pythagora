@@ -16,9 +16,10 @@
 # limitations under the License.
 #-------------------------------------------------------------------------------
 from PyQt4.QtCore import QSize, Qt, SIGNAL, QVariant, QSettings
-from PyQt4.QtGui import QIcon, QMessageBox, QFileDialog, QTableWidgetItem, QLineEdit
+from PyQt4.QtGui import QIcon, QMessageBox, QFileDialog, QTableWidgetItem, QLineEdit, QKeySequence, QAction
 from PyQt4 import uic
 import os.path
+import auxilia
 
 class Configuration:
     def __init__(self):
@@ -88,6 +89,7 @@ class Configuration:
             valueType = type(self.defaults[option])
             if option == 'knownHosts':
                 settings = QSettings()
+                settings.remove("Servers")
                 settings.beginGroup('Servers')
                 for name, host in value.iteritems():
                     settings.setValue(name, host)
@@ -116,6 +118,9 @@ class Configuration:
         self.setup.scBookmarkFile.setText(self.scBookmarkFile)
 
         # Setup the serverTable.
+        actionRemove = QAction(auxilia.PIcon("list-remove"), 'Remove', self.setup.serverTable)
+        self.setup.serverTable.addAction(actionRemove)
+        self.setup.serverTable.connect(actionRemove, SIGNAL('triggered()'), self.__removeServer)
         self.setup.serverTable.setColumnWidth(1, 120)
         self.setup.serverTable.setColumnWidth(2, 50)
         try:
@@ -144,6 +149,7 @@ class Configuration:
         self.setup.connect(self.setup.musicDirButton,SIGNAL('clicked()'),self.__selectMusicDir)
         self.setup.connect(self.setup.scFileButton,SIGNAL('clicked()'),self.__selectBookmarkFile)
         self.setup.connect(self.setup.buttonBox, SIGNAL('accepted()'), self.__accept)
+        self.setup.serverTable.keyPressEvent = self.__keyPressEvent
         if modal:
             self.setup.exec_()
         else: self.setup.show()
@@ -192,6 +198,17 @@ class Configuration:
         password.setEchoMode(QLineEdit.Password)
         self.setup.serverTable.setCellWidget(row, 3, password)
         self.setup.serverTable.blockSignals(False)
+
+    def __keyPressEvent(self, event):
+        if event.matches(QKeySequence.Delete):
+            self.__removeServer()
+
+    def __removeServer(self):
+        selection = self.setup.serverTable.selectedItems()
+        if selection:
+            row = self.setup.serverTable.row(selection[0])
+            self.__cellChanged(row, 0)
+            self.setup.serverTable.removeRow(row)
 
     def __cellChanged(self, row, col):
         if row+1 == self.setup.serverTable.rowCount():
