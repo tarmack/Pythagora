@@ -21,16 +21,15 @@ from PyQt4 import uic
 import os.path
 import auxilia
 
-class Configuration:
-    def __init__(self):
-        self.types = {
+class Configuration(object):
+    types = {
                 int: QVariant.toInt,
                 bool: QVariant.toBool,
                 str: QVariant.toString,
                 list: QVariant.toList,
                 QSize: QVariant.toSize,
                 }
-        self.defaults = {
+    defaults = {
                 'knownHosts':           {'Local': ['localhost','6600','']},
                 'server':               ['Local','localhost','6600',''],
                 'musicPath':            '~/Music',
@@ -57,6 +56,11 @@ class Configuration:
         value = self.__getOption(attr)
         setattr(self, attr, value)
         return value
+
+    def __setattr__(self, attr, value):
+        super(Configuration, self).__setattr__(attr, value)
+        if attr in self.defaults:
+            self.storeOption(attr, value)
 
     def __getOption(self, option):
         if option == 'knownHosts':
