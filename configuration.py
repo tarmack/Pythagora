@@ -16,7 +16,7 @@
 # limitations under the License.
 #-------------------------------------------------------------------------------
 from PyQt4.QtCore import QSize, Qt, SIGNAL, QVariant, QSettings
-from PyQt4.QtGui import QIcon, QMessageBox, QFileDialog, QTableWidgetItem, QLineEdit, QKeySequence, QAction
+from PyQt4.QtGui import QIcon, QMessageBox, QFileDialog, QTableWidget, QTableWidgetItem, QLineEdit, QKeySequence, QAction
 from PyQt4 import uic
 import os.path
 import auxilia
@@ -203,6 +203,8 @@ class Configuration(object):
     def __keyPressEvent(self, event):
         if event.matches(QKeySequence.Delete):
             self.__removeServer()
+        else:
+            QTableWidget.keyPressEvent(self.setup.serverTable, event)
 
     def __removeServer(self):
         selection = self.setup.serverTable.selectedItems()
