@@ -159,11 +159,12 @@ class Configuration(object):
         else: self.setup.show()
 
     def __accept(self):
-        self.knownHosts = {}
+        knownHosts = {}
         for row in xrange(self.setup.serverTable.rowCount()):
             server = self.__getServer(row)
             if server:
-                self.knownHosts.update(server)
+                knownHosts.update(server)
+        self.knownHosts = knownHosts
         server = self.server
         selection = self.setup.serverTable.selectedItems()
         if selection:
@@ -177,12 +178,8 @@ class Configuration(object):
         self.__checkDir("Music",self.musicPath)
         self.scBookmarkFile = unicode(self.setup.scBookmarkFile.text())
         self.__checkDir("ShoutCast bookmarks",unicode(self.scBookmarkFile).rpartition('/')[0])
-        self.save()
-        if self.server != server:
-            if not server or not self.server:
-                self.parent.emit(SIGNAL('reconnect()'))
-            elif server[1:] is not self.server[1:]:
-                self.parent.emit(SIGNAL('reconnect()'))
+        if server[1:] != self.server[1:]:
+            self.parent.emit(SIGNAL('reconnect()'))
 
     def __getServer(self, row):
         name = self.setup.serverTable.item(row, 0).text()
