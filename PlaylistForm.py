@@ -34,6 +34,7 @@ class PlaylistForm(QWidget, auxilia.Actions):
         QWidget.__init__(self)
         self.app = app
         self.view = view
+        self.config = config
         self.mpdclient = mpdclient
         self.currentPlaylist = None
         self.view.connect(self.view,SIGNAL('reloadPlaylists'),self.reload)
@@ -51,6 +52,7 @@ class PlaylistForm(QWidget, auxilia.Actions):
         self.connect(self.loadButton,SIGNAL('clicked()'),self.__loadList)
         self.connect(self.deleteButton,SIGNAL('clicked()'),self.__deleteList)
         self.connect(self, SIGNAL('showPlaylist'), self.__showPlaylist)
+        self.connect(self.playlistSplitter, SIGNAL('splitterMoved(int, int)'), self.__storeSplitter)
 
         # overload dropEvent()
         self.newButton.dragEnterEvent = self.dragEnterEvent
@@ -282,3 +284,5 @@ class PlaylistForm(QWidget, auxilia.Actions):
         finally:
             self.mpdclient.send('command_list_end')
 
+    def __storeSplitter(self):
+        self.config.playlistSplit = self.playlistSplitter.sizes()

@@ -37,8 +37,6 @@ if "--nokde" not in sys.argv:
 else:
     KDE = False
 
-# TODO: Make splitter sizes of not shown parts be rememberd correctly.
-
 class View(QMainWindow, auxilia.Actions):
     def __init__(self, configuration, mpdclient, app):
         QMainWindow.__init__(self)
@@ -73,7 +71,7 @@ class View(QMainWindow, auxilia.Actions):
         self.statusbar.addWidget(self.serverLabel)
         self.statusbar.addPermanentWidget(self.numSongsLabel)
         self.statusbar.addPermanentWidget(self.playTimeLabel)
-        self.connect(self.statusTabs, SIGNAL('currentChanged(int)'), self.stackedWidget.setCurrentIndex)
+        self.connect(self.statusTabs, SIGNAL('currentChanged(int)'), self.__toggleShoutCast)
 
         self.connect(self.menuConnect, SIGNAL('aboutToShow()'), self.__buildConnectTo)
         self.connect(self.actionExit,SIGNAL('triggered()'),self.app.quit)
@@ -91,6 +89,9 @@ class View(QMainWindow, auxilia.Actions):
         self.trayIcon.setContextMenu(self.trayMenu)
         self.connect(self.trayIcon, SIGNAL('activated(QSystemTrayIcon::ActivationReason)'), self.__toggleHideRestore)
         self.trayIcon.show()
+
+        self.connect(self.tabs, SIGNAL('currentChanged(int)'), self.__tabsIndexChanged)
+        self.connect(self.splitter, SIGNAL('splitterMoved(int, int)'), self.__storeSplitter)
 
         # Apply configuration.
         self.resize(configuration.mgrSize)
@@ -157,18 +158,7 @@ class View(QMainWindow, auxilia.Actions):
         self.shuttingDown = True
         self.app.processEvents()
         self.mpdclient.disconnect()
-        if self.config:
-            self.config.mgrSize = self.size()
-            self.config.showShoutcast = self.stackedWidget.currentIndex()
-            self.config.tabsIndex = self.tabs.currentIndex()
-            self.config.keepPlayingVisible = bool(self.currentList.keepPlayingVisible.checkState())
-            self.config.playlistControls = bool(self.currentList.playlistTools.isVisible())
-            self.config.mgrSplit = self.splitter.sizes()
-            self.config.mgrScSplit = self.shoutcast.scSplitter.sizes()
-            self.config.libSplit1 = self.libraryForm.libSplitter_1.sizes()
-            self.config.libSplit2 = self.libraryForm.libSplitter_2.sizes()
-            self.config.playlistSplit = self.playlistsForm.playlistSplitter.sizes()
-            self.config.save()
+        self.config.mgrSize = self.size()
         print 'debug: shutdown finished'
 
     def showConfig(self):
@@ -178,6 +168,16 @@ class View(QMainWindow, auxilia.Actions):
         '''Catch MainWindow's close event so we can hide it instead.'''
         self.__toggleHideRestore()
         event.ignore()
+
+    def __storeSplitter(self):
+        self.config.mgrSplit = self.splitter.sizes()
+
+    def __tabsIndexChanged(self, value):
+        self.config.tabsIndex = self.tabs.currentIndex()
+
+    def __toggleShoutCast(self, value):
+        self.config.showShoutcast = value
+        self.stackedWidget.setCurrentIndex(value)
 
     def __toggleHideRestore(self, reason=None):
         '''Show or hide the window based on some parameters. We can detect

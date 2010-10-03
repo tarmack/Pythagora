@@ -39,6 +39,7 @@ class ShoutcastForm(QWidget, Actions):
     def __init__(self, view, app, mpdclient, config):
         QWidget.__init__(self)
         self.view = view
+        self.config = config
         if self.view.KDE:
             uic.loadUi('ui/ShoutCastForm.ui', self)
         else:
@@ -64,6 +65,7 @@ class ShoutcastForm(QWidget, Actions):
         self.connect(self.bookmarkList, SIGNAL('itemDoubleClicked(QListWidgetItem*)'), self.__play)
         self.connect(self.saveStation, SIGNAL('clicked()'), self.__saveStation)
         self.connect(self.previewStation, SIGNAL('clicked()'), self.__previewStation)
+        self.connect(self.scSplitter, SIGNAL('splitterMoved(int, int)'), self.__storeSplitter)
 
         # Add context menu's
         self.actionPreview(self.genreList, self.__previewStation)
@@ -173,6 +175,9 @@ class ShoutcastForm(QWidget, Actions):
             urls = self.client.getStation(station['id'])
             station['urls'] = urls
         self.bookMarkList.addStation(station)
+
+    def __storeSplitter(self):
+        self.config.mgrScSplit = self.scSplitter.sizes()
 
 
 class StationTree():

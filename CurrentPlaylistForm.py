@@ -82,7 +82,7 @@ class CurrentPlaylistForm(QWidget, auxilia.Actions):
         self.connect(self.currentBottom, SIGNAL('clicked()'), self.__togglePlaylistTools)
         self.connect(self.currentList,SIGNAL('itemSelectionChanged()'),self._setEditing)
         self.connect(self.currentList.verticalScrollBar(), SIGNAL('valueChanged(int)'), self._setEditing)
-        self.connect(self.keepPlayingVisible,SIGNAL('clicked()'),self.__scrollList)
+        self.connect(self.keepPlayingVisible,SIGNAL('toggled(bool)'),self.__toggleKeepPlayingVisible)
         self.connect(self.oneLinePlaylist,SIGNAL('toggled(bool)'),self.__setOneLinePlaylist)
 
         # Menu for current playlist.
@@ -305,7 +305,7 @@ class CurrentPlaylistForm(QWidget, auxilia.Actions):
         if editing <= 5:
             keepCurrent = False
         else:
-            keepCurrent = self.keepPlayingVisible.isChecked()
+            keepCurrent = self.config.keepPlayingVisible
         if keepCurrent:
             self.currentList.scrollToItem(self.currentList.item(self.playing - ((count - maxScroll)/8)), 1)
         elif beforeScroll:
@@ -374,6 +374,10 @@ class CurrentPlaylistForm(QWidget, auxilia.Actions):
         else:
             self.view.playTimeLabel.setText('Total play time: %02d:%02d:%02d ' % (songHour, songMin, songSecs))
 
+    def __toggleKeepPlayingVisible(self, value):
+        self.config.keepPlayingVisible = value
+        self.__scrollList()
+
     def __setOneLinePlaylist(self, value):
         self.config.oneLinePlaylist = value
         self.view.emit(SIGNAL('resetCurrentList()'))
@@ -396,6 +400,7 @@ class CurrentPlaylistForm(QWidget, auxilia.Actions):
             self.playlistTools.setVisible(value)
         self.currentBottom.setArrowType(int(value)+1)
         self.currentBottom.setText(text[value])
+        self.config.playlistControls = bool(self.playlistTools.isVisible())
 
     def _setEditing(self, i=0):
         self.editing = time()

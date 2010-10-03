@@ -51,6 +51,8 @@ class LibraryForm(auxilia.Actions, QWidget):
 
         self.libSplitter_1.setSizes(config.libSplit1)
         self.libSplitter_2.setSizes(config.libSplit2)
+        self.connect(self.libSplitter_1, SIGNAL('splitterMoved(int, int)'), self.__storeSplitter)
+        self.connect(self.libSplitter_2, SIGNAL('splitterMoved(int, int)'), self.__storeSplitter)
         self.view.connect(self.view,SIGNAL('reloadLibrary'),self.reload)
 
         # search and filter functions
@@ -309,6 +311,10 @@ class LibraryForm(auxilia.Actions, QWidget):
     def __clearPlayTrack(self):
         self.mpdclient.send('clear')
         self.__addPlayTrack()
+
+    def __storeSplitter(self):
+        self.config.libSplit1 = self.libSplitter_1.sizes()
+        self.config.libSplit2 = self.libSplitter_2.sizes()
 
 
 def appendToList(listDict, keys, value, deduplicate=False):
