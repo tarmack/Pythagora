@@ -29,9 +29,11 @@
 # command. This is done to make your life easier.
 #------------------------------------------------------------------------------
 try:
-    import mpdunicode as mpd
+    from mpdunicode import *
+    from mpdunicode import MPDClient as MPDClientBase
 except ImportError:
-    import mpd
+    from mpd import *
+    from mpd import MPDClient as MPDClientBase
 import threading
 import Queue
 import sys
@@ -51,7 +53,7 @@ class MPDClient():
             if self.connected():
                 return lambda *args: self.connection.doBlocking(command, args)
             else:
-                raise mpd.ConnectionError('Not connected.')
+                raise ConnectionError('Not connected.')
         else:
             raise AttributeError("'%s' object has no attribute '%s'" %
                                  (self.__class__.__name__, command))
@@ -86,7 +88,7 @@ class MPDClient():
         '''
         self.connection.abort = True
 
-class MPDThread(mpd.MPDClient, threading.Thread):
+class MPDThread(MPDClientBase, threading.Thread):
     '''This class represents the interface thread to the mpd server.
     '''
     _idle = False
@@ -120,7 +122,7 @@ class MPDThread(mpd.MPDClient, threading.Thread):
             print 'debug: got ', command, ' with arguments ', args, 'from queue.'
             try:
                 value = self.__do(command, args)
-            except mpd.CommandError, e:
+            except CommandError, e:
                 print 'debug: MPD thread - CommandError: ', e, '\n', sys.exc_info()
                 value = sys.exc_info()[1]
             except Exception, e:
@@ -156,7 +158,7 @@ class MPDThread(mpd.MPDClient, threading.Thread):
         '''
         print 'debug: blocking on', command, ' with arguments ', args
         if self.connecting:
-            raise mpd.ConnectionError('Not connected yet.')
+            raise ConnectionError('Not connected yet.')
         if command != 'noidle' and self._idle:
             self._writecommand('noidle', [])
         self.queue.join()
