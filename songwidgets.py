@@ -23,8 +23,6 @@ import auxilia
 import shoutcast
 import os
 
-# TODO: Don't show 'by' and 'from' in SongLabel if that part is missing.
-
 #===============================================================================
 # List and tree widget items formatted in various ways for the forms to display
 # stuff with.
