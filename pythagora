@@ -17,7 +17,7 @@
 # limitations under the License.
 #-------------------------------------------------------------------------------
 from PyQt4.QtCore import QTimer, SIGNAL, Qt
-from PyQt4.QtGui import QApplication, QWidget, QSystemTrayIcon, QKeySequence
+from PyQt4.QtGui import QApplication, QWidget, QKeySequence
 
 import sys
 import signal
@@ -71,8 +71,6 @@ class Manager():
         self.update = Update(self.view, self.mpdclient, self.config, self.playControls)
         self.__connectSignals()
         self.__connectMPD()
-        # Overload some methods.
-        self.view.trayIcon.event = self.trayEvent
 
         self.timer.start(1000)
 
@@ -215,15 +213,6 @@ class Manager():
         print 'error: Lost connection to mpd server.'
         if self.config.server:
             self.__connectMPD(True)
-
-    def trayEvent(self, event):
-        if event.type() == 31: # enum: QEvent.wheel
-            event.accept()
-            self.playControls.volumeUp(int(event.delta())/(8*15))
-            return True
-        else:
-            QSystemTrayIcon.event(self.view.trayIcon, event)
-            return False
 
     def __runIdle(self):
         print 'debug: requesting idle.'
@@ -368,10 +357,9 @@ class Update:
     def __setPlayPauseState(self,state):
         if state == 'play':
             self.view.playerForm.play.setIcon(self.pauseIcon)
-            self.view.trayIcon.setIcon(self.pauseIcon)
         else:
             self.view.playerForm.play.setIcon(self.startIcon)
-            self.view.trayIcon.setIcon(self.startIcon)
+        self.view.trayIcon.setState(state)
         self.state = state
         self.playControls.state = self.state
 

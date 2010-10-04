@@ -83,6 +83,7 @@ class PlayControls:
             self.setVolume(0)
 
     def connectSignals(self, view):
+        view.connect(view.trayIcon, SIGNAL('scrollRequested(int, Qt::Orientation)'), lambda x: self.setVolume(self.currentVolume + (x/150)))
         view.connect(view.playerForm.play, SIGNAL('clicked(bool)'), self.playPause)
         view.connect(view.playerForm.back, SIGNAL('clicked(bool)'), self.back)
         view.connect(view.playerForm.forward, SIGNAL('clicked(bool)'), self.forward)

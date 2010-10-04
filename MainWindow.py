@@ -15,8 +15,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #-------------------------------------------------------------------------------
-from PyQt4.QtCore import SIGNAL, QTimer, Qt
-from PyQt4.QtGui import QMainWindow, QSystemTrayIcon, QLabel, QMenu, QIcon, QWidget
+from PyQt4.QtCore import SIGNAL, QTimer, Qt, QObject, QEvent, QPoint
+from PyQt4.QtGui import QMainWindow, QLabel, QMenu, QIcon, QWidget, QAction, QWidgetAction, QToolButton
 from PyQt4 import uic
 from time import time
 import sys
@@ -28,13 +28,15 @@ import LibraryForm
 import auxilia
 import songwidgets
 
-if "--nokde" not in sys.argv:
-    try:
+try:
+    if "--nokde" in sys.argv:
+        raise ImportError
+    else:
         from PyKDE4.kdeui import KWindowSystem, NET
+        from PyKDE4.kdeui import KStatusNotifierItem as SystemTrayItem
         KDE = True
-    except ImportError:
-        KDE = False
-else:
+except ImportError:
+    from PyQt4.QtGui import QSystemTrayIcon as SystemTrayItem
     KDE = False
 
 class View(QMainWindow, auxilia.Actions):
@@ -79,16 +81,15 @@ class View(QMainWindow, auxilia.Actions):
 
 
         # Set up trayicon and menu.
-        self.trayMenu = QMenu('Pythagora MPD client', self)
-        self.trayMenu.addAction(self.menuTitle(appIcon, 'Pythagora'))
-        self.trayMenu.addMenu(self.menuConnect)
-        self.trayMenu.addAction(self.actionSettings)
-        self.HideResoreAction = self.actionHideRestore(self.trayMenu, self.__toggleHideRestore)
-        self.trayMenu.addAction(self.actionExit)
-        self.trayIcon = QSystemTrayIcon(appIcon, self)
-        self.trayIcon.setContextMenu(self.trayMenu)
-        self.connect(self.trayIcon, SIGNAL('activated(QSystemTrayIcon::ActivationReason)'), self.__toggleHideRestore)
-        self.trayIcon.show()
+        if KDE:
+            self.trayIcon = KTrayIcon(appIcon, self)
+        else:
+            self.trayIcon = QTrayIcon(appIcon, self)
+        connectMenuAction = self.menuConnect.menuAction()
+        self.trayIcon.addMenuItem(connectMenuAction)
+        self.trayIcon.addMenuItem(self.actionSettings)
+        self.connect(self.trayIcon, SIGNAL('activate()'), self.__toggleHideRestore)
+        self.connect(self.trayIcon, SIGNAL('secondaryActivateRequested(QPoint)'), self.__playPause)
 
         self.connect(self.tabs, SIGNAL('currentChanged(int)'), self.__tabsIndexChanged)
         self.connect(self.splitter, SIGNAL('splitterMoved(int, int)'), self.__storeSplitter)
@@ -179,31 +180,28 @@ class View(QMainWindow, auxilia.Actions):
         self.config.showShoutcast = value
         self.stackedWidget.setCurrentIndex(value)
 
-    def __toggleHideRestore(self, reason=None):
+    def __toggleHideRestore(self):
         '''Show or hide the window based on some parameters. We can detect
         when we are obscured and come to the top. In other cases we hide if
         mapped and show if not.
         '''
-        if reason == QSystemTrayIcon.MiddleClick:
-            self.playerForm.play.emit(SIGNAL('clicked(bool)'), True)
         if KDE:
             info = KWindowSystem.windowInfo( self.winId(), NET.XAWMState | NET.WMState | ((2**32)/2), NET.WM2ExtendedStrut)
             mapped = bool(info.mappingState() == NET.Visible and not info.isMinimized())
-            if not reason or reason == QSystemTrayIcon.Trigger:
-                if not mapped:
-                    self.HideResoreAction.setText('Hide')
-                    self.show()
-                elif not reason or KWindowSystem.activeWindow() == self.winId():
-                    self.HideResoreAction.setText('Show')
-                    self.hide()
-                else:
-                    self.activateWindow()
-                    self.raise_()
+            if not mapped:
+                self.show()
+            elif KWindowSystem.activeWindow() == self.winId():
+                self.hide()
+            else:
+                self.activateWindow()
+                self.raise_()
         else:
             if self.isVisible():
                 self.hide()
             else: self.show()
 
+    def __playPause(self):
+        self.playerForm.play.emit(SIGNAL('clicked(bool)'), True)
 
     def __buildConnectTo(self):
         self.menuConnect.clear()
@@ -255,4 +253,109 @@ class PlayerForm(QWidget):
         time = int(currentsong.get('time', None))
         if time is not None:
             self.mpdclient.send('seekid', (currentsong['id'], int(time * position)))
+
+
+class QTrayIcon(SystemTrayItem, auxilia.Actions):
+    def __init__(self, icon, parent):
+        SystemTrayItem.__init__(self, icon, parent)
+        self.parent = parent
+        self.pauseIcon = auxilia.PIcon("media-playback-pause")
+        self.startIcon = auxilia.PIcon("media-playback-start")
+        self.actionList = []
+        self.menu = QMenu('Pythagora MPD client', parent)
+        self.menu.addAction(menuTitle(icon, 'Pythagora', parent))
+        self.setContextMenu(self.menu)
+        self.hideResoreAction = QAction('Minimize', self.menu)
+        self.connect(self.hideResoreAction, SIGNAL('triggered()'), self.__activated)
+        self.connect(self, SIGNAL('activated(QSystemTrayIcon::ActivationReason)'), self.__activated)
+        self.connect(self.menu, SIGNAL('aboutToShow()'), self.__buildMenu)
+        self.show()
+
+    def addMenuItem(self, action):
+        self.actionList.append(action)
+
+    def setState(self, state):
+        if state == 'play':
+            self.setIcon(self.startIcon)
+        else:
+            self.setIcon(self.pauseIcon)
+
+    def __activated(self, reason=None):
+        if reason == SystemTrayItem.MiddleClick:
+            self.emit(SIGNAL('secondaryActivateRequested(QPoint)'), QPoint())
+        if reason == None or reason == SystemTrayItem.Trigger:
+            self.emit(SIGNAL('activate()'))
+
+    def __buildMenu(self):
+        if self.parent.isVisible():
+            self.hideResoreAction.setText('Minimize')
+        else:
+            self.hideResoreAction.setText('Restore')
+        for action in self.actionList:
+            self.menu.addAction(action)
+        self.menu.addSeparator()
+        self.menu.addAction(self.hideResoreAction)
+        self.menu.addAction(self.parent.actionExit)
+
+
+    def event(self, event):
+        if event.type() == 31: # enum: QEvent.wheel
+            event.accept()
+            self.emit(SIGNAL('scrollRequested(int, Qt::Orientation)'), event.delta(), Qt.Horizontal)
+            return True
+        else:
+            super(QTrayIcon, self).event(event)
+            return False
+
+
+class KTrayIcon(SystemTrayItem, auxilia.Actions):
+    def __init__(self, icon, parent):
+        SystemTrayItem.__init__(self, parent)
+        self.icon = icon
+        self.parent = parent
+        self.setIconByPixmap(icon)
+        self.setCategory(1)
+        self.setStatus(2)
+
+    def addMenuItem(self, action):
+        self.contextMenu().addAction(action)
+
+    def setState(self, state):
+        if state == 'play':
+            self.setIconByName("media-playback-start")
+        else:
+            self.setIconByName("media-playback-pause")
+
+    def setToolTip(self, text):
+        super(KTrayIcon, self).setToolTip(self.icon, 'Pythagora, Now Playing:', text)
+
+    def activate(self, pos):
+        self.emit(SIGNAL('activate()'))
+
+
+class EventEater(QObject):
+    def eventFilter(self, reciever, event):
+        if event.type() == QEvent.MouseButtonPress or event.type() == QEvent.MouseButtonRelease:
+            return True
+        return False
+
+def menuTitle(icon, text, parent):
+    eventEater = EventEater()
+    buttonaction = QAction(parent)
+    font = buttonaction.font()
+    font.setBold(True)
+    buttonaction.setFont(font)
+    buttonaction.setText(text)
+    buttonaction.setIcon(icon)
+
+    action = QWidgetAction(parent)
+    action.setObjectName('trayMenuTitle')
+    titleButton = QToolButton(parent)
+    titleButton.installEventFilter(eventEater)
+    titleButton.setDefaultAction(buttonaction)
+    titleButton.setDown(True)
+    titleButton.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
+    action.setDefaultWidget(titleButton)
+
+    return action
 

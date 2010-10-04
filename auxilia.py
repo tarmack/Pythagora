@@ -18,8 +18,8 @@
 import locale
 import re
 import sys
-from PyQt4.QtCore import SIGNAL, Qt, QObject, QEvent, QTimer
-from PyQt4.QtGui import QAction, QWidgetAction, QToolButton, QTabBar, QIcon
+from PyQt4.QtCore import SIGNAL, QTimer
+from PyQt4.QtGui import QAction, QTabBar, QIcon
 
 try:
     if "--nokde" in sys.argv:
@@ -169,11 +169,6 @@ class Actions:
     #    , ''\
     #    , '')
 
-    def actionHideRestore(self, parent, slot):
-        return self.action(parent, slot\
-        , text='Hide'\
-        , tooltip='Hide application window in the systemtray.')
-
     def action(self, parent, slot, icon=None, text='', tooltip=None):
         action = QAction(text, parent)
         if type(icon) == str:
@@ -186,32 +181,6 @@ class Actions:
     def __addAction(self, action, parent, slot):
         parent.addAction(action)
         self.connect(action, SIGNAL('triggered()'), slot)
-
-    def menuTitle(self, icon, text):
-        self.eventEater = EventEater()
-        buttonaction = QAction(self)
-        font = buttonaction.font()
-        font.setBold(True)
-        buttonaction.setFont(font)
-        buttonaction.setText(text)
-        buttonaction.setIcon(icon)
-
-        action = QWidgetAction(self)
-        action.setObjectName('trayMenuTitle')
-        titleButton = QToolButton(self)
-        titleButton.installEventFilter(self.eventEater)
-        titleButton.setDefaultAction(buttonaction)
-        titleButton.setDown(True)
-        titleButton.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
-        action.setDefaultWidget(titleButton)
-
-        return action
-
-class EventEater(QObject):
-    def eventFilter(self, reciever, event):
-        if event.type() == QEvent.MouseButtonPress or event.type() == QEvent.MouseButtonRelease:
-            return True
-        return False
 
 def PIcon(icon):
     if KDE:
