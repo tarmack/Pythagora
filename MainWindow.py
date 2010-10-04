@@ -16,7 +16,7 @@
 # limitations under the License.
 #-------------------------------------------------------------------------------
 from PyQt4.QtCore import SIGNAL, QTimer, Qt, QObject, QEvent, QPoint
-from PyQt4.QtGui import QMainWindow, QLabel, QMenu, QIcon, QWidget, QAction, QWidgetAction, QToolButton
+from PyQt4.QtGui import QMainWindow, QLabel, QMenu, QIcon, QWidget, QAction, QWidgetAction, QToolButton, QStyleOptionToolButton
 from PyQt4 import uic
 from time import time
 import sys
@@ -48,19 +48,32 @@ class View(QMainWindow, auxilia.Actions):
         self.config = configuration
         self.mpdclient = mpdclient
         appIcon = QIcon('icons/Pythagora.png')
-        if KDE:
-            uic.loadUi('ui/Pythagora.ui', self)
-        else:
-            uic.loadUi('ui/Pythagora.ui.Qt', self)
+        uic.loadUi('ui/Pythagora.ui', self)
         self.KDE = KDE
         self.setWindowTitle('Pythagora')
         self.setWindowIcon(appIcon)
         # Load all forms.
         self.createViews()
+        # Create 'Connect to' menu.
+        self.menuConnect = QMenu('Connect To')
+        self.menuConnect.menuAction().setIcon(auxilia.PIcon('network-disconnect'))
+        self.connectButton = QToolButton()
+        self.connectButton.setPopupMode(QToolButton.InstantPopup)
+        self.connectButton.setIcon(auxilia.PIcon('network-disconnect'))
+        self.connectButton.setMenu(self.menuConnect)
         # Create 'MDP' menu.
+        self.menuMPD = QMenu('MPD')
+        self.menuMPD.menuAction().setIcon(auxilia.PIcon('network-workgroup'))
+        self.mpdButton = QToolButton()
+        self.mpdButton.setPopupMode(QToolButton.InstantPopup)
+        self.mpdButton.setIcon(auxilia.PIcon('network-workgroup'))
+        self.mpdButton.setMenu(self.menuMPD)
         self.reloadLibrary = self.actionLibReload(self.menuMPD, self.__libReload)
         self.updateLibrary = self.actionLibUpdate(self.menuMPD, self.libraryForm.update)
         self.rescanLibrary = self.actionLibRescan(self.menuMPD, self.libraryForm.rescan)
+        # Fill Toolbar.
+        self.toolBar.addWidget(self.connectButton)
+        self.toolBar.addWidget(self.mpdButton)
         # Fill Statusbar.
         self.serverLabel = QLabel('Not connected')
         self.numSongsLabel = QLabel('Songs')
