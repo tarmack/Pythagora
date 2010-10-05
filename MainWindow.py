@@ -16,7 +16,7 @@
 # limitations under the License.
 #-------------------------------------------------------------------------------
 from PyQt4.QtCore import SIGNAL, QTimer, Qt, QObject, QEvent, QPoint
-from PyQt4.QtGui import QMainWindow, QLabel, QMenu, QIcon, QWidget, QAction, QWidgetAction, QToolButton, QStyleOptionToolButton
+from PyQt4.QtGui import QMainWindow, QLabel, QMenu, QIcon, QWidget, QAction, QWidgetAction, QToolButton
 from PyQt4 import uic
 from time import time
 import sys
@@ -33,10 +33,10 @@ try:
         raise ImportError
     else:
         from PyKDE4.kdeui import KWindowSystem
-        from PyKDE4.kdeui import KStatusNotifierItem as SystemTrayItem
+        from PyKDE4.kdeui import KStatusNotifierItem
         KDE = True
 except ImportError:
-    from PyQt4.QtGui import QSystemTrayIcon as SystemTrayItem
+    from PyQt4.QtGui import QSystemTrayIcon
     KDE = False
 
 class View(QMainWindow, auxilia.Actions):
@@ -264,82 +264,83 @@ class PlayerForm(QWidget):
             self.mpdclient.send('seekid', (currentsong['id'], int(time * position)))
 
 
-class QTrayIcon(SystemTrayItem, auxilia.Actions):
-    def __init__(self, icon, parent):
-        SystemTrayItem.__init__(self, icon, parent)
-        self.parent = parent
-        self.pauseIcon = auxilia.PIcon("media-playback-pause")
-        self.startIcon = auxilia.PIcon("media-playback-start")
-        self.actionList = []
-        self.menu = QMenu('Pythagora MPD client', parent)
-        self.menu.addAction(menuTitle(icon, 'Pythagora', parent))
-        self.setContextMenu(self.menu)
-        self.hideResoreAction = QAction('Minimize', self.menu)
-        self.connect(self.hideResoreAction, SIGNAL('triggered()'), self.__activated)
-        self.connect(self, SIGNAL('activated(QSystemTrayIcon::ActivationReason)'), self.__activated)
-        self.connect(self.menu, SIGNAL('aboutToShow()'), self.__buildMenu)
-        self.show()
+if KDE:
+    class KTrayIcon(KStatusNotifierItem):
+        def __init__(self, icon, parent):
+            KStatusNotifierItem.__init__(self, parent)
+            self.icon = icon
+            self.parent = parent
+            self.setIconByPixmap(icon)
+            self.setCategory(1)
+            self.setStatus(2)
 
-    def addMenuItem(self, action):
-        self.actionList.append(action)
+        def addMenuItem(self, action):
+            self.contextMenu().addAction(action)
 
-    def setState(self, state):
-        if state == 'play':
-            self.setIcon(self.startIcon)
-        else:
-            self.setIcon(self.pauseIcon)
+        def setState(self, state):
+            if state == 'play':
+                self.setIconByName("media-playback-start")
+            else:
+                self.setIconByName("media-playback-pause")
 
-    def __activated(self, reason=None):
-        if reason == SystemTrayItem.MiddleClick:
-            self.emit(SIGNAL('secondaryActivateRequested(QPoint)'), QPoint())
-        if reason == None or reason == SystemTrayItem.Trigger:
+        def setToolTip(self, text):
+            super(KTrayIcon, self).setToolTip(self.icon, 'Pythagora, Now Playing:', text)
+
+        def activate(self, pos):
             self.emit(SIGNAL('activate()'))
 
-    def __buildMenu(self):
-        if self.parent.isVisible():
-            self.hideResoreAction.setText('Minimize')
-        else:
-            self.hideResoreAction.setText('Restore')
-        for action in self.actionList:
-            self.menu.addAction(action)
-        self.menu.addSeparator()
-        self.menu.addAction(self.hideResoreAction)
-        self.menu.addAction(self.parent.actionExit)
+else:
+    class QTrayIcon(QSystemTrayIcon, auxilia.Actions):
+        def __init__(self, icon, parent):
+            QSystemTrayIcon.__init__(self, icon, parent)
+            self.parent = parent
+            self.pauseIcon = auxilia.PIcon("media-playback-pause")
+            self.startIcon = auxilia.PIcon("media-playback-start")
+            self.actionList = []
+            self.menu = QMenu('Pythagora MPD client', parent)
+            self.menu.addAction(menuTitle(icon, 'Pythagora', parent))
+            self.setContextMenu(self.menu)
+            self.hideResoreAction = QAction('Minimize', self.menu)
+            self.connect(self.hideResoreAction, SIGNAL('triggered()'), self.__activated)
+            self.connect(self, SIGNAL('activated(QSystemTrayIcon::ActivationReason)'), self.__activated)
+            self.connect(self.menu, SIGNAL('aboutToShow()'), self.__buildMenu)
+            self.show()
+
+        def addMenuItem(self, action):
+            self.actionList.append(action)
+
+        def setState(self, state):
+            if state == 'play':
+                self.setIcon(self.startIcon)
+            else:
+                self.setIcon(self.pauseIcon)
+
+        def __activated(self, reason=None):
+            if reason == QSystemTrayIcon.MiddleClick:
+                self.emit(SIGNAL('secondaryActivateRequested(QPoint)'), QPoint())
+            if reason == None or reason == QSystemTrayIcon.Trigger:
+                self.emit(SIGNAL('activate()'))
+
+        def __buildMenu(self):
+            if self.parent.isVisible():
+                self.hideResoreAction.setText('Minimize')
+            else:
+                self.hideResoreAction.setText('Restore')
+            for action in self.actionList:
+                self.menu.addAction(action)
+            self.menu.addSeparator()
+            self.menu.addAction(self.hideResoreAction)
+            self.menu.addAction(self.parent.actionExit)
 
 
-    def event(self, event):
-        if event.type() == 31: # enum: QEvent.wheel
-            event.accept()
-            self.emit(SIGNAL('scrollRequested(int, Qt::Orientation)'), event.delta(), Qt.Horizontal)
-            return True
-        else:
-            super(QTrayIcon, self).event(event)
-            return False
-
-
-class KTrayIcon(SystemTrayItem, auxilia.Actions):
-    def __init__(self, icon, parent):
-        SystemTrayItem.__init__(self, parent)
-        self.icon = icon
-        self.parent = parent
-        self.setIconByPixmap(icon)
-        self.setCategory(1)
-        self.setStatus(2)
-
-    def addMenuItem(self, action):
-        self.contextMenu().addAction(action)
-
-    def setState(self, state):
-        if state == 'play':
-            self.setIconByName("media-playback-start")
-        else:
-            self.setIconByName("media-playback-pause")
-
-    def setToolTip(self, text):
-        super(KTrayIcon, self).setToolTip(self.icon, 'Pythagora, Now Playing:', text)
-
-    def activate(self, pos):
-        self.emit(SIGNAL('activate()'))
+        def event(self, event):
+            if event.type() == 31: # enum: QEvent.wheel
+                event.accept()
+                self.emit(SIGNAL('scrollRequested(int, Qt::Orientation)'), event.delta(), Qt.Horizontal)
+                return True
+            else:
+                super(QTrayIcon, self).event(event)
+                return False
 
 
 class EventEater(QObject):
