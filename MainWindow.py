@@ -32,7 +32,7 @@ try:
     if "--nokde" in sys.argv:
         raise ImportError
     else:
-        from PyKDE4.kdeui import KWindowSystem, NET
+        from PyKDE4.kdeui import KWindowSystem
         from PyKDE4.kdeui import KStatusNotifierItem as SystemTrayItem
         KDE = True
 except ImportError:
@@ -180,7 +180,7 @@ class View(QMainWindow, auxilia.Actions):
 
     def closeEvent(self, event):
         '''Catch MainWindow's close event so we can hide it instead.'''
-        self.__toggleHideRestore()
+        self.hide()
         event.ignore()
 
     def __storeSplitter(self):
@@ -199,15 +199,11 @@ class View(QMainWindow, auxilia.Actions):
         mapped and show if not.
         '''
         if KDE:
-            info = KWindowSystem.windowInfo( self.winId(), NET.XAWMState | NET.WMState | ((2**32)/2), NET.WM2ExtendedStrut)
-            mapped = bool(info.mappingState() == NET.Visible and not info.isMinimized())
-            if not mapped:
-                self.show()
-            elif KWindowSystem.activeWindow() == self.winId():
+            if KWindowSystem.activeWindow() == self.winId() and self.isVisible():
                 self.hide()
             else:
-                self.activateWindow()
-                self.raise_()
+                self.show()
+                KWindowSystem.forceActiveWindow(self.winId())
         else:
             if self.isVisible():
                 self.hide()
