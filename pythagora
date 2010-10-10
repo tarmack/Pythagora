@@ -61,18 +61,14 @@ class Manager():
         self.app = app
         self.firstConnect = True
         self.mpdclient = mpd.MPDClient()
-        self.timer = QTimer()
         self.idleTimer = QTimer()
         self.idleTimer.setSingleShot(True)
-        self.idleTimer.setInterval(0)
         self.config = configuration.Configuration()
         self.view = MainWindow.View(self.config, self.mpdclient, app)
         self.playControls = playControls.PlayControls(self.mpdclient)
         self.update = Update(self.view, self.mpdclient, self.config, self.playControls)
         self.__connectSignals()
         self.__connectMPD()
-
-        self.timer.start(1000)
 
         # Set global shortcuts if KDE is available otherwise overload keyPressEvent.
         if MainWindow.KDE:
@@ -158,12 +154,6 @@ class Manager():
         self.view.connect(action, SIGNAL("triggered()"), connectTo)
         return action
 
-    def __update(self):
-        if self.mpdclient.connected():
-            self.update.progress()
-            self.view.currentList.loadIcons()
-        else:
-            self.__connectMPD(error=True)
 
     def __connectMPD(self, error=False):
         if self.view.shuttingDown:
@@ -194,14 +184,14 @@ class Manager():
             self.update.currentsong = {}
             self.misses += 1
             self.misses = min(30, self.misses)
-            self.timer.setInterval(3000*self.misses)
+            self.idleTimer.start(3000*self.misses)
             if self.firstConnect:
                 self.firstConnect = False
                 self.config.showConfiguration(self.view, True)
         else:
             self.misses = 0
             self.errorCount = 0
-            self.timer.setInterval(1000)
+            self.idleTimer.setInterval(0)
             if len(self.config.server) > 3 and self.config.server[3] != '':
                 self.mpdclient.send('password', (self.config.server[3],))
             self.view.serverLabel.setText('Connected to %s' % self.config.server[0])
@@ -216,14 +206,16 @@ class Manager():
 
     def __runIdle(self):
         print 'debug: requesting idle.'
-        if not self.view.shuttingDown and self.mpdclient.connected():
-            self.mpdclient.send('idle', ([], 10), self.callback)
+        if not self.view.shuttingDown:
+            if self.mpdclient.connected():
+                self.mpdclient.send('idle', ([], 10), self.callback)
+            else:
+                self.view.emit(SIGNAL('ConnectionError()'))
 
     def __connectSignals(self):
         self.playControls.connectSignals(self.view)
         self.view.connect(self.view.menuConnect, SIGNAL('triggered(QAction *)'), self.connectTo)
 
-        self.view.connect(self.timer, SIGNAL("timeout()"), self.__update)
         self.view.connect(self.idleTimer, SIGNAL("timeout()"), self.__runIdle)
         self.view.connect(self.view, SIGNAL('reconnect()'), self.__connectMPD)
         self.view.connect(self.view, SIGNAL('ConnectionError()'), self._error)
@@ -253,8 +245,12 @@ class Update:
         self.playControls = playControls
         self.view.connect(self.view, SIGNAL('update'), self.update)
         self.view.connect(self.view, SIGNAL('currentSong'), self._currentsong)
+        # Set the progress timer up.
+        self.timer = QTimer()
+        self.view.connect(self.timer, SIGNAL("timeout()"), self.progress)
 
     def update(self, changes, status):
+        self.timer.start(1000)
         if changes:
             for change in changes:
                 getattr(self, change)(status)
@@ -262,6 +258,8 @@ class Update:
             self.player(status)
 
     def progress(self):
+        self.view.currentList.loadIcons()
+        if self.mpdclient.connected():
             try:
                 if self.state == 'play':
                     if 'time' in self.currentsong:
