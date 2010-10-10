@@ -80,6 +80,7 @@ class Manager():
 
     def connectTo(self, action):
         name = unicode(action.text())
+        name = filter(lambda x:x != '&', name)
         if self.config.server and name == self.config.server[0] and self.mpdclient.connected():
             return
         if name == 'None (disconnect)':
