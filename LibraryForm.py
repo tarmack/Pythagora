@@ -187,7 +187,10 @@ class LibraryForm(auxilia.Actions, QWidget):
         albums = self.albumView.selectedItems()
         artists = [unicode(artist.text()) for artist in self.artistView.selectedItems()]
         if len(albums) < 1:
-            self.__loadTracksView(self.library.songs())
+            if artists:
+                self.artistFilter()
+            else:
+                self.__loadTracksView(self.library.songs())
             return
         for album in albums:
             album = unicode(album.text())
