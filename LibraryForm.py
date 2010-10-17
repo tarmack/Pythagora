@@ -19,7 +19,7 @@ from PyQt4.QtCore import SIGNAL, Qt
 from PyQt4.QtGui import QHeaderView, QWidget
 from PyQt4 import uic
 from time import time
-import operator
+import os
 
 import songwidgets
 import auxilia
@@ -94,43 +94,24 @@ class LibraryForm(auxilia.Actions, QWidget):
             self.view.setCursor(Qt.WaitCursor)
             p = time()
             t = time()
-            self.mainSongList = []
-            self.artistdict = {}
-            self.albumdict = {}
-            self.albumlist = {}
-            filesystemlist = {}
-            # parse the list and prepare it for loading in the library browser and the file system view.
-            for song in (x for x in mainlist if 'file' in x):
-                self.mainSongList.append(song)
-                album = auxilia.songAlbum(song, 'None')
-                artist = auxilia.songArtist(song, 'Unknown')
-                appendToList(self.artistdict, artist, song)
-                appendToList(self.albumdict, album, song)
-                appendToList(self.albumlist, album, artist, True)
-
-                # Build the file system tree.
-                fslist = filesystemlist
-                for part in song['file'].split('/'):
-                    fslist[part] = fslist.get(part, {})
-                    fslist = fslist[part]
+            self.library = Library(mainlist)
 
             print 'library parsing took %.3f seconds' % (time() - t); t = time()
-            self.__loadArtistView()
+            self.__loadArtistView(self.library.artists())
             print 'load Artist took %.3f seconds' % (time() - t); t = time()
-            self.__loadAlbumView(self.albumlist)
+            self.__loadAlbumView(self.library.albums())
             print 'load Album took %.3f seconds' % (time() - t); t = time()
-            self.__loadTracksView(self.mainSongList)
+            self.__loadTracksView(self.library.songs())
             print 'load Tracks took %.3f seconds' % (time() - t); t = time()
-            self.__loadFileSystemView(filesystemlist)
+            self.__loadFileSystemView('/')
             print 'load FS took %.3f seconds' % (time() - t)
             print 'library load took %.3f seconds' % (time() - p)
         finally:
             self.view.setCursor(Qt.ArrowCursor)
 
-    def __loadArtistView(self):
+    def __loadArtistView(self, artists):
         self.artistView.clear()
         self.artistView.setUpdatesEnabled(False)
-        artists = self.artistdict.keys()
         artists.sort(auxilia.cmpUnicode)
         for artist in artists:
             self.artistView.addItem(songwidgets.ArtistWidget(artist))
@@ -142,7 +123,9 @@ class LibraryForm(auxilia.Actions, QWidget):
         '''Reloads the list with the list presented'''
         self.albumView.clear()
         self.albumView.setUpdatesEnabled(False)
-        for (album, artists) in sorted(albumlist.iteritems(), auxilia.cmpUnicode, operator.itemgetter(0)):
+        albumlist.sort(cmp=auxilia.cmpUnicode)
+        for album in albumlist:
+            artists = self.library.artistsOnAlbum(album)
             albumWidget = songwidgets.AlbumWidget(album, artists)
             self.albumView.addItem(albumWidget)
         self.albumView.insertItem(0, '--all--')
@@ -159,21 +142,21 @@ class LibraryForm(auxilia.Actions, QWidget):
             self.trackSearch(self.trackSearchField.text())
         self.trackView.setUpdatesEnabled(True)
 
-    def __loadFileSystemView(self, filelist, parent=None):
+    def __loadFileSystemView(self, path, parent=None):
         update = True
         if not parent:
-            self.filesystemTree.clear()
             parent = self.filesystemTree.invisibleRootItem()
-            update = False
             self.filesystemTree.setUpdatesEnabled(False)
-        for name in filelist.keys():
-            if filelist[name] == {}:
-                icon = 'file'
-            else:
-                icon = 'directory'
-            item = songwidgets.FilesystemWidget(name, icon)
+            update = False
+            self.filesystemTree.clear()
+        filelist = self.library.ls(path)
+        for name in filelist:
+            nextPath = os.path.join(path, name)
+            attr = self.library.attributes(nextPath)
+            item = songwidgets.FilesystemWidget(name, attr)
             parent.addChild(item)
-            self.__loadFileSystemView(filelist[name], item)
+            if attr == 'directory':
+                self.__loadFileSystemView(nextPath, item)
         parent.sortChildren(0, 0)
         if not update:
             self.filesystemTree.setUpdatesEnabled(True)
@@ -181,28 +164,21 @@ class LibraryForm(auxilia.Actions, QWidget):
 
     def artistFilter(self):
         songlist = []
-        albumlist = {}
+        albumlist = []
         artists = self.artistView.selectedItems()
         if len(artists) < 1:
-            self.__loadAlbumView(self.albumlist)
-            self.__loadTracksView(self.mainSongList)
+            self.__loadAlbumView(self.library.albums())
+            self.__loadTracksView(self.songs())
             return
         for artist in artists:
             artist = unicode(artist.text())
             if artist == '--all--':
                 if '--all--' in (unicode(x.text()) for x in self.albumView.selectedItems()):
-                    self.__loadTracksView(self.mainSongList)
-                self.__loadAlbumView(self.albumlist)
+                    self.__loadTracksView(self.library.songs())
+                self.__loadAlbumView(self.library.albums())
                 return
-            artistsongs = self.artistdict[artist]
-            songlist.extend(artistsongs)
-            for song in artistsongs:
-                #tup = (song.get('album', '?'), auxilia.songArtist(song))
-                #if not tup in albumlist:
-                #    albumlist.insert(0, tup)
-                album = auxilia.songAlbum(song, 'None')
-                if not artist in albumlist.get(album, []):
-                    albumlist[album] = albumlist.get(album, [])+[artist]
+            songlist.extend(self.library.artistSongs(artist))
+            albumlist.extend(self.library.artistAlbums(artist))
         self.__loadAlbumView(albumlist)
         self.__loadTracksView(songlist)
 
@@ -211,7 +187,7 @@ class LibraryForm(auxilia.Actions, QWidget):
         albums = self.albumView.selectedItems()
         artists = [unicode(artist.text()) for artist in self.artistView.selectedItems()]
         if len(albums) < 1:
-            self.__loadTracksView(self.mainSongList)
+            self.__loadTracksView(self.library.songs())
             return
         for album in albums:
             album = unicode(album.text())
@@ -219,9 +195,9 @@ class LibraryForm(auxilia.Actions, QWidget):
                 self.artistFilter()
                 return
             if album.lower() == 'greatest hits' and artists: # If album is a greatest hits assume only one artist is on there.
-                songlist.extend([song for song in self.albumdict[album] if auxilia.songArtist(song) in artists])
+                songlist.extend(self.library.albumSongs(album, artists))
             else:
-                songlist.extend(self.albumdict[album])
+                songlist.extend(self.library.albumSongs(album))
         self.__loadTracksView(songlist)
 
     def artistSearch(self, key):
@@ -335,3 +311,97 @@ def appendToList(listDict, keys, value, deduplicate=False):
         listDict[key] = part + value
 
 
+class Library:
+    '''Supplies a storage model for the mpd database.'''
+    def __init__(self, mainlist):
+        self._songList = []
+        self._artists = {}
+        self._albums = {}
+        self._filesystem = {}
+        # parse the list and prepare it for loading in the library browser and the file system view.
+        for song in (x for x in mainlist if 'file' in x):
+            self._songList.append(song)
+            album = auxilia.songAlbum(song, 'None')
+            artist = auxilia.songArtist(song, 'Unknown')
+            appendToList(self._artists, artist, song)
+            appendToList(self._albums, album, song)
+
+            # Build the file system tree.
+            fslist = self._filesystem
+            path = song['file'].split('/')
+            while path:
+                part = path.pop(0)
+                if path == []:
+                    fslist[part] = song
+                else:
+                    fslist[part] = fslist.get(part, {})
+                    fslist = fslist[part]
+
+    def artists(self):
+        '''Returns a list containing all artists in the library.'''
+        return self._artists.keys()
+
+    def albums(self):
+        '''Returns a list containing all albums in the library.'''
+        return self._albums.keys()
+
+    def songs(self):
+        '''Returns a list containing all songs in the library.'''
+        return self._songList[:]
+
+    def artistSongs(self, artist):
+        '''Returns a list containing all songs from the supplied artist.'''
+        return self._artists.get(artist, [])
+
+    def artistAlbums(self, artist):
+        '''Returns a list containing all albums the artist is listed on.'''
+        albumlist = set()
+        for song in self.artistSongs(artist):
+            album = auxilia.songAlbum(song, '')
+            albumlist.add(album)
+        return list(albumlist)
+
+    def albumSongs(self, album, artists=[]):
+        '''Returns a list containing all songs on the supplied album title.
+        The optional artist argument can be used to only get the songs of a particular artist or list of artists.'''
+        if type(artists) is str:
+            artists = [artists]
+        songlist = self._albums.get(album, [])
+        if artists:
+            songlist = [song for song in songlist if auxilia.songArtist(song, '') in artists]
+        return songlist
+
+    def artistsOnAlbum(self, album):
+        '''Returns a list containing all artists listed on the album.'''
+        songlist = self.albumSongs(album)
+        artistlist = set()
+        for song in songlist:
+            artistlist.add(auxilia.songArtist(song))
+        return list(artistlist)
+
+    def ls(self, path, fslist=None):
+        '''Returns a list of songs and directories contained in the given path.'''
+        if path.startswith('/'):
+            path = path[1:]
+        if fslist is None:
+            fslist = self._filesystem
+        if not path:
+            return fslist.keys()
+        part, sep, path = path.partition('/')
+        if part == '':
+            return fslist.keys()
+        fslist = fslist.get(part, {})
+        return self.ls(path, fslist)
+
+    def attributes(self, path):
+        '''Returns whether path is a directory or a song file.'''
+        if path.startswith('/'):
+            path = path[1:]
+        fslist = self._filesystem
+        for part in path.split('/'):
+            if part:
+                fslist = fslist[part]
+        if fslist.get('file', None) == path:
+            return 'file'
+        else:
+            return 'directory'
