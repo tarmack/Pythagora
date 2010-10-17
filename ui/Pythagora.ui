@@ -103,6 +103,7 @@
    <attribute name="toolBarBreak">
     <bool>false</bool>
    </attribute>
+   <addaction name="actionExit"/>
    <addaction name="actionSettings"/>
   </widget>
   <action name="actionExit">

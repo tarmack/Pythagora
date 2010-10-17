@@ -16,7 +16,7 @@
 # limitations under the License.
 #-------------------------------------------------------------------------------
 from PyQt4.QtCore import SIGNAL, QTimer, Qt, QObject, QEvent, QPoint
-from PyQt4.QtGui import QMainWindow, QLabel, QMenu, QIcon, QWidget, QAction, QWidgetAction, QToolButton
+from PyQt4.QtGui import QMainWindow, QLabel, QMenu, QIcon, QWidget, QAction, QWidgetAction, QToolButton, QMessageBox
 from PyQt4 import uic
 from time import time
 import sys
@@ -89,7 +89,7 @@ class View(QMainWindow, auxilia.Actions):
         self.connect(self.statusTabs, SIGNAL('currentChanged(int)'), self.__toggleShoutCast)
 
         self.connect(self.menuConnect, SIGNAL('aboutToShow()'), self.__buildConnectTo)
-        self.connect(self.actionExit,SIGNAL('triggered()'),self.app.quit)
+        self.connect(self.actionExit,SIGNAL('triggered()'),self.__quit)
         self.connect(self.actionSettings,SIGNAL('triggered()'),self.showConfig)
 
 
@@ -182,6 +182,16 @@ class View(QMainWindow, auxilia.Actions):
         '''Catch MainWindow's close event so we can hide it instead.'''
         self.hide()
         event.ignore()
+
+    def __quit(self):
+        dialog = QMessageBox(
+                QMessageBox.Question, # Icon
+                'Quit Pythagora?', # Title
+                'Do you want to quit Pythagora?', # Text
+                QMessageBox.Ok | QMessageBox.Cancel, # Buttons
+                )
+        if dialog.exec_() == QMessageBox.Ok:
+            self.app.quit()
 
     def __storeSplitter(self):
         self.config.mgrSplit = self.splitter.sizes()
