@@ -260,7 +260,7 @@ class CurrentPlaylistForm(QWidget, auxilia.Actions):
     def __drop(self, event, toPos):
         event.accept()
         itemList = event.source().selectedItems()
-        itemList = [item.getDrag(self.mpdclient) for item in itemList]
+        itemList = [item.getDrag() for item in itemList]
         try:
             print 'debug: adding', itemList
             self.view.setCursor(Qt.WaitCursor)

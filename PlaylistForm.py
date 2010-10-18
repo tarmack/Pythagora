@@ -126,7 +126,7 @@ class PlaylistForm(QWidget, auxilia.Actions):
                     toPos += 1
         else:
             itemList = event.source().selectedItems()
-            itemList = [item.getDrag(self.mpdclient) for item in itemList]
+            itemList = [item.getDrag() for item in itemList]
             try:
                 self.view.setCursor(Qt.WaitCursor)
                 count = self.songList.topLevelItemCount()
@@ -156,7 +156,7 @@ class PlaylistForm(QWidget, auxilia.Actions):
         playlists = [x['playlist'] for x in lsinfo if 'playlist' in x]
         playlists.sort(auxilia.cmpUnicode)
         for l in playlists:
-            self.playlistList.addItem(songwidgets.PlaylistWidget(l))
+            self.playlistList.addItem(songwidgets.PlaylistWidget(l, self.mpdclient))
 
         self.currentPlaylist = plname
         self.__getPlaylist(plname)

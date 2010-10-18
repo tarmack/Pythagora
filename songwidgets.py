@@ -53,27 +53,29 @@ class CurrentListWidget(QListWidgetItem):
             font.setWeight(50)
         self.setFont(font)
 
-    def getDrag(self, mpdclient):
+    def getDrag(self):
         return [self.song]
 
 class AlbumWidget(QListWidgetItem):
     '''Simple for album in library view.'''
-    def __init__(self, text, tooltip):
+    def __init__(self, text, tooltip, library):
+        self.library = library
         QListWidgetItem.__init__(self)
         self.setText(text)
         self.setToolTip('\n'.join(tooltip))
 
-    def getDrag(self, mpdclient):
-        return mpdclient.find('album', self.text())
+    def getDrag(self):
+        return self.library.albumSongs(unicode(self.text()))
 
 class ArtistWidget(QListWidgetItem):
     '''Simple widget for artists in library view.'''
-    def __init__(self, text):
+    def __init__(self, text, library):
+        self.library = library
         QListWidgetItem.__init__(self)
         self.setText(text)
 
-    def getDrag(self, mpdclient):
-        return mpdclient.find('artist', self.text())
+    def getDrag(self):
+        return self.library.artistSongs(unicode(self.text()))
 
 class TrackWidget(QTreeWidgetItem):
     '''Track widget used in library track view.'''
@@ -86,21 +88,21 @@ class TrackWidget(QTreeWidgetItem):
         self.setToolTip(1, "Artist:\t %s\nAlbum:\t %s\nFile:\t %s"\
                 % (auxilia.songArtist(song), auxilia.songAlbum(song), song['file']))
 
-    def getDrag(self, mpdclient):
+    def getDrag(self):
         return [self.song]
 
 class FilesystemWidget(QTreeWidgetItem):
     '''Widget used in the filesystem tree.'''
-    def __init__(self, text, icon):
-        self.icons = {
-                'file': auxilia.PIcon('audio-x-generic'),
-                'directory': auxilia.PIcon('folder-sound')
-                }
+    def __init__(self, text, attr, library):
+        self.library = library
         QTreeWidgetItem.__init__(self)
         self.setText(0, text)
-        self.setIcon(0, self.icons[icon])
+        if attr == 'file':
+            self.setIcon(0, auxilia.PIcon('audio-x-generic'))
+        else:
+            self.setIcon(0, auxilia.PIcon('folder-sound'))
 
-    def getDrag(self, mpdclient, path=''):
+    def getPath(self, path=''):
         text = unicode(self.text(0))
         if path == '':
             path = text
@@ -108,18 +110,29 @@ class FilesystemWidget(QTreeWidgetItem):
             path = os.path.join(text, path)
         parent = self.parent()
         if parent:
-            return parent.getDrag(mpdclient, path)
+            return parent.getPath(path)
         else:
-            return [song for song in mpdclient.listall(path) if 'file' in song]
+            return path
+
+    def getDrag(self):
+        song = self.library.ls(self.getPath())
+        if 'file' in song:
+            return [song]
+        songList = []
+        for i in xrange(self.childCount()):
+            child = self.child(i)
+            songList.extend(child.getDrag())
+        return songList
 
 class PlaylistWidget(QListWidgetItem):
     '''Widget used in the stored playlist list.'''
-    def __init__(self, text):
+    def __init__(self, text, mpdclient):
+        self.mpdclient = mpdclient
         QListWidgetItem.__init__(self)
         self.setText(text)
 
-    def getDrag(self, mpdclient):
-        return mpdclient.listplaylistinfo(self.text())
+    def getDrag(self):
+        return self.mpdclient.listplaylistinfo(self.text())
 
 class LongSongWidget(QTreeWidgetItem):
     '''Lays out a song in a three-column tree widget: artist, title, album.
@@ -132,7 +145,7 @@ class LongSongWidget(QTreeWidgetItem):
         self.setText(1,auxilia.songTitle(song))
         self.setText(2,auxilia.songAlbum(song))
 
-    def getDrag(self, mpdclient):
+    def getDrag(self):
         return [self.song]
 
 class ShoutCastStationWidget(QTreeWidgetItem):
@@ -145,7 +158,7 @@ class ShoutCastStationWidget(QTreeWidgetItem):
     def text(self):
         return self.station['name']
 
-    def getDrag(self, mpdclient):
+    def getDrag(self):
         client = shoutcast.ShoutcastClient()
         item = self.station['id']
         urls = client.getStation(item)
@@ -158,7 +171,7 @@ class ShoutCastBookmarkWidget(QListWidgetItem):
         self.station = station
         self.setText(station['name'])
 
-    def getDrag(self, mpdclient):
+    def getDrag(self):
         return [{'file': url} for url in self.urls]
 
 class SongLabel(QLabel):

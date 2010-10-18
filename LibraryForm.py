@@ -114,7 +114,7 @@ class LibraryForm(auxilia.Actions, QWidget):
         self.artistView.setUpdatesEnabled(False)
         artists.sort(auxilia.cmpUnicode)
         for artist in artists:
-            self.artistView.addItem(songwidgets.ArtistWidget(artist))
+            self.artistView.addItem(songwidgets.ArtistWidget(artist, self.library))
         self.artistView.insertItem(0, '--all--')
         self.artistSearch(self.artistSearchField.text())
         self.artistView.setUpdatesEnabled(True)
@@ -126,7 +126,7 @@ class LibraryForm(auxilia.Actions, QWidget):
         albumlist.sort(cmp=auxilia.cmpUnicode)
         for album in albumlist:
             artists = self.library.artistsOnAlbum(album)
-            albumWidget = songwidgets.AlbumWidget(album, artists)
+            albumWidget = songwidgets.AlbumWidget(album, artists, self.library)
             self.albumView.addItem(albumWidget)
         self.albumView.insertItem(0, '--all--')
         self.albumSearch(self.albumSearchField.text())
@@ -153,7 +153,7 @@ class LibraryForm(auxilia.Actions, QWidget):
         for name in filelist:
             nextPath = os.path.join(path, name)
             attr = self.library.attributes(nextPath)
-            item = songwidgets.FilesystemWidget(name, attr)
+            item = songwidgets.FilesystemWidget(name, attr, self.library)
             parent.addChild(item)
             if attr == 'directory':
                 self.__loadFileSystemView(nextPath, item)
