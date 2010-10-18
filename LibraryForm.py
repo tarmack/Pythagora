@@ -68,6 +68,8 @@ class LibraryForm(auxilia.Actions, QWidget):
         self.connect(self.albumView,SIGNAL('itemDoubleClicked(QListWidgetItem*)'),self.addAlbum)
         self.connect(self.trackView,SIGNAL('itemDoubleClicked(QTreeWidgetItem*,int)'),self.addTrack)
 
+        self.connect(self.filesystemTree, SIGNAL('itemExpanded(QTreeWidgetItem*)'), lambda item: item.setExpanded())
+
         # Create context menu's.
         #=======================================================================
 
@@ -142,24 +144,18 @@ class LibraryForm(auxilia.Actions, QWidget):
             self.trackSearch(self.trackSearchField.text())
         self.trackView.setUpdatesEnabled(True)
 
-    def __loadFileSystemView(self, path, parent=None):
-        update = True
-        if not parent:
-            parent = self.filesystemTree.invisibleRootItem()
-            self.filesystemTree.setUpdatesEnabled(False)
-            update = False
-            self.filesystemTree.clear()
+    def __loadFileSystemView(self, path):
+        parent = self.filesystemTree.invisibleRootItem()
+        self.filesystemTree.setUpdatesEnabled(False)
+        self.filesystemTree.clear()
         filelist = self.library.ls(path)
         for name in filelist:
             nextPath = os.path.join(path, name)
             attr = self.library.attributes(nextPath)
             item = songwidgets.FilesystemWidget(name, attr, self.library)
             parent.addChild(item)
-            if attr == 'directory':
-                self.__loadFileSystemView(nextPath, item)
         parent.sortChildren(0, 0)
-        if not update:
-            self.filesystemTree.setUpdatesEnabled(True)
+        self.filesystemTree.setUpdatesEnabled(True)
 
 
     def artistFilter(self):

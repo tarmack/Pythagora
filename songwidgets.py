@@ -100,6 +100,7 @@ class FilesystemWidget(QTreeWidgetItem):
         if attr == 'file':
             self.setIcon(0, auxilia.PIcon('audio-x-generic'))
         else:
+            self.setChildIndicatorPolicy(QTreeWidgetItem.ShowIndicator)
             self.setIcon(0, auxilia.PIcon('folder-sound'))
 
     def getPath(self, path=''):
@@ -123,6 +124,17 @@ class FilesystemWidget(QTreeWidgetItem):
             child = self.child(i)
             songList.extend(child.getDrag())
         return songList
+
+    def setExpanded(self):
+        path = self.getPath()
+        filelist = self.library.ls(path)
+        for name in filelist:
+            nextPath = os.path.join(path, name)
+            attr = self.library.attributes(nextPath)
+            item = FilesystemWidget(name, attr, self.library)
+            self.addChild(item)
+        self.sortChildren(0, 0)
+        self.setExpanded = lambda : None
 
 class PlaylistWidget(QListWidgetItem):
     '''Widget used in the stored playlist list.'''
