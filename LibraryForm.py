@@ -367,10 +367,10 @@ class Library:
     def albumSongs(self, album, artists=[]):
         '''Returns a list containing all songs on the supplied album title.
         The optional artist argument can be used to only get the songs of a particular artist or list of artists.'''
-        if type(artists) is str:
+        if type(artists) in (str, unicode):
             artists = [artists]
         songlist = self._albums.get(album, [])
-        if artists:
+        if artists != []:
             songlist = [song for song in songlist if auxilia.songArtist(song, '') in artists]
         return songlist
 
@@ -388,11 +388,12 @@ class Library:
             path = path[1:]
         if fslist is None:
             fslist = self._filesystem
-        if not path:
-            return fslist.keys()
         part, sep, path = path.partition('/')
         if part == '':
-            return fslist.keys()
+            if type(fslist.get('file', None)) in (str, unicode):
+                return fslist
+            else:
+                return fslist.keys()
         fslist = fslist.get(part, {})
         return self.ls(path, fslist)
 
