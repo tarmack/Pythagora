@@ -27,6 +27,7 @@ import playControls
 import configuration
 import MainWindow
 import auxilia
+import mpdlibrary
 
 #============== Long term TODO's ==============================================
 # TODO: notification on song change (http://mpd.wikia.com/wiki/Mpd_osd.py_(using_dbus)
@@ -292,8 +293,8 @@ class Update:
         self.mixer(status)
 
     def _currentsong(self, currentsong):
-        album = auxilia.songAlbum(currentsong)
-        self.setSongLabel(auxilia.songTitle(currentsong), auxilia.songArtist(currentsong), album)
+        album = mpdlibrary.songAlbum(currentsong)
+        self.setSongLabel(mpdlibrary.songTitle(currentsong), mpdlibrary.songArtist(currentsong), album)
         self.currentsong = currentsong
         self.lastSongId = currentsong['id']
 

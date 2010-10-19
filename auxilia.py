@@ -31,54 +31,6 @@ except ImportError:
 
 locale.setlocale(locale.LC_ALL, "")
 
-def songTitle(song):
-    value = _getSongAttr(song, ('title', 'name', 'file'))
-    return _getTextField(value)
-
-def songArtist(song, alt=''):
-    value = _getSongAttr(song, ('artist', 'performer', 'composer'))
-    if not value:
-        value = alt
-    return _getTextField(value)
-
-def songAlbum(song, alt=''):
-    value = song.get('album', alt)
-    return _getTextField(value)
-
-def songTrack(song, alt=''):
-    value = song.get('track', alt)
-    return _getTextField(value)
-
-def songGenre(song):
-    value = song.get('genre', [])
-    if type(value) in (str, unicode):
-        value = [value.lower()]
-    else:
-        value = [x.lower() for x in value]
-    return value
-
-def _getSongAttr(song, attrs):
-    '''Returns the value for the first key in attrs that exists.'''
-    for attr in attrs:
-        if attr in song:
-            return song[attr]
-
-def _getTextField(value):
-    if getattr(value, '__iter__', False):
-        return value[0]
-    else:
-        return value
-
-def songTime(song):
-    stime = int(song.get('time', '0'))
-    thour = stime / 3600
-    stime -= thour * 3600
-    tmin = stime / 60
-    tsec = stime - tmin * 60
-    if thour > 0:
-        return '%i:%02i:%02i' % (thour, tmin, tsec)
-    return '%i:%02i' % (tmin, tsec)
-
 def cmpUnicode(a, b):
     return locale.strcoll(a, b)#filter(lambda x: x.isalnum(), a), filter(lambda x: x.isalnum(), b))
 

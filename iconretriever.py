@@ -21,7 +21,7 @@ from sys import getrefcount
 import threading
 import time
 
-import auxilia
+import mpdlibrary
 
 APPNAME = 'pythagora'
 NOCOVER = 'icons/audio-x-generic.png'
@@ -71,8 +71,8 @@ class Retriever:
             if not self.coverPath:
                 return NOCOVER
             try:
-                artist = auxilia.songArtist(song)
-                album = auxilia.songAlbum(song)
+                artist = mpdlibrary.songArtist(song)
+                album = mpdlibrary.songAlbum(song)
                 if artist:
                     if album:
                         cover = self.getAlbumImage(artist,album)

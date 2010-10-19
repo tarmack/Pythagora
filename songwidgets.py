@@ -22,6 +22,7 @@ from PyQt4.QtGui import QListWidgetItem, QTreeWidgetItem, QBrush, QLabel\
 import auxilia
 import shoutcast
 import os
+import mpdlibrary
 
 #===============================================================================
 # List and tree widget items formatted in various ways for the forms to display
@@ -36,10 +37,10 @@ class CurrentListWidget(QListWidgetItem):
         self.icon = False
         self.song = song
         if oneLine:
-            self.setText(auxilia.songArtist(song) + ' - ' + auxilia.songTitle(song))
+            self.setText(mpdlibrary.songArtist(song) + ' - ' + mpdlibrary.songTitle(song))
         else:
-            self.setText(auxilia.songTitle(song) + '\n' + auxilia.songArtist(song))
-        self.setToolTip("Album:\t %s\nTime:\t %s\nFile:\t %s" % (auxilia.songAlbum(song), str(auxilia.songTime(song)) , song['file']))
+            self.setText(mpdlibrary.songTitle(song) + '\n' + mpdlibrary.songArtist(song))
+        self.setToolTip("Album:\t %s\nTime:\t %s\nFile:\t %s" % (mpdlibrary.songAlbum(song), str(mpdlibrary.songTime(song)) , song['file']))
 
     def setIcon(self, icon):
         self.icon = bool(icon)
@@ -82,11 +83,11 @@ class TrackWidget(QTreeWidgetItem):
     def __init__(self, song):
         QTreeWidgetItem.__init__(self)
         self.song = song
-        self.setText(0,auxilia.songTrack(song))
-        self.setText(1,auxilia.songTitle(song))
-        self.setText(2,auxilia.songTime(song))
+        self.setText(0,mpdlibrary.songTrack(song))
+        self.setText(1,mpdlibrary.songTitle(song))
+        self.setText(2,mpdlibrary.songTime(song))
         self.setToolTip(1, "Artist:\t %s\nAlbum:\t %s\nFile:\t %s"\
-                % (auxilia.songArtist(song), auxilia.songAlbum(song), song['file']))
+                % (mpdlibrary.songArtist(song), mpdlibrary.songAlbum(song), song['file']))
 
     def getDrag(self):
         return [self.song]
@@ -153,9 +154,9 @@ class LongSongWidget(QTreeWidgetItem):
         QTreeWidgetItem.__init__(self)
         self.song = song
         self.pos = pos
-        self.setText(0,auxilia.songArtist(song))
-        self.setText(1,auxilia.songTitle(song))
-        self.setText(2,auxilia.songAlbum(song))
+        self.setText(0,mpdlibrary.songArtist(song))
+        self.setText(1,mpdlibrary.songTitle(song))
+        self.setText(2,mpdlibrary.songAlbum(song))
 
     def getDrag(self):
         return [self.song]

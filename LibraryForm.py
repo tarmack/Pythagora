@@ -23,6 +23,7 @@ import os
 
 import songwidgets
 import auxilia
+import mpdlibrary
 
 class LibraryForm(auxilia.Actions, QWidget):
     '''List and controls for the full "library" of music known to the server.
@@ -96,7 +97,7 @@ class LibraryForm(auxilia.Actions, QWidget):
             self.view.setCursor(Qt.WaitCursor)
             p = time()
             t = time()
-            self.library = Library(mainlist)
+            self.library = mpdlibrary.Library(mainlist)
 
             print 'library parsing took %.3f seconds' % (time() - t); t = time()
             self.__loadArtistView(self.library.artists())
@@ -292,157 +293,4 @@ class LibraryForm(auxilia.Actions, QWidget):
         self.config.libSplit2 = self.libSplitter_2.sizes()
 
 
-def appendToList(listDict, keys, value, deduplicate=False):
-    '''In place add value to listDict at key.
-    If any of them are lists the values in those lists are used as value and
-    key. Everything gets added to everything. The optional deduplicate makes
-    appendToList only add values that are not yet in the list.
-    '''
-    if type(value) != list:
-        value = [value]
-    if type(keys) != list:
-        keys = [keys]
-    for key in keys:
-        part = listDict.get(key, [])
-        if deduplicate:
-            # filter all that are already in there.
-            value = [x for x in value if x not in part]
-        listDict[key] = part + value
-
-
-class Library:
-    '''Supplies a storage model for the mpd database.'''
-    def __init__(self, mainlist):
-        self._songList = []
-        self._artists = {}
-        self._albums = {}
-        self._genres = {}
-        self._filesystem = {}
-        # parse the list and prepare it for loading in the library browser and the file system view.
-        for song in (x for x in mainlist if 'file' in x):
-            self._songList.append(song)
-            album = auxilia.songAlbum(song, 'None')
-            artist = auxilia.songArtist(song, 'Unknown')
-            genre = song.get('genre', None)
-            appendToList(self._artists, artist, song)
-            appendToList(self._albums, album, song)
-            if genre:
-                appendToList(self._genres, genre, song)
-
-            # Build the file system tree.
-            fslist = self._filesystem
-            path = song['file'].split('/')
-            while path:
-                part = path.pop(0)
-                if path == []:
-                    fslist[part] = song
-                else:
-                    fslist[part] = fslist.get(part, {})
-                    fslist = fslist[part]
-
-    def artists(self):
-        '''Returns a list containing all artists in the library.'''
-        return self._artists.keys()
-
-    def albums(self):
-        '''Returns a list containing all albums in the library.'''
-        return self._albums.keys()
-
-    def songs(self):
-        '''Returns a list containing all songs in the library.'''
-        return self._songList[:]
-
-    def genres(self):
-        '''Returns a list containing all genres in the library.'''
-        return self._genres.keys()
-
-    def artistGenres(self, artist):
-        '''Returns a list containing all genres listed in songs by the given artist.'''
-        genres = set()
-        for song in self.artistSongs(artist):
-            genres.update(auxilia.songGenre(song))
-        return list(genres)
-
-    def albumGenres(self, album):
-        '''Returns a list containing all genres listed in songs on the given album.'''
-        genres = set()
-        for song in self.albumSongs(album):
-            genres.update(auxilia.songGenre(song))
-        return list(genres)
-
-    def genreArtists(self, genre):
-        '''Returns a list containing all artists in the given genre.'''
-        artists = set()
-        for song in self.genreSongs(genre):
-            artists.add(auxilia.songArtist(song))
-        return list(artists)
-
-    def genreAlbums(self, genre):
-        '''Returns a list containing all albums in the given genre.'''
-        albums = set()
-        for song in self.genreSongs(genre):
-            albums.add(auxilia.songAlbum(song))
-        return list(albums)
-
-    def genreSongs(self, genre):
-        '''Returns a list containing all songs in the given genre.'''
-        return self._genres.get(genre.lower(), [])
-
-    def artistSongs(self, artist):
-        '''Returns a list containing all songs from the supplied artist.'''
-        return self._artists.get(artist, [])
-
-    def artistAlbums(self, artist):
-        '''Returns a list containing all albums the artist is listed on.'''
-        albumlist = set()
-        for song in self.artistSongs(artist):
-            album = auxilia.songAlbum(song, '')
-            albumlist.add(album)
-        return list(albumlist)
-
-    def albumSongs(self, album, artists=[]):
-        '''Returns a list containing all songs on the supplied album title.
-        The optional artist argument can be used to only get the songs of a particular artist or list of artists.'''
-        if type(artists) in (str, unicode):
-            artists = [artists]
-        songlist = self._albums.get(album, [])
-        if artists != []:
-            songlist = [song for song in songlist if auxilia.songArtist(song, '') in artists]
-        return songlist
-
-    def albumArtists(self, album):
-        '''Returns a list containing all artists listed on the album.'''
-        songlist = self.albumSongs(album)
-        artistlist = set()
-        for song in songlist:
-            artistlist.add(auxilia.songArtist(song))
-        return list(artistlist)
-
-    def ls(self, path, fslist=None):
-        '''Returns a list of songs and directories contained in the given path.'''
-        if path.startswith('/'):
-            path = path[1:]
-        if fslist is None:
-            fslist = self._filesystem
-        part, sep, path = path.partition('/')
-        if part == '':
-            if type(fslist.get('file', None)) in (str, unicode):
-                return fslist
-            else:
-                return fslist.keys()
-        fslist = fslist.get(part, {})
-        return self.ls(path, fslist)
-
-    def attributes(self, path):
-        '''Returns whether path is a directory or a song file.'''
-        if path.startswith('/'):
-            path = path[1:]
-        fslist = self._filesystem
-        for part in path.split('/'):
-            if part:
-                fslist = fslist[part]
-        if fslist.get('file', None) == path:
-            return 'file'
-        else:
-            return 'directory'
 
