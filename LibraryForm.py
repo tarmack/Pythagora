@@ -127,7 +127,7 @@ class LibraryForm(auxilia.Actions, QWidget):
         self.albumView.setUpdatesEnabled(False)
         albumlist.sort(cmp=auxilia.cmpUnicode)
         for album in albumlist:
-            artists = self.library.artistsOnAlbum(album)
+            artists = self.library.albumArtists(album)
             albumWidget = songwidgets.AlbumWidget(album, artists, self.library)
             self.albumView.addItem(albumWidget)
         self.albumView.insertItem(0, '--all--')
@@ -316,14 +316,18 @@ class Library:
         self._songList = []
         self._artists = {}
         self._albums = {}
+        self._genres = {}
         self._filesystem = {}
         # parse the list and prepare it for loading in the library browser and the file system view.
         for song in (x for x in mainlist if 'file' in x):
             self._songList.append(song)
             album = auxilia.songAlbum(song, 'None')
             artist = auxilia.songArtist(song, 'Unknown')
+            genre = song.get('genre', None)
             appendToList(self._artists, artist, song)
             appendToList(self._albums, album, song)
+            if genre:
+                appendToList(self._genres, genre, song)
 
             # Build the file system tree.
             fslist = self._filesystem
@@ -348,6 +352,42 @@ class Library:
         '''Returns a list containing all songs in the library.'''
         return self._songList[:]
 
+    def genres(self):
+        '''Returns a list containing all genres in the library.'''
+        return self._genres.keys()
+
+    def artistGenres(self, artist):
+        '''Returns a list containing all genres listed in songs by the given artist.'''
+        genres = set()
+        for song in self.artistSongs(artist):
+            genres.update(auxilia.songGenre(song))
+        return list(genres)
+
+    def albumGenres(self, album):
+        '''Returns a list containing all genres listed in songs on the given album.'''
+        genres = set()
+        for song in self.albumSongs(album):
+            genres.update(auxilia.songGenre(song))
+        return list(genres)
+
+    def genreArtists(self, genre):
+        '''Returns a list containing all artists in the given genre.'''
+        artists = set()
+        for song in self.genreSongs(genre):
+            artists.add(auxilia.songArtist(song))
+        return list(artists)
+
+    def genreAlbums(self, genre):
+        '''Returns a list containing all albums in the given genre.'''
+        albums = set()
+        for song in self.genreSongs(genre):
+            albums.add(auxilia.songAlbum(song))
+        return list(albums)
+
+    def genreSongs(self, genre):
+        '''Returns a list containing all songs in the given genre.'''
+        return self._genres.get(genre.lower(), [])
+
     def artistSongs(self, artist):
         '''Returns a list containing all songs from the supplied artist.'''
         return self._artists.get(artist, [])
@@ -370,7 +410,7 @@ class Library:
             songlist = [song for song in songlist if auxilia.songArtist(song, '') in artists]
         return songlist
 
-    def artistsOnAlbum(self, album):
+    def albumArtists(self, album):
         '''Returns a list containing all artists listed on the album.'''
         songlist = self.albumSongs(album)
         artistlist = set()
@@ -405,3 +445,4 @@ class Library:
             return 'file'
         else:
             return 'directory'
+

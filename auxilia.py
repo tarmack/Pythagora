@@ -49,6 +49,14 @@ def songTrack(song, alt=''):
     value = song.get('track', alt)
     return _getTextField(value)
 
+def songGenre(song):
+    value = song.get('genre', [])
+    if type(value) in (str, unicode):
+        value = [value.lower()]
+    else:
+        value = [x.lower() for x in value]
+    return value
+
 def _getSongAttr(song, attrs):
     '''Returns the value for the first key in attrs that exists.'''
     for attr in attrs:
