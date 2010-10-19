@@ -32,11 +32,13 @@ except ImportError:
 locale.setlocale(locale.LC_ALL, "")
 
 def songTitle(song):
-    value = song.get('title', song.get('name', song['file']))
+    value = _getSongAttr(song, ('title', 'name', 'file'))
     return _getTextField(value)
 
 def songArtist(song, alt=''):
-    value = song.get('artist', song.get('performer', song.get('composer', alt)))
+    value = _getSongAttr(song, ('artist', 'performer', 'composer'))
+    if not value:
+        value = alt
     return _getTextField(value)
 
 def songAlbum(song, alt=''):
@@ -46,6 +48,12 @@ def songAlbum(song, alt=''):
 def songTrack(song, alt=''):
     value = song.get('track', alt)
     return _getTextField(value)
+
+def _getSongAttr(song, attrs):
+    '''Returns the value for the first key in attrs that exists.'''
+    for attr in attrs:
+        if attr in song:
+            return song[attr]
 
 def _getTextField(value):
     if getattr(value, '__iter__', False):
