@@ -16,7 +16,7 @@
 # limitations under the License.
 #-------------------------------------------------------------------------------
 from PyQt4.QtCore import SIGNAL, QTimer, Qt, QObject, QEvent, QPoint
-from PyQt4.QtGui import QMainWindow, QLabel, QMenu, QIcon, QWidget, QAction, QWidgetAction, QToolButton, QMessageBox
+from PyQt4.QtGui import QMainWindow, QLabel, QMenu, QIcon, QWidget, QAction, QWidgetAction, QToolButton, QMessageBox, QTabBar
 from PyQt4 import uic
 from time import time
 import sys
@@ -78,7 +78,7 @@ class View(QMainWindow, auxilia.Actions):
         self.serverLabel = QLabel('Not connected')
         self.numSongsLabel = QLabel('Songs')
         self.playTimeLabel = QLabel('playTime')
-        self.statusTabs = auxilia.StatusTabBar()
+        self.statusTabs = StatusTabBar()
         self.statusTabs.addTab(auxilia.PIcon("media-playlist-repeat"), 'Current Playlist')
         self.statusTabs.addTab(auxilia.PIcon("network-workgroup"), 'Shoutcast')
         self.statusTabs.setShape(1)
@@ -231,6 +231,39 @@ class View(QMainWindow, auxilia.Actions):
                 icon = auxilia.PIcon('network-connect')
             else: icon = auxilia.PIcon('network-disconnect')
             self.menuConnect.addAction(icon, server)
+
+
+class StatusTabBar(QTabBar):
+    def __init__(self):
+        QTabBar.__init__(self)
+        self.tabTimer = QTimer()
+        self.connect(self.tabTimer, SIGNAL('timeout()'), self.__selectTab)
+        self.setAcceptDrops(True)
+
+    def dragEnterEvent(self, event):
+        '''Starts timer on enter and sets first position.'''
+        self.tabPos = event.pos()
+        event.accept()
+        self.tabTimer.start(500)
+
+    def dragLeaveEvent(self, event):
+        '''If the mouse leaves the tabWidget stop the timer.'''
+        self.tabTimer.stop()
+
+    def dragMoveEvent(self, event):
+        '''Keep track of the mouse and change the position, restarts the timer when moved.'''
+        tabPos = event.pos()
+        moved = tabPos.manhattanLength() - self.tabPos.manhattanLength()
+        if moved > 7 or moved < -7:
+            self.tabTimer.start(500)
+        self.tabPos = tabPos
+
+    def __selectTab(self):
+        '''Changes the view to the tab where the mouse was hovering above.'''
+        index = self.tabAt(self.tabPos)
+        self.setCurrentIndex(index)
+        self.tabTimer.stop()
+
 
 class PlayerForm(QWidget):
     def __init__(self, view, app, mpdclient, config):

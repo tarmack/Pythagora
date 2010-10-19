@@ -18,8 +18,8 @@
 import locale
 import re
 import sys
-from PyQt4.QtCore import SIGNAL, QTimer
-from PyQt4.QtGui import QAction, QTabBar, QIcon
+from PyQt4.QtCore import SIGNAL
+from PyQt4.QtGui import QAction, QIcon
 
 try:
     if "--nokde" in sys.argv:
@@ -152,35 +152,4 @@ def PIcon(icon):
         return KIcon(icon)
     else:
         return QIcon('icons/%s.png' % icon)
-
-class StatusTabBar(QTabBar):
-    def __init__(self):
-        QTabBar.__init__(self)
-        self.tabTimer = QTimer()
-        self.connect(self.tabTimer, SIGNAL('timeout()'), self.__selectTab)
-        self.setAcceptDrops(True)
-
-    def dragEnterEvent(self, event):
-        '''Starts timer on enter and sets first position.'''
-        self.tabPos = event.pos()
-        event.accept()
-        self.tabTimer.start(500)
-
-    def dragLeaveEvent(self, event):
-        '''If the mouse leaves the tabWidget stop the timer.'''
-        self.tabTimer.stop()
-
-    def dragMoveEvent(self, event):
-        '''Keep track of the mouse and change the position, restarts the timer when moved.'''
-        tabPos = event.pos()
-        moved = tabPos.manhattanLength() - self.tabPos.manhattanLength()
-        if moved > 7 or moved < -7:
-            self.tabTimer.start(500)
-        self.tabPos = tabPos
-
-    def __selectTab(self):
-        '''Changes the view to the tab where the mouse was hovering above.'''
-        index = self.tabAt(self.tabPos)
-        self.setCurrentIndex(index)
-        self.tabTimer.stop()
 
