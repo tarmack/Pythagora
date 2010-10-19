@@ -16,14 +16,13 @@
 # limitations under the License.
 #-------------------------------------------------------------------------------
 from PyQt4.QtCore import SIGNAL, Qt
-from PyQt4.QtGui import QWidget, QMessageBox, QTreeWidgetItem, QKeySequence, QListWidget
+from PyQt4.QtGui import QWidget, QMessageBox, QTreeWidgetItem, QKeySequence, QListWidget, QListWidgetItem
 from PyQt4 import uic
 
 from xml.etree import ElementTree as ET
 import os
 
 import shoutcast
-import songwidgets
 from auxilia import Actions
 
 class ShoutcastForm(QWidget, Actions):
@@ -80,7 +79,7 @@ class ShoutcastForm(QWidget, Actions):
     def dragEnterEvent(self, event):
         source = event.source()
         if source == self.genreList:
-            if isinstance(source.selectedItems()[0], songwidgets.ShoutCastStationWidget):
+            if isinstance(source.selectedItems()[0], ShoutCastStationWidget):
                 event.accept()
 
     def dropEvent(self, event):
@@ -208,7 +207,7 @@ class StationTree():
         if current == None:
             current = self.view.genreList.invisibleRootItem()
         for station in stationlist:
-            current.addChild(songwidgets.ShoutCastStationWidget(station))
+            current.addChild(ShoutCastStationWidget(station))
 
     def currentStation(self):
         '''Figure out and return the current station and the base URL for it.'''
@@ -240,7 +239,7 @@ class BookmarkList():
         if os.path.isfile(self.bookmarkFile):
             self.xml = ET.parse(self.bookmarkFile)
             for element in self.xml.getiterator('station'):
-                widget = songwidgets.ShoutCastBookmarkWidget(element.attrib)
+                widget = ShoutCastBookmarkWidget(element.attrib)
                 widget.urls = self.getStationFiles(element.attrib['name'])
                 self.view.bookmarkList.addItem(widget)
         # start it ourselves
@@ -281,7 +280,7 @@ class BookmarkList():
             element = ET.Element('station')
             stations = self.xml.find('stations')
             stations.append(element)
-            self.view.bookmarkList.addItem(songwidgets.ShoutCastBookmarkWidget(station))
+            self.view.bookmarkList.addItem(ShoutCastBookmarkWidget(station))
         # in both cases, set data and save
         for key in station.keys():
             if key != 'urls':
@@ -314,4 +313,31 @@ class BookmarkList():
             self.delete()
         else:
             QListWidget.keyPressEvent(self.view.bookmarkList, event)
+
+# Widget subclasses.
+class ShoutCastStationWidget(QTreeWidgetItem):
+    '''Gives us in item storage of the station information this is needed to tune in to the station.'''
+    def __init__(self, station):
+        QTreeWidgetItem.__init__(self)
+        self.station = station
+        self.setText(0, station['name'])
+
+    def text(self):
+        return self.station['name']
+
+    def getDrag(self):
+        client = shoutcast.ShoutcastClient()
+        item = self.station['id']
+        urls = client.getStation(item)
+        return [{'file': url} for url in urls]
+
+class ShoutCastBookmarkWidget(QListWidgetItem):
+    '''Gives us in item storage of the station information this is needed to tune in to the station.'''
+    def __init__(self, station):
+        QListWidgetItem.__init__(self)
+        self.station = station
+        self.setText(station['name'])
+
+    def getDrag(self):
+        return [{'file': url} for url in self.urls]
 

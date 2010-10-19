@@ -16,12 +16,11 @@
 # limitations under the License.
 #-------------------------------------------------------------------------------
 from PyQt4.QtCore import SIGNAL, Qt
-from PyQt4.QtGui import QHeaderView, QWidget
+from PyQt4.QtGui import QHeaderView, QWidget, QTreeWidgetItem, QListWidgetItem
 from PyQt4 import uic
 from time import time
 import os
 
-import songwidgets
 import auxilia
 import mpdlibrary
 
@@ -117,7 +116,7 @@ class LibraryForm(auxilia.Actions, QWidget):
         self.artistView.setUpdatesEnabled(False)
         artists.sort(auxilia.cmpUnicode)
         for artist in artists:
-            self.artistView.addItem(songwidgets.ArtistWidget(artist, self.library))
+            self.artistView.addItem(ArtistWidget(artist, self.library))
         self.artistView.insertItem(0, '--all--')
         self.artistSearch(self.artistSearchField.text())
         self.artistView.setUpdatesEnabled(True)
@@ -129,7 +128,7 @@ class LibraryForm(auxilia.Actions, QWidget):
         albumlist.sort(cmp=auxilia.cmpUnicode)
         for album in albumlist:
             artists = self.library.albumArtists(album)
-            albumWidget = songwidgets.AlbumWidget(album, artists, self.library)
+            albumWidget = AlbumWidget(album, artists, self.library)
             self.albumView.addItem(albumWidget)
         self.albumView.insertItem(0, '--all--')
         self.albumSearch(self.albumSearchField.text())
@@ -139,7 +138,7 @@ class LibraryForm(auxilia.Actions, QWidget):
         self.trackView.clear()
         self.trackView.setUpdatesEnabled(False)
         for track in tracks:
-            trackWidget = songwidgets.TrackWidget(track)
+            trackWidget = TrackWidget(track)
             self.trackView.addTopLevelItem(trackWidget)
         if self.trackSearchField.text() != '':
             self.trackSearch(self.trackSearchField.text())
@@ -153,7 +152,7 @@ class LibraryForm(auxilia.Actions, QWidget):
         for name in filelist:
             nextPath = os.path.join(path, name)
             attr = self.library.attributes(nextPath)
-            item = songwidgets.FilesystemWidget(name, attr, self.library)
+            item = FilesystemWidget(name, attr, self.library)
             parent.addChild(item)
         parent.sortChildren(0, 0)
         self.filesystemTree.setUpdatesEnabled(True)
@@ -293,4 +292,84 @@ class LibraryForm(auxilia.Actions, QWidget):
         self.config.libSplit2 = self.libSplitter_2.sizes()
 
 
+# Widget subclasses.
+class ArtistWidget(QListWidgetItem):
+    '''Simple widget for artists in library view.'''
+    def __init__(self, text, library):
+        self.library = library
+        QListWidgetItem.__init__(self)
+        self.setText(text)
+
+    def getDrag(self):
+        return self.library.artistSongs(unicode(self.text()))
+
+class AlbumWidget(QListWidgetItem):
+    '''Simple for album in library view.'''
+    def __init__(self, text, tooltip, library):
+        self.library = library
+        QListWidgetItem.__init__(self)
+        self.setText(text)
+        self.setToolTip('\n'.join(tooltip))
+
+    def getDrag(self):
+        return self.library.albumSongs(unicode(self.text()))
+
+class TrackWidget(QTreeWidgetItem):
+    '''Track widget used in library track view.'''
+    def __init__(self, song):
+        QTreeWidgetItem.__init__(self)
+        self.song = song
+        self.setText(0,mpdlibrary.songTrack(song))
+        self.setText(1,mpdlibrary.songTitle(song))
+        self.setText(2,mpdlibrary.songTime(song))
+        self.setToolTip(1, "Artist:\t %s\nAlbum:\t %s\nFile:\t %s"\
+                % (mpdlibrary.songArtist(song), mpdlibrary.songAlbum(song), song['file']))
+
+    def getDrag(self):
+        return [self.song]
+
+class FilesystemWidget(QTreeWidgetItem):
+    '''Widget used in the filesystem tree.'''
+    def __init__(self, text, attr, library):
+        self.library = library
+        QTreeWidgetItem.__init__(self)
+        self.setText(0, text)
+        if attr == 'file':
+            self.setIcon(0, auxilia.PIcon('audio-x-generic'))
+        else:
+            self.setChildIndicatorPolicy(QTreeWidgetItem.ShowIndicator)
+            self.setIcon(0, auxilia.PIcon('folder-sound'))
+
+    def getPath(self, path=''):
+        text = unicode(self.text(0))
+        if path == '':
+            path = text
+        else:
+            path = os.path.join(text, path)
+        parent = self.parent()
+        if parent:
+            return parent.getPath(path)
+        else:
+            return path
+
+    def getDrag(self):
+        song = self.library.ls(self.getPath())
+        if 'file' in song:
+            return [song]
+        songList = []
+        for i in xrange(self.childCount()):
+            child = self.child(i)
+            songList.extend(child.getDrag())
+        return songList
+
+    def setExpanded(self):
+        path = self.getPath()
+        filelist = self.library.ls(path)
+        for name in filelist:
+            nextPath = os.path.join(path, name)
+            attr = self.library.attributes(nextPath)
+            item = FilesystemWidget(name, attr, self.library)
+            self.addChild(item)
+        self.sortChildren(0, 0)
+        self.setExpanded = lambda : None
 

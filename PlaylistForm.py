@@ -16,12 +16,12 @@
 # limitations under the License.
 #-------------------------------------------------------------------------------
 from PyQt4.QtCore import SIGNAL, Qt
-from PyQt4.QtGui import QMessageBox, QInputDialog, QKeySequence, QListWidget, QTreeWidget, QWidget
+from PyQt4.QtGui import QMessageBox, QInputDialog, QKeySequence, QListWidget, QTreeWidget, QWidget, QTreeWidgetItem, QListWidgetItem
 from PyQt4 import uic
 
 import mpd
-import songwidgets
 import auxilia
+import mpdlibrary
 
 # TODO: Double click actions. playlistlist add to current.
 
@@ -156,7 +156,7 @@ class PlaylistForm(QWidget, auxilia.Actions):
         playlists = [x['playlist'] for x in lsinfo if 'playlist' in x]
         playlists.sort(auxilia.cmpUnicode)
         for l in playlists:
-            self.playlistList.addItem(songwidgets.PlaylistWidget(l, self.mpdclient))
+            self.playlistList.addItem(PlaylistWidget(l, self.mpdclient))
 
         self.currentPlaylist = plname
         self.__getPlaylist(plname)
@@ -182,7 +182,7 @@ class PlaylistForm(QWidget, auxilia.Actions):
         if isinstance(songlist, Exception):
             return
         for i, song in enumerate(songlist):
-            self.songList.addTopLevelItem(songwidgets.LongSongWidget(song, i))
+            self.songList.addTopLevelItem(LongSongWidget(song, i))
         for i in range(3):
             self.songList.resizeColumnToContents(i)
 
@@ -232,7 +232,7 @@ class PlaylistForm(QWidget, auxilia.Actions):
                         , 'New Playlist')
                 if ok != True:
                     return self.currentPlaylist
-            self.playlistList.addItem(songwidgets.PlaylistWidget(name))
+            self.playlistList.addItem(PlaylistWidget(name))
             try:
                 self.playlistList.setCurrentItem(self.playlistList.findItems(name, Qt.MatchExactly)[0])
             except:
@@ -286,3 +286,29 @@ class PlaylistForm(QWidget, auxilia.Actions):
 
     def __storeSplitter(self):
         self.config.playlistSplit = self.playlistSplitter.sizes()
+
+# Widget subclasses.
+class PlaylistWidget(QListWidgetItem):
+    '''Widget used in the stored playlist list.'''
+    def __init__(self, text, mpdclient):
+        self.mpdclient = mpdclient
+        QListWidgetItem.__init__(self)
+        self.setText(text)
+
+    def getDrag(self):
+        return self.mpdclient.listplaylistinfo(self.text())
+
+class LongSongWidget(QTreeWidgetItem):
+    '''Lays out a song in a three-column tree widget: artist, title, album.
+    Used in PlaylistForm.'''
+    def __init__(self, song, pos):
+        QTreeWidgetItem.__init__(self)
+        self.song = song
+        self.pos = pos
+        self.setText(0,mpdlibrary.songArtist(song))
+        self.setText(1,mpdlibrary.songTitle(song))
+        self.setText(2,mpdlibrary.songAlbum(song))
+
+    def getDrag(self):
+        return [self.song]
+

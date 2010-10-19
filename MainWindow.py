@@ -15,8 +15,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #-------------------------------------------------------------------------------
-from PyQt4.QtCore import SIGNAL, QTimer, Qt, QObject, QEvent, QPoint
-from PyQt4.QtGui import QMainWindow, QLabel, QMenu, QIcon, QWidget, QAction, QWidgetAction, QToolButton, QMessageBox, QTabBar
+from PyQt4.QtCore import SIGNAL, QTimer, Qt, QObject, QEvent, QPoint, QPointF
+from PyQt4.QtGui import QMainWindow, QLabel, QMenu, QIcon, QWidget, QAction, QWidgetAction, QToolButton, QMessageBox, QTabBar,\
+        QBrush, QFontMetrics, QPainter, QLinearGradient, QPalette, QPen
 from PyQt4 import uic
 from time import time
 import sys
@@ -305,6 +306,70 @@ class PlayerForm(QWidget):
         time = int(currentsong.get('time', None))
         if time is not None:
             self.mpdclient.send('seekid', (currentsong['id'], int(time * position)))
+
+class SongLabel(QLabel):
+    title = 'title'
+    artist = 'artist'
+    album = 'album'
+    parts = ('title', 'artist', 'album')
+    prepends = {
+            'artist': 'by',
+            'album': 'from'
+            }
+    def __init__(self):
+        QLabel.__init__(self)
+        self.setAlignment(Qt.AlignBottom)
+        self.titleFont = self.font()
+        self.titleFont.setPointSize(self.font().pointSize()+2)
+        self.titleFont.setBold(True)
+        self.artistFont = self.font()
+        self.artistFont.setPointSize(self.font().pointSize()+2)
+        self.albumFont = self.font()
+        self.albumFont.setItalic(True)
+
+    def setText(self, title='', artist='', album=''):
+        self.title = title
+        self.artist = artist
+        self.album = album
+        self.repaint()
+
+    def paintEvent(self, event):
+        gradient = self.__gradient()
+        self.spaceLeft = self.contentsRect()
+        for part in self.parts:
+            font = getattr(self, '%sFont' % part)
+            text = getattr(self, part)
+            if text:
+                self.__write(self.prepends.get(part, ''), self.font(), gradient)
+            self.__write(text, font, gradient)
+        if self.spaceLeft.width() <= 0:
+            if self.title:
+                title = '<b><big>%s</big></b>' % self.title
+            if self.artist:
+                artist = 'by <big>%s</big>' % self.artist
+            if self.album:
+                album = 'from <i>%s</i>' % self.album
+            tooltip = '<br>'.join((item for item in (title, artist, album) if item))
+            self.setToolTip(tooltip)
+        else: self.setToolTip('')
+
+    def __write(self, text, font, pen):
+        width = QFontMetrics(font).width(text+' ')
+        painter = QPainter(self)
+        painter.setFont(font)
+        painter.setPen(pen)
+        painter.drawText(self.spaceLeft, Qt.AlignBottom, text)
+        self.spaceLeft.setLeft(self.spaceLeft.left() + width ) # move the left edge to the end of what we just painted.
+
+    def __gradient(self):
+        left = QPointF(self.contentsRect().topLeft())
+        right = QPointF(self.contentsRect().topRight())
+        gradient = QLinearGradient(left, right)
+        gradient.setColorAt(0.9, self.palette().color(QPalette.WindowText))
+        gradient.setColorAt(1.0, self.palette().color(QPalette.Window))
+        pen = QPen()
+        pen.setBrush(QBrush(gradient))
+        return pen
 
 
 if KDE:

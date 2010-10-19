@@ -16,14 +16,14 @@
 # limitations under the License.
 #-------------------------------------------------------------------------------
 from PyQt4.QtCore import SIGNAL, Qt, QSize#, QTimer
-from PyQt4.QtGui import QWidget, QInputDialog, QKeySequence, QListWidget, QIcon
+from PyQt4.QtGui import QWidget, QInputDialog, QKeySequence, QListWidget, QIcon, QListWidgetItem
 from PyQt4 import uic
 from time import time
 from sys import getrefcount
 
-import songwidgets
 import auxilia
 import iconretriever
+import mpdlibrary
 
 # TODO: See if drag pixmap can be alpha blended. (probably impossible)
 # TODO: Make cover art download optional.
@@ -171,7 +171,7 @@ class CurrentPlaylistForm(QWidget, auxilia.Actions):
                     self._insertItem(song['pos'], item)
                 else:
                     # If the song is not in the parallel or the 'hold on to' list. Just insert a new item at the correct position.
-                    item = songwidgets.CurrentListWidget(song, oneLine)
+                    item = CurrentListWidget(song, oneLine)
                     self._insertItem(song['pos'], item)
                 oldPos = song['pos']
                 # select the song again if needed.
@@ -405,3 +405,32 @@ class CurrentPlaylistForm(QWidget, auxilia.Actions):
     def _setEditing(self, i=0):
         self.editing = time()
 
+
+# Widget subclas.
+class CurrentListWidget(QListWidgetItem):
+    '''Song, album, cover in a tree widget item'''
+    # Used in CurrentPlaylistForm
+    def __init__(self, song, oneLine=False):
+        QListWidgetItem.__init__(self)
+        self.icon = False
+        self.song = song
+        if oneLine:
+            self.setText(mpdlibrary.songArtist(song) + ' - ' + mpdlibrary.songTitle(song))
+        else:
+            self.setText(mpdlibrary.songTitle(song) + '\n' + mpdlibrary.songArtist(song))
+        self.setToolTip("Album:\t %s\nTime:\t %s\nFile:\t %s" % (mpdlibrary.songAlbum(song), str(mpdlibrary.songTime(song)) , song['file']))
+
+    def setIcon(self, icon):
+        self.icon = bool(icon)
+        QListWidgetItem.setIcon(self, icon)
+
+    def playing(self, playing):
+        font = self.font()
+        if playing:
+            font.setWeight(75)
+        else:
+            font.setWeight(50)
+        self.setFont(font)
+
+    def getDrag(self):
+        return [self.song]
