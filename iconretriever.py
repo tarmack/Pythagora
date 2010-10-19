@@ -98,7 +98,7 @@ class Retriever:
 
     def getAlbumImage(self, artist, album):
         '''Get a album cover, return None on failure.'''
-        coverFile = os.path.join(self.coverPath, auxilia.fileName(artist)+'-'+auxilia.fileName(album))
+        coverFile = os.path.join(self.coverPath, fileName(artist)+'-'+fileName(album))
         # find cached version of the cover.
         cover = self._coverGlob(coverFile)
         if cover:
@@ -122,7 +122,7 @@ class Retriever:
 
     def getArtistImage(self, artist):
         '''Get a picture of artist, return None on failure.'''
-        coverFile = os.path.join(self.coverPath, auxilia.fileName(artist))
+        coverFile = os.path.join(self.coverPath, fileName(artist))
         # find cached version of the picture.
         cover = self._coverGlob(coverFile)
         if cover:
@@ -240,3 +240,5 @@ def checkDir(path):
             return None
     return path
 
+def fileName(name):
+    return filter(lambda x: x != '/' , name)

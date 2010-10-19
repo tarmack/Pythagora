@@ -88,9 +88,6 @@ def cmpTracks(a, b):
     except:
         return cmpUnicode(a, b)
 
-def fileName(name):
-    return filter(lambda x: x != '/' , name)
-
 # Actions
 #==============================================================================
 
