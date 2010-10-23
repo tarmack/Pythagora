@@ -28,6 +28,8 @@ import PlaylistForm
 import LibraryForm
 import auxilia
 
+DATA_DIR = ''
+
 try:
     if "--nokde" in sys.argv:
         raise ImportError
@@ -47,8 +49,8 @@ class View(QMainWindow, auxilia.Actions):
         self.shuttingDown = False
         self.config = configuration
         self.mpdclient = mpdclient
-        appIcon = QIcon('icons/Pythagora.png')
-        uic.loadUi('ui/Pythagora.ui', self)
+        appIcon = QIcon(DATA_DIR+'icons/Pythagora.png')
+        uic.loadUi(DATA_DIR+'ui/Pythagora.ui', self)
         self.KDE = KDE
         self.setWindowTitle('Pythagora')
         self.setWindowIcon(appIcon)
@@ -271,9 +273,9 @@ class PlayerForm(QWidget):
         self.view = view
         self.mpdclient = mpdclient
         if self.view.KDE:
-            uic.loadUi('ui/PlayerForm.ui', self)
+            uic.loadUi(DATA_DIR+'ui/PlayerForm.ui', self)
         else:
-            uic.loadUi('ui/PlayerForm.ui.Qt', self)
+            uic.loadUi(DATA_DIR+'ui/PlayerForm.ui.Qt', self)
         self.playerForm = self
         self.view.topLayout.addWidget(self)
         # Set attributes not set trough xml file.

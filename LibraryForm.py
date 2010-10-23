@@ -24,6 +24,8 @@ import os
 import auxilia
 import mpdlibrary
 
+DATA_DIR = ''
+
 class LibraryForm(auxilia.Actions, QWidget):
     '''List and controls for the full "library" of music known to the server.
        Note that this does not actually manage the filesystem or tags or covers.
@@ -37,16 +39,16 @@ class LibraryForm(auxilia.Actions, QWidget):
         self.config = config
         # Load and place the Library form.
         if self.view.KDE:
-            uic.loadUi('ui/LibraryForm.ui', self)
+            uic.loadUi(DATA_DIR+'ui/LibraryForm.ui', self)
         else:
-            uic.loadUi('ui/LibraryForm.ui.Qt', self)
+            uic.loadUi(DATA_DIR+'ui/LibraryForm.ui.Qt', self)
         self.trackView.header().setResizeMode(1, QHeaderView.Stretch)
         self.view.tabs.addTab(self, auxilia.PIcon('server-database'), '&Library')
         # Load and place the FileSystem form.
         if self.view.KDE:
-            uic.loadUi('ui/FileSystemForm.ui', self)
+            uic.loadUi(DATA_DIR+'ui/FileSystemForm.ui', self)
         else:
-            uic.loadUi('ui/FileSystemForm.ui.Qt', self)
+            uic.loadUi(DATA_DIR+'ui/FileSystemForm.ui.Qt', self)
         self.view.tabs.addTab(self.filesystemTree, auxilia.PIcon('folder-sound'), 'F&ileSystem')
 
         self.libSplitter_1.setSizes(config.libSplit1)

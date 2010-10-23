@@ -23,9 +23,11 @@ import time
 
 import mpdlibrary
 
+DATA_DIR = ''
+
 APPNAME = 'pythagora'
-NOCOVER = 'icons/audio-x-generic.png'
-STREAMICON = 'icons/audio-x-stream.png'
+NOCOVER = DATA_DIR+'icons/audio-x-generic.png'
+STREAMICON = DATA_DIR+'icons/audio-x-stream.png'
 APIKEY = 'c01e19f763d7bd5adc905bd7456cf80d'
 SECONDS_BETWEEN_REQUESTS = 0.2
 

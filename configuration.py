@@ -21,6 +21,8 @@ from PyQt4 import uic
 import os.path
 import auxilia
 
+DATA_DIR = ''
+
 class Configuration(object):
     types = {
                 int: QVariant.toInt,
@@ -111,7 +113,7 @@ class Configuration(object):
     def showConfiguration(self, parent, modal=False):
         '''Display the configuration dialog and activate the changes.'''
         self.parent = parent
-        self.setup = uic.loadUi('ui/Configuration.ui')
+        self.setup = uic.loadUi(DATA_DIR+'ui/Configuration.ui')
         self.setup.setWindowTitle('Pythagora settings')
         self.setup.setWindowIcon(QIcon('Pythagora.png'))
         self.setup.setAttribute(Qt.WA_QuitOnClose, False)

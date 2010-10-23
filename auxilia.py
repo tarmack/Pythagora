@@ -21,6 +21,8 @@ import sys
 from PyQt4.QtCore import SIGNAL
 from PyQt4.QtGui import QAction, QIcon
 
+DATA_DIR = ''
+
 try:
     if "--nokde" in sys.argv:
         raise ImportError
@@ -151,5 +153,5 @@ def PIcon(icon):
     if KDE:
         return KIcon(icon)
     else:
-        return QIcon('icons/%s.png' % icon)
+        return QIcon(DATA_DIR+'icons/%s.png' % icon)
 

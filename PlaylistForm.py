@@ -23,6 +23,8 @@ import mpd
 import auxilia
 import mpdlibrary
 
+DATA_DIR = ''
+
 # TODO: Double click actions. playlistlist add to current.
 
 #==============================================================================
@@ -40,9 +42,9 @@ class PlaylistForm(QWidget, auxilia.Actions):
         self.view.connect(self.view,SIGNAL('reloadPlaylists'),self.reload)
         # Load and place the stored playlists form.
         if self.view.KDE:
-            uic.loadUi('ui/PlaylistsForm.ui', self)
+            uic.loadUi(DATA_DIR+'ui/PlaylistsForm.ui', self)
         else:
-            uic.loadUi('ui/PlaylistsForm.ui.Qt', self)
+            uic.loadUi(DATA_DIR+'ui/PlaylistsForm.ui.Qt', self)
         self.view.tabs.addTab(self, auxilia.PIcon('document-multiple'), '&PlayLists')
         self.playlistSplitter.setSizes(config.playlistSplit)
 

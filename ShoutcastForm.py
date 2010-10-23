@@ -25,6 +25,8 @@ import os
 import shoutcast
 from auxilia import Actions
 
+DATA_DIR = ''
+
 class ShoutcastForm(QWidget, Actions):
     '''Grab Shoutcast streams and save them as "bookmarks" - and play them on
        the currently selected server.
@@ -40,9 +42,9 @@ class ShoutcastForm(QWidget, Actions):
         self.view = view
         self.config = config
         if self.view.KDE:
-            uic.loadUi('ui/ShoutCastForm.ui', self)
+            uic.loadUi(DATA_DIR+'ui/ShoutCastForm.ui', self)
         else:
-            uic.loadUi('ui/ShoutCastForm.ui.Qt', self)
+            uic.loadUi(DATA_DIR+'ui/ShoutCastForm.ui.Qt', self)
         self.view.stackedWidget.addWidget(self)
         self.scSplitter.setSizes(config.mgrScSplit)
         self.adding = False

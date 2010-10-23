@@ -25,6 +25,8 @@ import auxilia
 import iconretriever
 import mpdlibrary
 
+DATA_DIR = ''
+
 # TODO: See if drag pixmap can be alpha blended. (probably impossible)
 # TODO: Make cover art download optional.
 
@@ -44,9 +46,9 @@ class CurrentPlaylistForm(QWidget, auxilia.Actions):
         self.mpdclient = mpdclient
         self.config = config
         if self.view.KDE:
-            uic.loadUi('ui/CurrentListForm.ui', self)
+            uic.loadUi(DATA_DIR+'ui/CurrentListForm.ui', self)
         else:
-            uic.loadUi('ui/CurrentListForm.ui.Qt', self)
+            uic.loadUi(DATA_DIR+'ui/CurrentListForm.ui.Qt', self)
         self.view.currentListLayout.addWidget(self)
 
         self.retriever = iconretriever.ThreadedRetriever(config.musicPath)
