@@ -27,7 +27,6 @@ import ShoutcastForm
 import PlaylistForm
 import LibraryForm
 import auxilia
-import songwidgets
 
 try:
     if "--nokde" in sys.argv:
@@ -281,7 +280,7 @@ class PlayerForm(QWidget):
         self.back.setIcon(auxilia.PIcon("media-skip-backward"))
         self.stop.setIcon(auxilia.PIcon("media-playback-stop"))
         self.forward.setIcon(auxilia.PIcon("media-skip-forward"))
-        self.songLabel = songwidgets.SongLabel()
+        self.songLabel = SongLabel()
         self.setAcceptDrops(True)
         self.titleLayout.addWidget(self.songLabel)
         self.progress.mouseReleaseEvent = self.__mouseReleaseEvent
