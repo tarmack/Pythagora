@@ -286,6 +286,8 @@ class PlayerForm(QWidget):
         self.setAcceptDrops(True)
         self.titleLayout.addWidget(self.songLabel)
         self.progress.mouseReleaseEvent = self.__mouseReleaseEvent
+        self.progress.mouseMoveEvent = self.__mouseMoveEvent
+        self.progress.setMouseTracking(True)
         self.connect(self, SIGNAL('songSeek'), self.songSeek)
 
     def dragEnterEvent(self, event):
@@ -302,6 +304,11 @@ class PlayerForm(QWidget):
             position = float(event.x()) / int(self.progress.geometry().width())
             self.mpdclient.send('currentsong', callback=
                     lambda currentsong: self.emit(SIGNAL('songSeek'), currentsong, position))
+
+    def __mouseMoveEvent(self, event):
+        position = float(event.x()) / int(self.progress.geometry().width())
+        seconds = position * self.progress.maximum()
+        self.progress.setToolTip(auxilia.formatTime(seconds))
 
     def songSeek(self, currentsong, position):
         time = int(currentsong.get('time', None))
@@ -477,4 +484,3 @@ def menuTitle(icon, text, parent):
     action.setDefaultWidget(titleButton)
 
     return action
-

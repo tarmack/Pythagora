@@ -155,3 +155,19 @@ def PIcon(icon):
     else:
         return QIcon(DATA_DIR+'icons/%s.png' % icon)
 
+def formatTime(seconds):
+    seconds = int(seconds)
+    form = '%i'
+    result = []
+    units = (60*60*24, 60*60, 60)
+    for size in units:
+        if seconds > size-1 or form == '%02i':
+            count = seconds / size
+            seconds -= (count * size)
+            result.append(form % count)
+            form = '%02i'
+    result.append('%02i' % seconds)
+    if len(result) < 2:
+        result.insert(0, '0')
+    return ':'.join(result)
+

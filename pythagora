@@ -337,11 +337,11 @@ class Update:
         songTime = int(ss)
         if songTime <= 0:
             self.view.playerForm.progress.setValue(0)
-            self.view.playerForm.progress.setFormat(formatTime(curTime))
+            self.view.playerForm.progress.setFormat(auxilia.formatTime(curTime))
         else:
             self.view.playerForm.progress.setMaximum(songTime)
             self.view.playerForm.progress.setValue(curTime)
-            self.view.playerForm.progress.setFormat('/'.join((formatTime(curTime), formatTime(songTime))))
+            self.view.playerForm.progress.setFormat('/'.join((auxilia.formatTime(curTime), auxilia.formatTime(songTime))))
         self.time = curTime
 
     def clearForms(self):
@@ -360,22 +360,6 @@ class Update:
         self.view.trayIcon.setState(state)
         self.state = state
         self.playControls.state = self.state
-
-def formatTime(seconds):
-    seconds = int(seconds)
-    form = '%i'
-    result = []
-    units = (60*60*24, 60*60, 60)
-    for size in units:
-        if seconds > size-1 or form == '%02i':
-            count = seconds / size
-            seconds -= (count * size)
-            result.append(form % count)
-            form = '%02i'
-    result.append('%02i' % seconds)
-    if len(result) < 2:
-        result.insert(0, '0')
-    return ':'.join(result)
 
 
 if __name__ == "__main__":
