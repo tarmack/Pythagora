@@ -142,6 +142,8 @@ class Manager():
                 "Volume Down", "Volume down", Qt.CTRL + Qt.Key_VolumeDown, self.playControls.volumeDown)
         self.muteAction = self.__setGlobalShortcut(
                 "Mute", "Mute/unmute", Qt.CTRL + Qt.Key_VolumeMute, self.playControls.toggleMute)
+        self.hideRestoreAction = self.__setGlobalShortcut(
+                "Hide/Restore", "Hide or Restore the main window.", Qt.CTRL + Qt.SHIFT + Qt.Key_P, self.view.toggleHideRestore)
 
     def __setGlobalShortcut(self, name, helpText, keys, connectTo):
         print 'debug: Registering global shortcut for %s as %s.' % (name, str(keys))

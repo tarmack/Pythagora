@@ -103,7 +103,7 @@ class View(QMainWindow, auxilia.Actions):
         connectMenuAction = self.menuConnect.menuAction()
         self.trayIcon.addMenuItem(connectMenuAction)
         self.trayIcon.addMenuItem(self.actionSettings)
-        self.connect(self.trayIcon, SIGNAL('activate()'), self.__toggleHideRestore)
+        self.connect(self.trayIcon, SIGNAL('activate()'), self.toggleHideRestore)
         self.connect(self.trayIcon, SIGNAL('secondaryActivateRequested(QPoint)'), self.__playPause)
 
         self.connect(self.tabs, SIGNAL('currentChanged(int)'), self.__tabsIndexChanged)
@@ -205,7 +205,7 @@ class View(QMainWindow, auxilia.Actions):
         self.config.showShoutcast = value
         self.stackedWidget.setCurrentIndex(value)
 
-    def __toggleHideRestore(self):
+    def toggleHideRestore(self):
         '''Show or hide the window based on some parameters. We can detect
         when we are obscured and come to the top. In other cases we hide if
         mapped and show if not.
