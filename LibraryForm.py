@@ -146,7 +146,7 @@ class LibraryForm(auxilia.Actions, QWidget):
         artists = self.artistView.selectedItems()
         if len(artists) < 1:
             self.__loadAlbumView(self.library.albums())
-            self.__loadTracksView(self.songs())
+            self.__loadTracksView(self.library.songs())
             return
         for artist in artists:
             artist = unicode(artist.text())
