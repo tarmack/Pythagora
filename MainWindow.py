@@ -16,7 +16,7 @@
 # limitations under the License.
 #-------------------------------------------------------------------------------
 from PyQt4.QtCore import SIGNAL, QTimer, Qt, QObject, QEvent, QPoint, QPointF
-from PyQt4.QtGui import QMainWindow, QLabel, QMenu, QIcon, QWidget, QAction, QWidgetAction, QToolButton, QMessageBox, QTabBar,\
+from PyQt4.QtGui import QMainWindow, QLabel, QMenu, QIcon, QWidget, QAction, QWidgetAction, QToolButton, QMessageBox,\
         QBrush, QFontMetrics, QPainter, QLinearGradient, QPalette, QPen
 from PyQt4 import uic
 from time import time
@@ -81,15 +81,9 @@ class View(QMainWindow, auxilia.Actions):
         self.serverLabel = QLabel('Not connected')
         self.numSongsLabel = QLabel('Songs')
         self.playTimeLabel = QLabel('playTime')
-        self.statusTabs = StatusTabBar()
-        self.statusTabs.addTab(auxilia.PIcon("media-playlist-repeat"), 'Current Playlist')
-        self.statusTabs.addTab(auxilia.PIcon("network-workgroup"), 'Shoutcast')
-        self.statusTabs.setShape(1)
-        self.statusbar.addWidget(self.statusTabs)
         self.statusbar.addWidget(self.serverLabel)
         self.statusbar.addPermanentWidget(self.numSongsLabel)
         self.statusbar.addPermanentWidget(self.playTimeLabel)
-        self.connect(self.statusTabs, SIGNAL('currentChanged(int)'), self.__toggleShoutCast)
 
         self.connect(self.menuConnect, SIGNAL('aboutToShow()'), self.__buildConnectTo)
         self.connect(self.actionExit,SIGNAL('triggered()'),self.__quit)
@@ -114,7 +108,6 @@ class View(QMainWindow, auxilia.Actions):
         # Apply configuration.
         self.resize(configuration.mgrSize)
         self.splitter.setSizes(configuration.mgrSplit)
-        self.statusTabs.setCurrentIndex(configuration.showShoutcast)
         self.tabs.setCurrentIndex(configuration.tabsIndex)
 
         self.closeEvent = self.closeEvent
@@ -169,12 +162,12 @@ class View(QMainWindow, auxilia.Actions):
         # Standard views.
         self.playerForm = PlayerForm(self, self.app, self.mpdclient, self.config)
         self.currentList = CurrentPlaylistForm.CurrentPlaylistForm(self, self.app, self.mpdclient, self.config)
-        self.shoutcast = ShoutcastForm.ShoutcastForm(self, self.app, self.mpdclient, self.config)
         # Plugin views.
+        self.shoutcast = ShoutcastForm.ShoutcastForm(self, self.app, self.mpdclient, self.config)
         self.libraryForm = LibraryForm.LibraryForm(self, self.app, self.mpdclient, self.config)
         self.fileSystemForm = FileSystemForm.FileSystemForm(self, self.app, self.mpdclient, self.config)
         self.playlistsForm = PlaylistForm.PlaylistForm(self, self.app, self.mpdclient, self.config)
-        plugins = [self.libraryForm, self.fileSystemForm, self.playlistsForm]
+        plugins = [self.libraryForm, self.fileSystemForm, self.playlistsForm, self.shoutcast]
         for name in self.config.tabOrder:
             for plugin in plugins:
                 if plugin.moduleName == name:
@@ -250,38 +243,6 @@ class View(QMainWindow, auxilia.Actions):
                 icon = auxilia.PIcon('network-connect')
             else: icon = auxilia.PIcon('network-disconnect')
             self.menuConnect.addAction(icon, server)
-
-
-class StatusTabBar(QTabBar):
-    def __init__(self):
-        QTabBar.__init__(self)
-        self.tabTimer = QTimer()
-        self.connect(self.tabTimer, SIGNAL('timeout()'), self.__selectTab)
-        self.setAcceptDrops(True)
-
-    def dragEnterEvent(self, event):
-        '''Starts timer on enter and sets first position.'''
-        self.tabPos = event.pos()
-        event.accept()
-        self.tabTimer.start(500)
-
-    def dragLeaveEvent(self, event):
-        '''If the mouse leaves the tabWidget stop the timer.'''
-        self.tabTimer.stop()
-
-    def dragMoveEvent(self, event):
-        '''Keep track of the mouse and change the position, restarts the timer when moved.'''
-        tabPos = event.pos()
-        moved = tabPos.manhattanLength() - self.tabPos.manhattanLength()
-        if moved > 7 or moved < -7:
-            self.tabTimer.start(500)
-        self.tabPos = tabPos
-
-    def __selectTab(self):
-        '''Changes the view to the tab where the mouse was hovering above.'''
-        index = self.tabAt(self.tabPos)
-        self.setCurrentIndex(index)
-        self.tabTimer.stop()
 
 
 class PlayerForm(QWidget):

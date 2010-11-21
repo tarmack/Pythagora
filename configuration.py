@@ -47,7 +47,7 @@ class Configuration(object):
                 'libSplit1':            [3,5],
                 'libSplit2':            [3,5],
                 'playlistSplit':        [5,20],
-                'tabOrder':             ['&Library', 'F&ileSystem', '&PlayLists'],
+                'tabOrder':             ['&Library', 'F&ileSystem', '&PlayLists', '&Shoutcast'],
                 }
 
     def __getattr__(self, attr):

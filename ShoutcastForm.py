@@ -23,11 +23,11 @@ from xml.etree import ElementTree as ET
 import os
 
 import shoutcast
-from auxilia import Actions
+import auxilia
 
 DATA_DIR = ''
 
-class ShoutcastForm(QWidget, Actions):
+class ShoutcastForm(QWidget, auxilia.Actions):
     '''Grab Shoutcast streams and save them as "bookmarks" - and play them on
        the currently selected server.
 
@@ -35,6 +35,8 @@ class ShoutcastForm(QWidget, Actions):
        shoutcast server/API is pretty lame so timeouts actually occur quite
        frequently.
     '''
+    moduleName = '&Shoutcast'
+    moduleIcon = auxilia.PIcon("network-workgroup")
     stations = {}
 
     def __init__(self, view, app, mpdclient, config):
@@ -45,7 +47,6 @@ class ShoutcastForm(QWidget, Actions):
             uic.loadUi(DATA_DIR+'ui/ShoutCastForm.ui', self)
         else:
             uic.loadUi(DATA_DIR+'ui/ShoutCastForm.ui.Qt', self)
-        self.view.stackedWidget.addWidget(self)
         self.scSplitter.setSizes(config.mgrScSplit)
         self.adding = False
         self.search = False
