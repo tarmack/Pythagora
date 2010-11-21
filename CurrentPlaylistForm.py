@@ -106,6 +106,28 @@ class CurrentPlaylistForm(QWidget, auxilia.Actions):
         self.currentList.addAction(self.currentMenuSave)
         self.currentList.addAction(self.currentMenuCrop)
 
+        # Set the Off icon for the repeat and random buttons.
+        icon = self.randomButton.icon()
+        icon.addPixmap(
+                icon.pixmap(32,32,QIcon.Normal),
+                QIcon.Normal,
+                QIcon.On)
+        icon.addPixmap(
+                icon.pixmap(32,32,QIcon.Disabled),
+                QIcon.Normal,
+                QIcon.Off)
+        self.randomButton.setIcon(icon)
+        icon = self.repeatButton.icon()
+        icon.addPixmap(
+                icon.pixmap(32,32,QIcon.Normal),
+                QIcon.Normal,
+                QIcon.On)
+        icon.addPixmap(
+                icon.pixmap(32,32,QIcon.Disabled),
+                QIcon.Normal,
+                QIcon.Off)
+        self.repeatButton.setIcon(icon)
+
 
     def setPlaying(self, currentsong):
         playing = int(currentsong['pos'])
