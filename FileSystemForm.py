@@ -44,7 +44,7 @@ class FileSystemForm(auxilia.Actions, QWidget):
 
         self.view.connect(self.view,SIGNAL('reloadLibrary'),self.reload)
 
-        self.connect(self.filesystemTree, SIGNAL('itemExpanded(QTreeWidgetItem*)'), lambda item: item.setExpanded())
+        self.connect(self.filesystemTree, SIGNAL('itemExpanded(QTreeWidgetItem*)'), lambda item: item.loadChildren())
 
     def reload(self, mpdLibrary):
         try:
@@ -100,12 +100,13 @@ class FilesystemWidget(QTreeWidgetItem):
         if 'file' in song:
             return [song]
         songList = []
+        self.loadChildren()
         for i in xrange(self.childCount()):
             child = self.child(i)
             songList.extend(child.getDrag())
         return songList
 
-    def setExpanded(self):
+    def loadChildren(self):
         path = self.getPath()
         filelist = self.library.ls(path)
         for name in filelist:
@@ -114,5 +115,5 @@ class FilesystemWidget(QTreeWidgetItem):
             item = FilesystemWidget(name, attr, self.library)
             self.addChild(item)
         self.sortChildren(0, 0)
-        self.setExpanded = lambda : None
+        self.loadChildren = lambda : None
 
