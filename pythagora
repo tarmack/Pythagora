@@ -316,7 +316,7 @@ class Update:
 
     def database(self, status):
         self.mpdclient.send('listallinfo', callback=
-                lambda mainlist: self.view.emit(SIGNAL('reloadLibrary'), mainlist))
+                lambda mainlist: self.view.emit(SIGNAL('reloadLibrary'), mpdlibrary.Library(mainlist)))
 
     def setSongLabel(self, title='', artist='', album=''):
         self.view.playerForm.songLabel.setText(title, artist, album)
@@ -350,7 +350,7 @@ class Update:
         self.view.libraryForm.artistView.clear()
         self.view.libraryForm.albumView.clear()
         self.view.libraryForm.trackView.clear()
-        self.view.libraryForm.filesystemTree.clear()
+        self.view.fileSystemForm.filesystemTree.clear()
         self.view.playlistsForm.playlistList.clear()
         self.view.playlistsForm.songList.clear()
 

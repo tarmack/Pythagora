@@ -19,7 +19,6 @@ from PyQt4.QtCore import SIGNAL, Qt
 from PyQt4.QtGui import QHeaderView, QWidget, QTreeWidgetItem, QListWidgetItem
 from PyQt4 import uic
 from time import time
-import os
 
 import auxilia
 import mpdlibrary
@@ -37,6 +36,7 @@ class LibraryForm(auxilia.Actions, QWidget):
         self.view = view
         self.mpdclient = mpdclient
         self.config = config
+        self.library = None
         # Load and place the Library form.
         if self.view.KDE:
             uic.loadUi(DATA_DIR+'ui/LibraryForm.ui', self)
@@ -44,12 +44,6 @@ class LibraryForm(auxilia.Actions, QWidget):
             uic.loadUi(DATA_DIR+'ui/LibraryForm.ui.Qt', self)
         self.trackView.header().setResizeMode(1, QHeaderView.Stretch)
         self.view.tabs.addTab(self, auxilia.PIcon('server-database'), '&Library')
-        # Load and place the FileSystem form.
-        if self.view.KDE:
-            uic.loadUi(DATA_DIR+'ui/FileSystemForm.ui', self)
-        else:
-            uic.loadUi(DATA_DIR+'ui/FileSystemForm.ui.Qt', self)
-        self.view.tabs.addTab(self.filesystemTree, auxilia.PIcon('folder-sound'), 'F&ileSystem')
 
         self.libSplitter_1.setSizes(config.libSplit1)
         self.libSplitter_2.setSizes(config.libSplit2)
@@ -70,7 +64,6 @@ class LibraryForm(auxilia.Actions, QWidget):
         self.connect(self.albumView,SIGNAL('itemDoubleClicked(QListWidgetItem*)'),self.addAlbum)
         self.connect(self.trackView,SIGNAL('itemDoubleClicked(QTreeWidgetItem*,int)'),self.addTrack)
 
-        self.connect(self.filesystemTree, SIGNAL('itemExpanded(QTreeWidgetItem*)'), lambda item: item.setExpanded())
 
         # Create context menu's.
         #=======================================================================
@@ -90,7 +83,7 @@ class LibraryForm(auxilia.Actions, QWidget):
 
         #=======================================================================
 
-    def reload(self, mainlist):
+    def reload(self, mpdLibrary):
         if not self.config.server:
             return
         try:
@@ -98,7 +91,7 @@ class LibraryForm(auxilia.Actions, QWidget):
             self.view.setCursor(Qt.WaitCursor)
             p = time()
             t = time()
-            self.library = mpdlibrary.Library(mainlist)
+            self.library = mpdLibrary
 
             print 'library parsing took %.3f seconds' % (time() - t); t = time()
             self.__loadArtistView(self.library.artists())
@@ -107,8 +100,6 @@ class LibraryForm(auxilia.Actions, QWidget):
             print 'load Album took %.3f seconds' % (time() - t); t = time()
             self.__loadTracksView(self.library.songs())
             print 'load Tracks took %.3f seconds' % (time() - t); t = time()
-            self.__loadFileSystemView('/')
-            print 'load FS took %.3f seconds' % (time() - t)
             print 'library load took %.3f seconds' % (time() - p)
         finally:
             self.view.setCursor(Qt.ArrowCursor)
@@ -145,19 +136,6 @@ class LibraryForm(auxilia.Actions, QWidget):
         if self.trackSearchField.text() != '':
             self.trackSearch(self.trackSearchField.text())
         self.trackView.setUpdatesEnabled(True)
-
-    def __loadFileSystemView(self, path):
-        parent = self.filesystemTree.invisibleRootItem()
-        self.filesystemTree.setUpdatesEnabled(False)
-        self.filesystemTree.clear()
-        filelist = self.library.ls(path)
-        for name in filelist:
-            nextPath = os.path.join(path, name)
-            attr = self.library.attributes(nextPath)
-            item = FilesystemWidget(name, attr, self.library)
-            parent.addChild(item)
-        parent.sortChildren(0, 0)
-        self.filesystemTree.setUpdatesEnabled(True)
 
 
     def artistFilter(self):
@@ -329,49 +307,4 @@ class TrackWidget(QTreeWidgetItem):
 
     def getDrag(self):
         return [self.song]
-
-class FilesystemWidget(QTreeWidgetItem):
-    '''Widget used in the filesystem tree.'''
-    def __init__(self, text, attr, library):
-        self.library = library
-        QTreeWidgetItem.__init__(self)
-        self.setText(0, text)
-        if attr == 'file':
-            self.setIcon(0, auxilia.PIcon('audio-x-generic'))
-        else:
-            self.setChildIndicatorPolicy(QTreeWidgetItem.ShowIndicator)
-            self.setIcon(0, auxilia.PIcon('folder-sound'))
-
-    def getPath(self, path=''):
-        text = unicode(self.text(0))
-        if path == '':
-            path = text
-        else:
-            path = os.path.join(text, path)
-        parent = self.parent()
-        if parent:
-            return parent.getPath(path)
-        else:
-            return path
-
-    def getDrag(self):
-        song = self.library.ls(self.getPath())
-        if 'file' in song:
-            return [song]
-        songList = []
-        for i in xrange(self.childCount()):
-            child = self.child(i)
-            songList.extend(child.getDrag())
-        return songList
-
-    def setExpanded(self):
-        path = self.getPath()
-        filelist = self.library.ls(path)
-        for name in filelist:
-            nextPath = os.path.join(path, name)
-            attr = self.library.attributes(nextPath)
-            item = FilesystemWidget(name, attr, self.library)
-            self.addChild(item)
-        self.sortChildren(0, 0)
-        self.setExpanded = lambda : None
 

@@ -26,6 +26,7 @@ import CurrentPlaylistForm
 import ShoutcastForm
 import PlaylistForm
 import LibraryForm
+import FileSystemForm
 import auxilia
 
 DATA_DIR = ''
@@ -167,6 +168,7 @@ class View(QMainWindow, auxilia.Actions):
         self.playerForm = PlayerForm(self, self.app, self.mpdclient, self.config)
         self.currentList = CurrentPlaylistForm.CurrentPlaylistForm(self, self.app, self.mpdclient, self.config)
         self.libraryForm = LibraryForm.LibraryForm(self, self.app, self.mpdclient, self.config)
+        self.fileSystemForm = FileSystemForm.FileSystemForm(self, self.app, self.mpdclient, self.config)
         self.playlistsForm = PlaylistForm.PlaylistForm(self, self.app, self.mpdclient, self.config)
         self.shoutcast = ShoutcastForm.ShoutcastForm(self, self.app, self.mpdclient, self.config)
 
