@@ -52,6 +52,7 @@ class PlaylistForm(QWidget, auxilia.Actions):
 
         # top bit
         self.connect(self.playlistList,SIGNAL('itemSelectionChanged()'),self.selectPlaylist)
+        self.connect(self.playlistList,SIGNAL('itemDoubleClicked(QListWidgetItem*)'),self.__addList)
         self.connect(self.newButton,SIGNAL('clicked()'),self.__newList)
         self.connect(self.loadButton,SIGNAL('clicked()'),self.__loadList)
         self.connect(self.deleteButton,SIGNAL('clicked()'),self.__deleteList)
