@@ -47,6 +47,7 @@ class Configuration(object):
                 'libSplit1':            [3,5],
                 'libSplit2':            [3,5],
                 'playlistSplit':        [5,20],
+                'tabOrder':             ['&Library', 'F&ileSystem', '&PlayLists'],
                 }
 
     def __getattr__(self, attr):
@@ -82,6 +83,8 @@ class Configuration(object):
         value = QtType(QSettings().value(option,self.defaults[option]))
         if not value and value == None:
             return None
+        if option == 'tabOrder':
+            return [unicode(x.toString()) for x in value]
         if option == 'server':
             return [unicode(col.toString()) for col in value]
         if valueType == list:

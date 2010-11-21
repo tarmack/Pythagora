@@ -108,6 +108,7 @@ class View(QMainWindow, auxilia.Actions):
         self.connect(self.trayIcon, SIGNAL('secondaryActivateRequested(QPoint)'), self.__playPause)
 
         self.connect(self.tabs, SIGNAL('currentChanged(int)'), self.__tabsIndexChanged)
+        self.connect(self.tabs.tabBar(), SIGNAL('tabMoved(int,int)'), self.__tabMoved)
         self.connect(self.splitter, SIGNAL('splitterMoved(int, int)'), self.__storeSplitter)
 
         # Apply configuration.
@@ -165,12 +166,20 @@ class View(QMainWindow, auxilia.Actions):
 
     def createViews(self):
         '''Set up our different view handlers.'''
+        # Standard views.
         self.playerForm = PlayerForm(self, self.app, self.mpdclient, self.config)
         self.currentList = CurrentPlaylistForm.CurrentPlaylistForm(self, self.app, self.mpdclient, self.config)
+        self.shoutcast = ShoutcastForm.ShoutcastForm(self, self.app, self.mpdclient, self.config)
+        # Plugin views.
         self.libraryForm = LibraryForm.LibraryForm(self, self.app, self.mpdclient, self.config)
         self.fileSystemForm = FileSystemForm.FileSystemForm(self, self.app, self.mpdclient, self.config)
         self.playlistsForm = PlaylistForm.PlaylistForm(self, self.app, self.mpdclient, self.config)
-        self.shoutcast = ShoutcastForm.ShoutcastForm(self, self.app, self.mpdclient, self.config)
+        plugins = [self.libraryForm, self.fileSystemForm, self.playlistsForm]
+        for name in self.config.tabOrder:
+            for plugin in plugins:
+                if plugin.moduleName == name:
+                    self.tabs.addTab(plugin, plugin.moduleIcon, plugin.moduleName)
+                    break
 
     def shutdown(self):
         self.shuttingDown = True
@@ -202,6 +211,12 @@ class View(QMainWindow, auxilia.Actions):
 
     def __tabsIndexChanged(self, value):
         self.config.tabsIndex = self.tabs.currentIndex()
+
+    def __tabMoved(self, old, new):
+        print "DEBUG: Tab from", old, "moved to", new
+        order = self.config.tabOrder
+        order.insert(new, order.pop(old))
+        self.config.tabOrder = order
 
     def __toggleShoutCast(self, value):
         self.config.showShoutcast = value

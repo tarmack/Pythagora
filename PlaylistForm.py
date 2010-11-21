@@ -32,6 +32,9 @@ DATA_DIR = ''
 #==============================================================================
 class PlaylistForm(QWidget, auxilia.Actions):
     '''Display and manage the currently known playlists.'''
+    moduleName = '&PlayLists'
+    moduleIcon = auxilia.PIcon('document-multiple')
+
     def __init__(self, view, app, mpdclient, config):
         QWidget.__init__(self)
         self.app = app
@@ -45,7 +48,6 @@ class PlaylistForm(QWidget, auxilia.Actions):
             uic.loadUi(DATA_DIR+'ui/PlaylistsForm.ui', self)
         else:
             uic.loadUi(DATA_DIR+'ui/PlaylistsForm.ui.Qt', self)
-        self.view.tabs.addTab(self, auxilia.PIcon('document-multiple'), '&PlayLists')
         self.playlistSplitter.setSizes(config.playlistSplit)
 
         # top bit

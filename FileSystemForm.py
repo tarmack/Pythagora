@@ -26,6 +26,8 @@ import auxilia
 DATA_DIR = ''
 
 class FileSystemForm(auxilia.Actions, QWidget):
+    moduleName = 'F&ileSystem'
+    moduleIcon = auxilia.PIcon('folder-sound')
 
     def __init__(self, view, app, mpdclient, config):
         QWidget.__init__(self)
@@ -39,7 +41,6 @@ class FileSystemForm(auxilia.Actions, QWidget):
             uic.loadUi(DATA_DIR+'ui/FileSystemForm.ui', self)
         else:
             uic.loadUi(DATA_DIR+'ui/FileSystemForm.ui.Qt', self)
-        self.view.tabs.addTab(self, auxilia.PIcon('folder-sound'), 'F&ileSystem')
 
         self.view.connect(self.view,SIGNAL('reloadLibrary'),self.reload)
 

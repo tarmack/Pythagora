@@ -30,6 +30,9 @@ class LibraryForm(auxilia.Actions, QWidget):
        Note that this does not actually manage the filesystem or tags or covers.
        There are many other programs that do that exceedingly well already.
     '''
+    moduleName = '&Library'
+    moduleIcon = auxilia.PIcon('server-database')
+
     def __init__(self, view, app, mpdclient, config):
         QWidget.__init__(self)
         self.app = app
@@ -43,7 +46,6 @@ class LibraryForm(auxilia.Actions, QWidget):
         else:
             uic.loadUi(DATA_DIR+'ui/LibraryForm.ui.Qt', self)
         self.trackView.header().setResizeMode(1, QHeaderView.Stretch)
-        self.view.tabs.addTab(self, auxilia.PIcon('server-database'), '&Library')
 
         self.libSplitter_1.setSizes(config.libSplit1)
         self.libSplitter_2.setSizes(config.libSplit2)
