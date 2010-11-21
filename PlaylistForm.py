@@ -166,8 +166,9 @@ class PlaylistForm(QWidget, auxilia.Actions):
         self.__getPlaylist(plname)
 
     def selectPlaylist(self):
-        item = self.playlistList.selectedItems()[0]
-        self.__getPlaylist(unicode(item.text()))
+        if self.playlistList.selectedItems():
+            item = self.playlistList.selectedItems()[0]
+            self.__getPlaylist(unicode(item.text()))
 
     def __getPlaylist(self, plname=None):
         '''Load up and display the selected playlist or the one given.'''
