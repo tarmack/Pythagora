@@ -33,7 +33,7 @@ DATA_DIR = ''
 class PlaylistForm(QWidget, auxilia.Actions):
     '''Display and manage the currently known playlists.'''
     moduleName = '&PlayLists'
-    moduleIcon = auxilia.PIcon('document-multiple')
+    moduleIcon = 'document-multiple'
 
     def __init__(self, view, app, mpdclient, config):
         QWidget.__init__(self)

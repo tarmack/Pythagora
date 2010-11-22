@@ -31,7 +31,7 @@ class LibraryForm(auxilia.Actions, QWidget):
        There are many other programs that do that exceedingly well already.
     '''
     moduleName = '&Library'
-    moduleIcon = auxilia.PIcon('server-database')
+    moduleIcon = 'server-database'
 
     def __init__(self, view, app, mpdclient, config):
         QWidget.__init__(self)

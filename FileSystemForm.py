@@ -27,7 +27,7 @@ DATA_DIR = ''
 
 class FileSystemForm(auxilia.Actions, QWidget):
     moduleName = 'F&ileSystem'
-    moduleIcon = auxilia.PIcon('folder-sound')
+    moduleIcon = 'folder-sound'
 
     def __init__(self, view, app, mpdclient, config):
         QWidget.__init__(self)

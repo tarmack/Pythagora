@@ -36,7 +36,7 @@ class ShoutcastForm(QWidget, auxilia.Actions):
        frequently.
     '''
     moduleName = '&Shoutcast'
-    moduleIcon = auxilia.PIcon("network-workgroup")
+    moduleIcon = "network-workgroup"
     stations = {}
 
     def __init__(self, view, app, mpdclient, config):

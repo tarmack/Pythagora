@@ -171,7 +171,7 @@ class View(QMainWindow, auxilia.Actions):
         for name in self.config.tabOrder:
             for plugin in plugins:
                 if plugin.moduleName == name:
-                    self.tabs.addTab(plugin, plugin.moduleIcon, plugin.moduleName)
+                    self.tabs.addTab(plugin, auxilia.PIcon(plugin.moduleIcon), plugin.moduleName)
                     break
 
     def shutdown(self):
