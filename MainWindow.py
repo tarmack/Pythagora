@@ -27,6 +27,7 @@ import ShoutcastForm
 import PlaylistForm
 import LibraryForm
 import FileSystemForm
+import mpdlibrary
 import auxilia
 
 DATA_DIR = ''
@@ -153,7 +154,7 @@ class View(QMainWindow, auxilia.Actions):
 
     def __libReload(self):
         self.mpdclient.send('listallinfo', callback=
-                lambda mainlist: self.emit(SIGNAL('reloadLibrary'), mainlist))
+                lambda mainlist: self.emit(SIGNAL('reloadLibrary'), mpdlibrary.Library(mainlist)))
 
 #==============================================================================
 
