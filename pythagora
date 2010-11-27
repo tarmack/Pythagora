@@ -312,7 +312,7 @@ class Update:
 
     def stored_playlist(self, status):
         self.mpdclient.send('lsinfo', callback=
-                lambda lsinfo: self.view.emit(SIGNAL('reloadPlaylists'), lsinfo))
+                lambda lsinfo: self.view.emit(SIGNAL('reloadPlaylists'), [x['playlist'] for x in lsinfo if 'playlist' in x]))
 
     def database(self, status):
         self.mpdclient.send('listallinfo', callback=

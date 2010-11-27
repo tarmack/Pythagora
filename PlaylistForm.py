@@ -151,14 +151,13 @@ class PlaylistForm(QWidget, auxilia.Actions):
                 self.mpdclient.send('command_list_end')
                 self.view.setCursor(Qt.ArrowCursor)
 
-    def reload(self, lsinfo):
+    def reload(self, playlists):
         '''Reload the lists from the server'''
         try:
             plname = unicode(self.playlistList.selectedItems()[0].text())
         except:
             plname = None
         self.playlistList.clear()
-        playlists = [x['playlist'] for x in lsinfo if 'playlist' in x]
         playlists.sort(auxilia.cmpUnicode)
         for l in playlists:
             self.playlistList.addItem(PlaylistWidget(l, self.mpdclient))
