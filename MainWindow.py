@@ -23,10 +23,7 @@ from time import time
 import sys
 
 import CurrentPlaylistForm
-from plugins import ShoutcastForm
-from plugins import PlaylistForm
-from plugins import LibraryForm
-from plugins import FileSystemForm
+import plugins
 import mpdlibrary
 import auxilia
 
@@ -164,13 +161,11 @@ class View(QMainWindow, auxilia.Actions):
         self.playerForm = PlayerForm(self, self.app, self.mpdclient, self.config)
         self.currentList = CurrentPlaylistForm.CurrentPlaylistForm(self, self.app, self.mpdclient, self.config)
         # Plugin views.
-        shoutcast = ShoutcastForm.getWidget(self, self.mpdclient, self.config)
-        libraryForm = LibraryForm.getWidget(self, self.mpdclient, self.config)
-        fileSystemForm = FileSystemForm.getWidget(self, self.mpdclient, self.config)
-        playlistsForm = PlaylistForm.getWidget(self, self.mpdclient, self.config)
-        plugins = [libraryForm, fileSystemForm, playlistsForm, shoutcast]
+        loadedPlugins = []
+        for plugin in plugins.allPlugins:
+            loadedPlugins.append(plugin.getWidget(self, self.mpdclient, self.config))
         for name in self.config.tabOrder:
-            for plugin in plugins:
+            for plugin in loadedPlugins:
                 if plugin.moduleName == name:
                     self.tabs.addTab(plugin, auxilia.PIcon(plugin.moduleIcon), plugin.moduleName)
                     break
