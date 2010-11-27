@@ -56,7 +56,7 @@ class ShoutcastForm(QWidget, auxilia.Actions):
         self.bookMarkList.reload()
 
         self.client = shoutcast.ShoutcastClient()
-        self.mpd = mpdclient
+        self.mpdclient = mpdclient
 
         # connect to the lists and buttons
         self.connect(self.reloadGenres, SIGNAL('clicked()'), self.__loadGenres)
@@ -156,19 +156,19 @@ class ShoutcastForm(QWidget, auxilia.Actions):
         station = self.stationTree.currentStation()
         urls = self.client.getStation(station['id'])
         station['urls'] = urls
-        self.mpd.send('stop')
-        self.mpd.send('clear')
+        self.mpdclient.send('stop')
+        self.mpdclient.send('clear')
         for url in urls:
-            self.mpd.send('add', (url,))
-        self.mpd.send('play')
+            self.mpdclient.send('add', (url,))
+        self.mpdclient.send('play')
 
     def __play(self, item=None):
         '''Play the currently selected bookmarked station.'''
-        self.mpd.send('stop')
-        self.mpd.send('clear')
+        self.mpdclient.send('stop')
+        self.mpdclient.send('clear')
         for url in self.bookMarkList.getStationFiles():
-            self.mpd.send('add', (url,))
-        self.mpd.send('play')
+            self.mpdclient.send('add', (url,))
+        self.mpdclient.send('play')
 
     def __saveStation(self):
         '''Bookmark the currently selected station.'''
