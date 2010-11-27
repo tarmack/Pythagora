@@ -16,16 +16,17 @@
 # limitations under the License.
 #-------------------------------------------------------------------------------
 from PyQt4.QtCore import SIGNAL, Qt
-from PyQt4.QtGui import QHeaderView, QWidget, QTreeWidgetItem, QListWidgetItem
+from PyQt4.QtGui import QHeaderView, QTreeWidgetItem, QListWidgetItem
 from PyQt4 import uic
 from time import time
 
 import auxilia
 import mpdlibrary
+import PluginBase
 
 DATA_DIR = ''
 
-class LibraryForm(auxilia.Actions, QWidget):
+class LibraryForm(PluginBase.PluginBase, auxilia.Actions):
     '''List and controls for the full "library" of music known to the server.
        Note that this does not actually manage the filesystem or tags or covers.
        There are many other programs that do that exceedingly well already.
@@ -33,12 +34,7 @@ class LibraryForm(auxilia.Actions, QWidget):
     moduleName = '&Library'
     moduleIcon = 'server-database'
 
-    def __init__(self, view, app, mpdclient, config):
-        QWidget.__init__(self)
-        self.app = app
-        self.view = view
-        self.mpdclient = mpdclient
-        self.config = config
+    def load(self):
         self.library = None
         # Load and place the Library form.
         if self.view.KDE:
@@ -47,8 +43,8 @@ class LibraryForm(auxilia.Actions, QWidget):
             uic.loadUi(DATA_DIR+'ui/LibraryForm.ui.Qt', self)
         self.trackView.header().setResizeMode(1, QHeaderView.Stretch)
 
-        self.libSplitter_1.setSizes(config.libSplit1)
-        self.libSplitter_2.setSizes(config.libSplit2)
+        self.libSplitter_1.setSizes(self.config.libSplit1)
+        self.libSplitter_2.setSizes(self.config.libSplit2)
         self.connect(self.libSplitter_1, SIGNAL('splitterMoved(int, int)'), self.__storeSplitter)
         self.connect(self.libSplitter_2, SIGNAL('splitterMoved(int, int)'), self.__storeSplitter)
         self.view.connect(self.view,SIGNAL('reloadLibrary'),self.reload)
@@ -302,3 +298,6 @@ class TrackWidget(QTreeWidgetItem):
     def getDrag(self):
         return [self.song]
 
+
+def getWidget(view, mpdclient, config):
+    return LibraryForm(view, mpdclient, config)

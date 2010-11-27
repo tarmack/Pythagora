@@ -16,25 +16,21 @@
 # limitations under the License.
 #-------------------------------------------------------------------------------
 from PyQt4.QtCore import SIGNAL, Qt
-from PyQt4.QtGui import QWidget, QTreeWidgetItem
+from PyQt4.QtGui import QTreeWidgetItem
 from PyQt4 import uic
 from time import time
 import os
 
 import auxilia
+import PluginBase
 
 DATA_DIR = ''
 
-class FileSystemForm(auxilia.Actions, QWidget):
+class FileSystemForm(PluginBase.PluginBase, auxilia.Actions):
     moduleName = 'F&ileSystem'
     moduleIcon = 'folder-sound'
 
-    def __init__(self, view, app, mpdclient, config):
-        QWidget.__init__(self)
-        self.app = app
-        self.view = view
-        self.mpdclient = mpdclient
-        self.config = config
+    def load(self):
         self.library = None
         # Load and place the FileSystem form.
         if self.view.KDE:
@@ -117,3 +113,6 @@ class FilesystemWidget(QTreeWidgetItem):
         self.sortChildren(0, 0)
         self.loadChildren = lambda : None
 
+
+def getWidget(view, mpdclient, config):
+    return FileSystemForm(view, mpdclient, config)

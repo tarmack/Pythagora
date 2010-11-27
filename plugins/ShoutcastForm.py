@@ -16,7 +16,7 @@
 # limitations under the License.
 #-------------------------------------------------------------------------------
 from PyQt4.QtCore import SIGNAL, Qt
-from PyQt4.QtGui import QWidget, QMessageBox, QTreeWidgetItem, QKeySequence, QListWidget, QListWidgetItem
+from PyQt4.QtGui import QMessageBox, QTreeWidgetItem, QKeySequence, QListWidget, QListWidgetItem
 from PyQt4 import uic
 
 from xml.etree import ElementTree as ET
@@ -24,10 +24,11 @@ import os
 
 import shoutcast
 import auxilia
+import PluginBase
 
 DATA_DIR = ''
 
-class ShoutcastForm(QWidget, auxilia.Actions):
+class ShoutcastForm(PluginBase.PluginBase, auxilia.Actions):
     '''Grab Shoutcast streams and save them as "bookmarks" - and play them on
        the currently selected server.
 
@@ -39,24 +40,20 @@ class ShoutcastForm(QWidget, auxilia.Actions):
     moduleIcon = "network-workgroup"
     stations = {}
 
-    def __init__(self, view, app, mpdclient, config):
-        QWidget.__init__(self)
-        self.view = view
-        self.config = config
+    def load(self):
         if self.view.KDE:
             uic.loadUi(DATA_DIR+'ui/ShoutCastForm.ui', self)
         else:
             uic.loadUi(DATA_DIR+'ui/ShoutCastForm.ui.Qt', self)
-        self.scSplitter.setSizes(config.mgrScSplit)
+        self.scSplitter.setSizes(self.config.mgrScSplit)
         self.adding = False
         self.search = False
         self.stationTree = StationTree(self)
 
-        self.bookMarkList = BookmarkList(self, os.path.expanduser(config.scBookmarkFile))
+        self.bookMarkList = BookmarkList(self, os.path.expanduser(self.config.scBookmarkFile))
         self.bookMarkList.reload()
 
         self.client = shoutcast.ShoutcastClient()
-        self.mpdclient = mpdclient
 
         # connect to the lists and buttons
         self.connect(self.reloadGenres, SIGNAL('clicked()'), self.__loadGenres)
@@ -344,3 +341,6 @@ class ShoutCastBookmarkWidget(QListWidgetItem):
     def getDrag(self):
         return [{'file': url} for url in self.urls]
 
+
+def getWidget(view, mpdclient, config):
+    return ShoutcastForm(view, mpdclient, config)

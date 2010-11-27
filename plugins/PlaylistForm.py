@@ -16,12 +16,13 @@
 # limitations under the License.
 #-------------------------------------------------------------------------------
 from PyQt4.QtCore import SIGNAL, Qt
-from PyQt4.QtGui import QMessageBox, QInputDialog, QKeySequence, QListWidget, QTreeWidget, QWidget, QTreeWidgetItem, QListWidgetItem
+from PyQt4.QtGui import QMessageBox, QInputDialog, QKeySequence, QListWidget, QTreeWidget, QTreeWidgetItem, QListWidgetItem
 from PyQt4 import uic
 
 import mpd
 import auxilia
 import mpdlibrary
+import PluginBase
 
 DATA_DIR = ''
 
@@ -30,17 +31,12 @@ DATA_DIR = ''
 #==============================================================================
 # Display and manage the currently known playlists.
 #==============================================================================
-class PlaylistForm(QWidget, auxilia.Actions):
+class PlaylistForm(PluginBase.PluginBase, auxilia.Actions):
     '''Display and manage the currently known playlists.'''
     moduleName = '&PlayLists'
     moduleIcon = 'document-multiple'
 
-    def __init__(self, view, app, mpdclient, config):
-        QWidget.__init__(self)
-        self.app = app
-        self.view = view
-        self.config = config
-        self.mpdclient = mpdclient
+    def load(self):
         self.currentPlaylist = None
         self.view.connect(self.view,SIGNAL('reloadPlaylists'),self.reload)
         # Load and place the stored playlists form.
@@ -48,7 +44,7 @@ class PlaylistForm(QWidget, auxilia.Actions):
             uic.loadUi(DATA_DIR+'ui/PlaylistsForm.ui', self)
         else:
             uic.loadUi(DATA_DIR+'ui/PlaylistsForm.ui.Qt', self)
-        self.playlistSplitter.setSizes(config.playlistSplit)
+        self.playlistSplitter.setSizes(self.config.playlistSplit)
 
         # top bit
         self.connect(self.playlistList,SIGNAL('itemSelectionChanged()'),self.selectPlaylist)
@@ -317,3 +313,6 @@ class LongSongWidget(QTreeWidgetItem):
     def getDrag(self):
         return [self.song]
 
+
+def getWidget(view, mpdclient, config):
+    return PlaylistForm(view, mpdclient, config)
