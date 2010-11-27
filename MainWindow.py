@@ -73,8 +73,8 @@ class View(QMainWindow, auxilia.Actions):
         self.mpdButton.setIcon(auxilia.PIcon('network-workgroup'))
         self.mpdButton.setMenu(self.menuMPD)
         self.reloadLibrary = self.actionLibReload(self.menuMPD, self.__libReload)
-        self.updateLibrary = self.actionLibUpdate(self.menuMPD, self.libraryForm.update)
-        self.rescanLibrary = self.actionLibRescan(self.menuMPD, self.libraryForm.rescan)
+        self.updateLibrary = self.actionLibUpdate(self.menuMPD, lambda: self.mpdclient.send('update'))
+        self.rescanLibrary = self.actionLibRescan(self.menuMPD, lambda: self.mpdclient.send('rescan'))
         # Fill Toolbar.
         self.toolBar.addWidget(self.connectButton)
         self.toolBar.addWidget(self.mpdButton)

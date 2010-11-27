@@ -201,14 +201,6 @@ class LibraryForm(auxilia.Actions, QWidget):
         for hit in hits:
             hit.setHidden(False)
 
-    def rescan(self):
-        '''rescan the library'''
-        self.mpdclient.send('rescan')
-
-    def update(self):
-        '''update the library'''
-        self.mpdclient.send('update')
-
     def addArtist(self):
         '''Add all songs from the currently selected artist into the current playlist'''
         return self.__addSongSet('artist', self.artistView.selectedItems())
