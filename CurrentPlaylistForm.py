@@ -321,6 +321,8 @@ class CurrentPlaylistForm(QWidget, auxilia.Actions):
         self.version = 0
         self.playing = -1
         self.currentPlayTime = 0
+        self.view.numSongsLabel.setText('- Songs')
+        self.__setPlayTime()
 
     def __scrollList(self, beforeScroll=None):
         editing = time() - self.editing
