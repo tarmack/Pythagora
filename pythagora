@@ -166,7 +166,7 @@ class Manager():
         if not server:
             self.update.setSongLabel('Not connected')
             self.view.serverLabel.setText('Not connected')
-            self.update.clearForms()
+            self.view.emit(SIGNAL('clearForms'))
             self.update.currentsong = {}
             if self.firstConnect:
                 self.config.showConfiguration(self.view, True)
@@ -182,7 +182,7 @@ class Manager():
         if isinstance(exc, Exception):
             self.update.setSongLabel('Could not connect to %s at %s.' % (self.config.server[0], self.config.server[1]))
             self.view.serverLabel.setText('Not connected')
-            self.update.clearForms()
+            self.view.emit(SIGNAL('clearForms'))
             self.update.currentsong = {}
             self.misses += 1
             self.misses = min(30, self.misses)
@@ -345,14 +345,6 @@ class Update:
             self.view.playerForm.progress.setValue(curTime)
             self.view.playerForm.progress.setFormat('/'.join((auxilia.formatTime(curTime), auxilia.formatTime(songTime))))
         self.time = curTime
-
-    def clearForms(self):
-        self.view.libraryForm.artistView.clear()
-        self.view.libraryForm.albumView.clear()
-        self.view.libraryForm.trackView.clear()
-        self.view.fileSystemForm.filesystemTree.clear()
-        self.view.playlistsForm.playlistList.clear()
-        self.view.playlistsForm.songList.clear()
 
     def __setPlayPauseState(self,state):
         if state == 'play':

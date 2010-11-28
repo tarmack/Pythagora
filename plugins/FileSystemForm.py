@@ -39,6 +39,7 @@ class FileSystemForm(PluginBase.PluginBase, auxilia.Actions):
             uic.loadUi(DATA_DIR+'ui/FileSystemForm.ui.Qt', self)
 
         self.view.connect(self.view,SIGNAL('reloadLibrary'),self.reload)
+        self.view.connect(self.view,SIGNAL('clearForms'),self.filesystemTree.clear)
 
         self.connect(self.filesystemTree, SIGNAL('itemExpanded(QTreeWidgetItem*)'), lambda item: item.loadChildren())
 

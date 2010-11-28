@@ -48,6 +48,7 @@ class LibraryForm(PluginBase.PluginBase, auxilia.Actions):
         self.connect(self.libSplitter_1, SIGNAL('splitterMoved(int, int)'), self.__storeSplitter)
         self.connect(self.libSplitter_2, SIGNAL('splitterMoved(int, int)'), self.__storeSplitter)
         self.view.connect(self.view,SIGNAL('reloadLibrary'),self.reload)
+        self.view.connect(self.view,SIGNAL('clearForms'),self.clear)
 
         # search and filter functions
         self.connect(self.artistView,SIGNAL('itemSelectionChanged()'),self.artistFilter)
@@ -101,6 +102,11 @@ class LibraryForm(PluginBase.PluginBase, auxilia.Actions):
             print 'library load took %.3f seconds' % (time() - p)
         finally:
             self.view.setCursor(Qt.ArrowCursor)
+
+    def clear(self):
+        self.artistView.clear()
+        self.albumView.clear()
+        self.trackView.clear()
 
     def __loadArtistView(self, artists):
         self.artistView.clear()

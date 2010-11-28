@@ -39,6 +39,7 @@ class PlaylistForm(PluginBase.PluginBase, auxilia.Actions):
     def load(self):
         self.currentPlaylist = None
         self.view.connect(self.view,SIGNAL('reloadPlaylists'),self.reload)
+        self.view.connect(self.view,SIGNAL('clearForms'),self.clear)
         # Load and place the stored playlists form.
         if self.view.KDE:
             uic.loadUi(DATA_DIR+'ui/PlaylistsForm.ui', self)
@@ -160,6 +161,11 @@ class PlaylistForm(PluginBase.PluginBase, auxilia.Actions):
 
         self.currentPlaylist = plname
         self.__getPlaylist(plname)
+
+    def clear(self):
+        self.playlistList.clear()
+        self.songList.clear()
+        self.currentPlaylist = None
 
     def selectPlaylist(self):
         if self.playlistList.selectedItems():
