@@ -87,6 +87,7 @@ class MPDClient():
         in the queue.
         '''
         self.connection.abort = True
+        self.connection.send('close')
 
 class MPDThread(MPDClientBase, threading.Thread):
     '''This class represents the interface thread to the mpd server.
