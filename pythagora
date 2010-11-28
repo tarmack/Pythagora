@@ -168,6 +168,8 @@ class Manager():
             self.view.serverLabel.setText('Not connected')
             self.view.emit(SIGNAL('clearForms'))
             self.update.currentsong = {}
+            if self.mpdclient.connected():
+                self.mpdclient.disconnect()
             if self.firstConnect:
                 self.config.showConfiguration(self.view, True)
         else:
