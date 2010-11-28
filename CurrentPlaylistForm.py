@@ -63,7 +63,7 @@ class CurrentPlaylistForm(QWidget, auxilia.Actions):
         self.idlist = []
         self.trackKey = ''
         self.view.connect(self.view, SIGNAL('playlistChanged'), self.reload)
-        self.view.connect(self.view, SIGNAL('resetCurrentList()'), self.__resetCurrentList)
+        self.view.connect(self.view, SIGNAL('clearForms'), self.__resetCurrentList)
         self.view.connect(self.view, SIGNAL('currentSong'), self.setPlaying)
 
         # Connect to the list for double click action.
@@ -404,7 +404,7 @@ class CurrentPlaylistForm(QWidget, auxilia.Actions):
 
     def __setOneLinePlaylist(self, value):
         self.config.oneLinePlaylist = value
-        self.view.emit(SIGNAL('resetCurrentList()'))
+        self.__resetCurrentList()
         if value:
             self.currentList.setIconSize(QSize(16, 16))
         else:

@@ -178,7 +178,6 @@ class Manager():
 
     def __connectionTry(self, exc):
         print 'debug: tried to connect again :$'
-        self.view.emit(SIGNAL('resetCurrentList()'))
         if isinstance(exc, Exception):
             self.update.setSongLabel('Could not connect to %s at %s.' % (self.config.server[0], self.config.server[1]))
             self.view.serverLabel.setText('Not connected')
