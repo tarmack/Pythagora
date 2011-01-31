@@ -130,6 +130,7 @@ class Configuration(object):
         actionRemove = QAction(auxilia.PIcon("list-remove"), 'Remove', self.setup.serverTable)
         self.setup.serverTable.addAction(actionRemove)
         self.setup.serverTable.connect(actionRemove, SIGNAL('triggered()'), self.__removeServer)
+        self.setup.serverTable.setColumnWidth(0, 160)
         self.setup.serverTable.setColumnWidth(1, 120)
         self.setup.serverTable.setColumnWidth(2, 50)
         try:
