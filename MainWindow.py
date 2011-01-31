@@ -15,8 +15,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #-------------------------------------------------------------------------------
-from PyQt4.QtCore import SIGNAL, QTimer, Qt, QObject, QEvent, QPoint, QPointF
-from PyQt4.QtGui import QMainWindow, QLabel, QMenu, QIcon, QWidget, QAction, QWidgetAction, QToolButton, QMessageBox,\
+from PyQt4.QtCore import SIGNAL, SLOT, QTimer, Qt, QObject, QEvent, QPoint, QPointF
+from PyQt4.QtGui import QMainWindow, QLabel, QMenu, QIcon, QWidget, QAction, QWidgetAction, QToolButton,\
         QBrush, QFontMetrics, QPainter, QLinearGradient, QPalette, QPen
 from PyQt4 import uic
 from time import time
@@ -35,6 +35,7 @@ try:
     else:
         from PyKDE4.kdeui import KWindowSystem
         from PyKDE4.kdeui import KStatusNotifierItem
+        from PyKDE4.kdeui import KStandardAction
         KDE = True
 except ImportError:
     from PyQt4.QtGui import QSystemTrayIcon
@@ -84,7 +85,7 @@ class View(QMainWindow, auxilia.Actions):
         self.statusbar.addPermanentWidget(self.playTimeLabel)
 
         self.connect(self.menuConnect, SIGNAL('aboutToShow()'), self.__buildConnectTo)
-        self.connect(self.actionExit,SIGNAL('triggered()'),self.__quit)
+        self.connect(self.actionExit,SIGNAL('triggered()'),self.app.quit)
         self.connect(self.actionSettings,SIGNAL('triggered()'),self.showConfig)
 
 
@@ -184,16 +185,6 @@ class View(QMainWindow, auxilia.Actions):
         '''Catch MainWindow's close event so we can hide it instead.'''
         self.hide()
         event.ignore()
-
-    def __quit(self):
-        dialog = QMessageBox(
-                QMessageBox.Question, # Icon
-                'Quit Pythagora?', # Title
-                'Do you want to quit Pythagora?', # Text
-                QMessageBox.Ok | QMessageBox.Cancel, # Buttons
-                )
-        if dialog.exec_() == QMessageBox.Ok:
-            self.app.quit()
 
     def __storeSplitter(self):
         self.config.mgrSplit = self.splitter.sizes()
@@ -356,8 +347,14 @@ class SongLabel(QLabel):
 
 if KDE:
     class KTrayIcon(KStatusNotifierItem):
+        actionList = []
         def __init__(self, icon, parent):
             KStatusNotifierItem.__init__(self, parent)
+            self.setStandardActionsEnabled(False)
+            self.connect(self.contextMenu(), SIGNAL('aboutToShow()'), self.__buildMenu)
+            self.actionQuit = KStandardAction.quit(parent.app, SLOT("quit()"), self)
+            self.hideResoreAction = QAction('Minimize', self.contextMenu())
+            self.connect(self.hideResoreAction, SIGNAL('triggered()'), SIGNAL("activate()"))
             self.icon = icon
             self.parent = parent
             self.setIconByPixmap(icon)
@@ -365,7 +362,7 @@ if KDE:
             self.setStatus(2)
 
         def addMenuItem(self, action):
-            self.contextMenu().addAction(action)
+            self.actionList.append(action)
 
         def setState(self, state):
             if state == 'play':
@@ -378,6 +375,17 @@ if KDE:
 
         def activate(self, pos):
             self.emit(SIGNAL('activate()'))
+
+        def __buildMenu(self):
+            if self.parent.isVisible():
+                self.hideResoreAction.setText('Minimize')
+            else:
+                self.hideResoreAction.setText('Restore')
+            for action in self.actionList:
+                self.contextMenu().addAction(action)
+            self.contextMenu().addSeparator()
+            self.contextMenu().addAction(self.hideResoreAction)
+            self.contextMenu().addAction(self.actionQuit)
 
 else:
     class QTrayIcon(QSystemTrayIcon, auxilia.Actions):
