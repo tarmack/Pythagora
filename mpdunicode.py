@@ -28,65 +28,47 @@ from mpd import *
 
 ENCODING = 'utf-8'
 
-class MPDClient(MPDClient):
-    ''' This proxy class wraps round the python-mpd module.
-    It converts the dictionary values in the output to unicode
-    objects and adds support for unicode input.  It also ads
-    support for some missing commands including the idle
-    command and friends.
-    '''
-    def __init__(self):
-        self._idle = False
-        super(MPDClient, self).__init__()
-        self._commands.update({'rescan': self._getitem
-                              ,'single': self._getnone
-                              ,'consume': self._getnone
-                              })
-
-    def idle(self, subsystems=[], timeout=None):
-        ''' Calls the idle command on the server and blocks until
-        mpd signals with changes or timeout expires. It returns a
-        list with the subsystems that had changes.
+if hasattr(MPDClient, '_writecommand'):
+    class MPDClient(MPDClient):
+        ''' This proxy class wraps round the python-mpd module.
+        It converts the dictionary values in the output to unicode
+        objects and adds support for unicode input.
         '''
-        if self._commandlist is not None:
-            raise CommandListError("idle not allowed in command list")
-        if self._idle:
-            raise ProtocolError('Already in idle mode.')
-        self._idle = True
-        oldTimeout = self._sock.gettimeout()
-        if timeout is not None:
-            self._sock.settimeout(timeout)
-        try:
-            rtn = self._docommand('idle', subsystems, self._getlist)
-        except socket.timeout:
-            try:
-                rtn = self.noidle()
-            except socket.timeout:
-                raise ConnectionError("Connection timed out")
-        finally:
-            self._sock.settimeout(oldTimeout)
-            self._idle = False
-        return rtn
+        def __init__(self):
+            super(MPDClient, self).__init__()
+            self._commands.update({'rescan': self._getitem
+                                  ,'single': self._getnone
+                                  ,'consume': self._getnone
+                                  ,'idle': self._getlist
+                                  ,'noidle': None
+                                  })
 
-    def noidle(self):
-        if not self._idle:
-            raise ProtocolError('Not in idle mode')
-        self._idle = False
-        return self._docommand('noidle', [], self._getlist)
+        def _writecommand(self, command, args=[]):
+            args = [unicode(arg).encode(ENCODING) for arg in args]
+            super(MPDClient, self)._writecommand(command, args)
 
-    def _writecommand(self, command, args=[]):
-        if self._idle and command not in ('idle', 'noidle'):
-            raise ProtocolError('%s not allowed in idle mode.' % command)
-        args = [unicode(arg).encode(ENCODING) for arg in args]
-        super(MPDClient, self)._writecommand(command, args)
+        def _readitem(self, separator):
+            item = super(MPDClient, self)._readitem(separator)
+            if item:
+                item[1] = item[1].decode(ENCODING)
+            return item
 
-    def _readitem(self, separator):
-        item = super(MPDClient, self)._readitem(separator)
-        if item:
-            item[1] = item[1].decode(ENCODING)
-        return item
+else:
+    class MPDClient(MPDClient):
+        ''' This proxy class wraps round the python-mpd module.
+        It converts the dictionary values in the output to unicode
+        objects and adds support for unicode input.
+        '''
+        def __init__(self):
+            super(MPDClient, self).__init__()
 
-    def _reset(self):
-        self._idle = False
-        super(MPDClient, self)._reset()
+        def _write_command(self, command, args=[]):
+            args = [unicode(arg).encode(ENCODING) for arg in args]
+            super(MPDClient, self)._write_command(command, args)
+
+        def _read_pair(self, separator):
+            item = super(MPDClient, self)._read_pair(separator)
+            if item:
+                item[1] = item[1].decode(ENCODING)
+            return item
 

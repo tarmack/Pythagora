@@ -115,7 +115,36 @@ class MPDThread(MPDClientBase, threading.Thread):
         '''
         self.queue.put((command, args, callback, callbackArgs))
         if command != 'noidle' and self._idle:
-            self._writecommand('noidle', [])
+            self._write_proxy('noidle', [])
+
+    def idle(self, subsystems=[], timeout=None):
+        ''' Calls the idle command on the server and blocks until
+        mpd signals with changes or timeout expires. It returns a
+        list with the subsystems that had changes.
+        '''
+        if self._idle:
+            raise ProtocolError('Already in idle mode.')
+        self._idle = True
+        oldTimeout = self._sock.gettimeout()
+        if timeout is not None:
+            self._sock.settimeout(timeout)
+        try:
+            rtn = self._execute('idle', subsystems)
+        except socket.timeout:
+            try:
+                if self._commands['noidle'] is None:
+                    if hasattr(MPDClientBase, '_getlist'):
+                        self._commands['noidle'] = self._getlist
+                    else:
+                        self._commands['noidle'] = self._fetch_list
+                rtn = self.noidle()
+                self._commands['noidle'] = None
+            except socket.timeout:
+                raise ConnectionError("Connection timed out")
+        finally:
+            self._sock.settimeout(oldTimeout)
+            self._idle = False
+        return rtn
 
     def run(self):
         while True:
@@ -161,7 +190,7 @@ class MPDThread(MPDClientBase, threading.Thread):
         if self.connecting:
             raise ConnectionError('Not connected yet.')
         if command != 'noidle' and self._idle:
-            self._writecommand('noidle', [])
+            self._write_proxy('noidle', [])
         self.queue.join()
         return self.__do(command, args)
 
@@ -172,17 +201,52 @@ class MPDThread(MPDClientBase, threading.Thread):
             function = self.__getattr__(command)
         return function(*args)
 
-    def _docommand(self, command, args, retval):
-        if command not in ('idle', 'noidle') and self._idle:
-            self._writecommand('noidle', [])
-        with self._lock:
-            return super(MPDThread, self)._docommand(command, args, retval)
-
-    def _writecommand(self, command, args=[]):
-        if command.startswith('command_list') and self._idle:
-            self._writecommand('noidle', [])
+    if hasattr(MPDClientBase, '_docommand'):
+        def _docommand(self, command, args, retval):
+            if command not in ('idle', 'noidle') and self._idle:
+                self._writecommand('noidle', [])
             with self._lock:
+                return super(MPDThread, self)._docommand(command, args, retval)
+
+        def _execute(self, command, args):
+            retval = self._commands[command]
+            return self._docommand(command, args, retval)
+    else:
+        def _execute(self, command, args):
+            if command not in ('idle', 'noidle') and self._idle:
+                self._write_command('noidle', [])
+            with self._lock:
+                return super(MPDThread, self)._execute(command, args)
+
+    if hasattr(MPDClientBase, '_writecommand'):
+        def _writecommand(self, command, args=[]):
+            if command.startswith('command_list') and self._idle:
+                self._writecommand('noidle', [])
+            if self._idle and command not in ('idle', 'noidle'):
+                raise ProtocolError('%s not allowed in idle mode.' % command)
+                with self._lock:
+                    super(MPDThread, self)._writecommand(command, args)
+            else:
                 super(MPDThread, self)._writecommand(command, args)
-        else:
-            super(MPDThread, self)._writecommand(command, args)
+    else:
+        def _write_command(self, command, args=[]):
+            if command.startswith('command_list') and self._idle:
+                self._write_command('noidle', [])
+            if self._idle and command not in ('idle', 'noidle'):
+                raise ProtocolError('%s not allowed in idle mode.' % command)
+                with self._lock:
+                    super(MPDThread, self)._write_command(command, args)
+            else:
+                super(MPDThread, self)._write_command(command, args)
+
+    def _reset(self):
+        self._idle = False
+        super(MPDThread, self)._reset()
+
+    if hasattr(MPDClientBase, '_writecommand'):
+        def _write_proxy(self, command, args=[]):
+            self._writecommand(command, args)
+    else:
+        def _write_proxy(self, command, args=[]):
+            self._write_command(command, args)
 
