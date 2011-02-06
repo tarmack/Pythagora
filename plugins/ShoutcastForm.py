@@ -38,6 +38,16 @@ class ShoutCastForm(PluginBase.PluginBase):
     moduleIcon = "network-workgroup"
 
     def load(self):
+        pass
+
+    def event(self, event):
+        if event.type() == QEvent.Paint:
+            if not hasattr(self, 'webView'):
+                self._load()
+                self.event = super(ShoutCastForm, self).event
+        return False
+
+    def _load(self):
         self.cookie = QNetworkCookie('Settings', 'Player~others|Bandwidth~ALL|Codec~ALL')
         self.cookie.setDomain('.shoutcast.com')
         self.cookie.setExpirationDate(QDateTime())
