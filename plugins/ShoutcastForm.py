@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #-------------------------------------------------------------------------------
-from PyQt4.QtCore import SIGNAL, Qt, QUrl, QDateTime
+from PyQt4.QtCore import SIGNAL, QUrl, QDateTime, QEvent
 from PyQt4.QtGui import QVBoxLayout
 from PyQt4.QtWebKit import QWebView, QWebPage
 from PyQt4.QtNetwork import QNetworkCookie, QNetworkCookieJar
