@@ -177,6 +177,13 @@ def songGenre(song):
         value = [x.lower() for x in value]
     return value
 
+def songStation(song):
+    if isStream(song):
+        value = _getSongAttr(song, ('name', 'file'))
+        return _getTextField(value)
+    else:
+        return ''
+
 def songTime(song):
     stime = int(song.get('time', '0'))
     thour = stime / 3600
@@ -187,9 +194,20 @@ def songTime(song):
         return '%i:%02i:%02i' % (thour, tmin, tsec)
     return '%i:%02i' % (tmin, tsec)
 
+def isStream(song):
+    return 'http://' in song.get('file', '')
 
 def _getSongAttr(song, attrs):
     '''Returns the value for the first key in attrs that exists.'''
+    if isStream(song):
+        # mpd puts stream metadata in the title attribute as "{artist} - {song}"
+        value = song.get('title', '')
+        if ' - ' in value:
+            artist, title = value.split(' - ', 1)
+            if 'artist' in attrs:
+                return artist
+            if 'title' in attrs:
+                return title
     for attr in attrs:
         if attr in song:
             return song[attr]
