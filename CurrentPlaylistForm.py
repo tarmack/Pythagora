@@ -436,6 +436,7 @@ class CurrentPlaylistForm(QWidget, auxilia.Actions):
 class CurrentListWidget(QListWidgetItem):
     '''Song, album, cover in a tree widget item'''
     # Used in CurrentPlaylistForm
+    _playing = False
     def __init__(self, song, oneLine=False):
         QListWidgetItem.__init__(self)
         self.oneLine = oneLine
@@ -458,15 +459,23 @@ class CurrentListWidget(QListWidgetItem):
         else:
             font.setWeight(50)
         self.setFont(font)
+        self._playing = playing
+        self._updateText()
 
     def getDrag(self):
         return [self.song]
 
     def _updateText(self):
-        if self.oneLine:
-            self.setText(mpdlibrary.songArtist(self.song) + ' - ' + mpdlibrary.songTitle(self.song))
+        if not self._playing and mpdlibrary.isStream(self.song):
+            title = mpdlibrary.songStation(self.song)
+            artist = ''
         else:
-            self.setText(mpdlibrary.songTitle(self.song) + '\n' + mpdlibrary.songArtist(self.song))
+            artist = mpdlibrary.songArtist(self.song)
+            title = mpdlibrary.songTitle(self.song)
+        if self.oneLine:
+            self.setText(artist + ' - ' + title)
+        else:
+            self.setText(title + '\n' + artist)
         if mpdlibrary.isStream(self.song):
             self.setToolTip("Station:\t %s\nurl:\t %s" % (mpdlibrary.songStation(self.song), self.song['file']))
         else:
