@@ -168,7 +168,7 @@ class CurrentPlaylistForm(QWidget, auxilia.Actions):
                     index = self.idlist.index(song['id'])
                     # take the item.
                     item = self._takeItem(index)
-                    item.song = song
+                    item.setSong(song)
                     # If the old position is after the new position (moving up).
                     if index > song['pos']:
                         # take all songs that were between old and new position and put them in a dict.
@@ -190,7 +190,7 @@ class CurrentPlaylistForm(QWidget, auxilia.Actions):
                     # pick the item from the dict.
                     item = itemlist[song['id']]
                     # update the song atribute.
-                    item.song = song
+                    item.setSong(song)
                     # put it in place in the view.
                     self._insertItem(song['pos'], item)
                 else:
@@ -438,17 +438,18 @@ class CurrentListWidget(QListWidgetItem):
     # Used in CurrentPlaylistForm
     def __init__(self, song, oneLine=False):
         QListWidgetItem.__init__(self)
+        self.oneLine = oneLine
         self.icon = False
         self.song = song
-        if oneLine:
-            self.setText(mpdlibrary.songArtist(song) + ' - ' + mpdlibrary.songTitle(song))
-        else:
-            self.setText(mpdlibrary.songTitle(song) + '\n' + mpdlibrary.songArtist(song))
-        self.setToolTip("Album:\t %s\nTime:\t %s\nFile:\t %s" % (mpdlibrary.songAlbum(song), str(mpdlibrary.songTime(song)) , song['file']))
+        self._updateText()
 
     def setIcon(self, icon):
         self.icon = bool(icon)
         QListWidgetItem.setIcon(self, icon)
+
+    def setSong(self, song):
+        self.song = song
+        self._updateText()
 
     def playing(self, playing):
         font = self.font()
@@ -460,3 +461,14 @@ class CurrentListWidget(QListWidgetItem):
 
     def getDrag(self):
         return [self.song]
+
+    def _updateText(self):
+        if self.oneLine:
+            self.setText(mpdlibrary.songArtist(self.song) + ' - ' + mpdlibrary.songTitle(self.song))
+        else:
+            self.setText(mpdlibrary.songTitle(self.song) + '\n' + mpdlibrary.songArtist(self.song))
+        if mpdlibrary.isStream(self.song):
+            self.setToolTip("Station:\t %s\nurl:\t %s" % (mpdlibrary.songStation(self.song), self.song['file']))
+        else:
+            self.setToolTip("Album:\t %s\nTime:\t %s\nFile:\t %s" % (mpdlibrary.songAlbum(self.song), str(mpdlibrary.songTime(self.song)) , self.song['file']))
+
