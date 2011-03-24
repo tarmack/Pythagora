@@ -233,12 +233,11 @@ class Manager():
 
 
 class Update:
-    lastSongId = None
     state = None
     misses = 0
     errorCount = 0
     time = 0
-    currentsong = {}
+    lastSong = {}
     def __init__(self, view, mpdclient, config, playControls):
         self.pauseIcon = auxilia.PIcon("media-playback-pause")
         self.startIcon = auxilia.PIcon("media-playback-start")
@@ -247,7 +246,7 @@ class Update:
         self.config = config
         self.playControls = playControls
         self.view.connect(self.view, SIGNAL('update'), self.update)
-        self.view.connect(self.view, SIGNAL('currentSong'), self._currentsong)
+        self.view.connect(self.view, SIGNAL('_currentsong'), self._currentsong)
         # Set the progress timer up.
         self.timer = QTimer()
         self.view.connect(self.timer, SIGNAL("timeout()"), self.progress)
@@ -265,7 +264,7 @@ class Update:
         if self.mpdclient.connected():
             try:
                 if self.state == 'play':
-                    if 'time' in self.currentsong:
+                    if not mpdlibrary.isStream(self.lastSong):
                         self.setProgress(self.time + 1)
                     else:
                         self.setProgress(self.time + 1, 0)
@@ -282,13 +281,13 @@ class Update:
             self.__setPlayPauseState(status['state'])
         # if we're stopped, just call it quits
         if status['state'] == 'stop':
-            self.lastSongId = 0
+            self.lastSong = {}
             self.setProgress(0, 0)
             self.setSongLabel('Connected to %s.' % self.config.server[0])
             return
-        if status['songid'] != self.lastSongId:
-            self.mpdclient.send('currentsong', callback=
-                    lambda currentsong: self.view.emit(SIGNAL('currentSong'), currentsong))
+        if status['songid'] != self.lastSong.get('id') or mpdlibrary.isStream(self.lastSong):
+                self.mpdclient.send('currentsong', callback=
+                        lambda currentsong: self.view.emit(SIGNAL('_currentsong'), currentsong))
         # format times
         cs, ss = status['time'].split(':')
         self.setProgress(cs, ss)
@@ -298,8 +297,8 @@ class Update:
     def _currentsong(self, currentsong):
         album = mpdlibrary.songAlbum(currentsong)
         self.setSongLabel(mpdlibrary.songTitle(currentsong), mpdlibrary.songArtist(currentsong), album)
-        self.currentsong = currentsong
-        self.lastSongId = currentsong['id']
+        self.lastSong = currentsong
+        self.view.emit(SIGNAL('currentSong'), currentsong)
 
     def mixer(self, status):
         volumeStatus = int(status['volume'])
