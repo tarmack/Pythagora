@@ -195,7 +195,7 @@ def songTime(song):
     return '%i:%02i' % (tmin, tsec)
 
 def isStream(song):
-    return 'http://' in song.get('file', '')
+    return song.get('file', '').startswith('http://')
 
 def _getSongAttr(song, attrs):
     '''Returns the value for the first key in attrs that exists.'''

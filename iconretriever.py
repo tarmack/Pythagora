@@ -64,7 +64,7 @@ class Retriever:
         a picture of the artist.'''
         # comment out the next line to disable icon fetching.
         #return NOCOVER
-        if song['file'].startswith('http://'):
+        if mpdlibrary.isStream(song):
             return STREAMICON
         cover = None
         cover = self.getFolderImage(song)
