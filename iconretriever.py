@@ -229,6 +229,12 @@ class ThreadedRetriever:
         self.retriever.toFetch.append(item)
         self.retriever.event.set()
 
+    def setIcons(self):
+        while self.retriever.icons:
+            item, icon = self.retriever.icons.pop(0)
+            if getrefcount(item) > 2:
+                item.setIcon(icon)
+
     def killRetriever(self):
         self.retriever.exit()
 

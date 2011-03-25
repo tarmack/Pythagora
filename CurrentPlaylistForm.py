@@ -218,10 +218,7 @@ class CurrentPlaylistForm(QWidget, auxilia.Actions):
         self.currentList.setUpdatesEnabled(True)
 
     def loadIcons(self):
-        while self.retriever.icons:
-            item, icon = self.retriever.icons.pop(0)
-            if getrefcount(item) > 2:
-                item.setIcon(icon)
+        self.retriever.setIcons()
 
     def trackSearch(self, key):
         print 'debug: trackSearch starting.'
