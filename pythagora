@@ -335,7 +335,8 @@ class Update:
         if album:
             album = 'from <i>%s</i>' % album
         label = '<br>'.join((item for item in (title, artist, album, station) if item))
-        self.view.trayIcon.setToolTip(label)
+        icon = self.view.currentList.playingItem().iconPath
+        self.view.trayIcon.setToolTip(icon, label)
 
     def setProgress(self, cs, ss=None):
         ''' Moves the progress indicator to the correct position,

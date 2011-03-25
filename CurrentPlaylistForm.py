@@ -145,6 +145,9 @@ class CurrentPlaylistForm(QWidget, auxilia.Actions):
         else: self.playing = -1
         self.__scrollList(beforeScroll)
 
+    def playingItem(self):
+        return self.currentList.item(self.playing)
+
     def reload(self, plist, status):
         '''Causes the current play list to be reloaded from the server'''
         if not self.config.server:
