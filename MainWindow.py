@@ -385,7 +385,7 @@ if KDE:
                 self.setIconByName("media-playback-pause")
 
         def setToolTip(self, text):
-            super(KTrayIcon, self).setToolTip(self.icon, 'Pythagora, Now Playing:', text)
+            super(KTrayIcon, self).setToolTip(self.icon, 'Pythagora,&nbsp;Now&nbsp;Playing:', text)
 
         def activate(self, pos):
             self.emit(SIGNAL('activate()'))
@@ -426,6 +426,9 @@ else:
                 self.setIcon(self.startIcon)
             else:
                 self.setIcon(self.pauseIcon)
+
+        def setToolTip(self, text):
+            super(QTrayIcon, self).setToolTip('Pythagora,&nbsp;Now&nbsp;Playing:<br>%s' % text)
 
         def __activated(self, reason=None):
             if reason == QSystemTrayIcon.MiddleClick:
