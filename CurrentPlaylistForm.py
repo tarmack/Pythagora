@@ -221,7 +221,7 @@ class CurrentPlaylistForm(QWidget, auxilia.Actions):
         while self.retriever.icons:
             item, icon = self.retriever.icons.pop(0)
             if getrefcount(item) > 2:
-                item.setIcon(QIcon(icon))
+                item.setIcon(icon)
 
     def trackSearch(self, key):
         print 'debug: trackSearch starting.'
@@ -311,7 +311,7 @@ class CurrentPlaylistForm(QWidget, auxilia.Actions):
     def _insertItem(self, row, item):
         self.currentList.insertItem(row, item)
         self.idlist.insert(row, item.song['id'])
-        if not item.icon:
+        if not item.iconPath:
             self.retriever.fetchIcon(item, self.config.musicPath)
         self.currentPlayTime += int(item.song.get('time','0'))
 
@@ -440,13 +440,13 @@ class CurrentListWidget(QListWidgetItem):
     def __init__(self, song, oneLine=False):
         QListWidgetItem.__init__(self)
         self.oneLine = oneLine
-        self.icon = False
+        self.iconPath = ''
         self.song = song
         self._updateText()
 
     def setIcon(self, icon):
-        self.icon = bool(icon)
-        QListWidgetItem.setIcon(self, icon)
+        self.iconPath = icon
+        QListWidgetItem.setIcon(self, QIcon(icon))
 
     def setSong(self, song):
         self.song = song
