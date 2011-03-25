@@ -284,10 +284,12 @@ class SongLabel(QLabel):
     title = 'title'
     artist = 'artist'
     album = 'album'
-    parts = ('title', 'artist', 'album')
+    station = 'station'
+    parts = ('title', 'artist', 'album', 'station')
     prepends = {
             'artist': 'by',
-            'album': 'from'
+            'album': 'from',
+            'station': 'on',
             }
     def __init__(self):
         QLabel.__init__(self)
@@ -299,11 +301,17 @@ class SongLabel(QLabel):
         self.artistFont.setPointSize(self.font().pointSize()+2)
         self.albumFont = self.font()
         self.albumFont.setItalic(True)
+        self.stationFont = self.font()
+        self.stationFont.setItalic(True)
 
-    def setText(self, title='', artist='', album=''):
+    def setText(self, title='', artist='', album='', station=''):
         self.title = title
         self.artist = artist
         self.album = album
+        if station != title:
+            self.station = station
+        else:
+            self.station = ''
         self.repaint()
 
     def paintEvent(self, event):
@@ -316,13 +324,19 @@ class SongLabel(QLabel):
                 self.__write(self.prepends.get(part, ''), self.font(), gradient)
             self.__write(text, font, gradient)
         if self.spaceLeft.width() <= 0:
+            title = ''
+            artist = ''
+            album = ''
+            station = ''
             if self.title:
                 title = '<b><big>%s</big></b>' % self.title
             if self.artist:
                 artist = 'by <big>%s</big>' % self.artist
             if self.album:
                 album = 'from <i>%s</i>' % self.album
-            tooltip = '<br>'.join((item for item in (title, artist, album) if item))
+            if self.station:
+                station = 'on <i>%s</i>' % self.station
+            tooltip = '<br>'.join((item for item in (title, artist, album, station) if item))
             self.setToolTip(tooltip)
         else: self.setToolTip('')
 

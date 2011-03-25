@@ -295,8 +295,12 @@ class Update:
         self.mixer(status)
 
     def _currentsong(self, currentsong):
-        album = mpdlibrary.songAlbum(currentsong)
-        self.setSongLabel(mpdlibrary.songTitle(currentsong), mpdlibrary.songArtist(currentsong), album)
+        self.setSongLabel(
+                mpdlibrary.songTitle(currentsong),
+                mpdlibrary.songArtist(currentsong),
+                mpdlibrary.songAlbum(currentsong),
+                mpdlibrary.songStation(currentsong)
+                )
         self.lastSong = currentsong
         self.view.emit(SIGNAL('currentSong'), currentsong)
 
@@ -318,15 +322,19 @@ class Update:
         self.mpdclient.send('listallinfo', callback=
                 lambda mainlist: self.view.emit(SIGNAL('reloadLibrary'), mpdlibrary.Library(mainlist)))
 
-    def setSongLabel(self, title='', artist='', album=''):
-        self.view.playerForm.songLabel.setText(title, artist, album)
+    def setSongLabel(self, title='', artist='', album='', station=''):
+        self.view.playerForm.songLabel.setText(title, artist, album, station)
+        if station and station != title:
+            station = 'on <i>%s</i>' % station
+        else:
+            station = ''
         if title:
             title = '<b><big>%s</big></b>' % title
         if artist:
             artist = 'by <big>%s</big>' % artist
         if album:
             album = 'from <i>%s</i>' % album
-        label = '<br>'.join((item for item in (title, artist, album) if item))
+        label = '<br>'.join((item for item in (title, artist, album, station) if item))
         self.view.trayIcon.setToolTip(label)
 
     def setProgress(self, cs, ss=None):
