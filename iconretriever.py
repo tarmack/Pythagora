@@ -31,6 +31,12 @@ STREAMICON = DATA_DIR+'icons/audio-x-stream.png'
 APIKEY = 'c01e19f763d7bd5adc905bd7456cf80d'
 SECONDS_BETWEEN_REQUESTS = 0.2
 
+def absolutePath(funct):
+    def decorate(self, song):
+        iconPath = funct(self, song)
+        return os.path.abspath(iconPath)
+    return decorate
+
 class Retriever:
     def __init__(self, musicPath):
         self.lastContact = time.time()
@@ -58,6 +64,7 @@ class Retriever:
                 self.coverPath = checkDir(os.path.join(self.coverPath, APPNAME))
         print 'debug: coverPath = ', self.coverPath
 
+    @absolutePath
     def songIcon(self, song):
         '''Try to get a cover image from folder.jpg, if that fails. Get an album
         cover from the interwebs. If it can't find an album cover it tries to get
