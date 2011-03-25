@@ -17,7 +17,35 @@
 from PyQt4.QtGui import QWidget
 
 class PluginBase(QWidget):
+    """ This is the base class for Pythagora plugins.
+    It serves mainly as documentation. But should be inherited to account for
+    changes to the interface.
+
+    Your subclass should at least implement the load function to setup its
+    display and instantiate variables.
+
+    The music library can be retrieved by connecting to the 'reloadLibrary'
+    signal. This signal will provide an instance of mpdlibrary.
+    The 'clearForms' signal will be emitted when the data in the forms
+    should be discarded, for instance when a new connection is made.
+    """
+    # moduleName will be shown on the tab of the plugin. You can use '&' to
+    # indicate the keyboard shortcut key.
+    moduleName = ''
+    # moduleIcon should be the name of the icon to show in the tab of the
+    # plugin.
+    moduleIcon = ''
+
     def __init__(self, view, mpdclient, config):
+        """ Initiates the plugin providing the view, mpdclient and config
+        instances.
+        * The view class can be used to connect to signals and emit them if needed.
+        * The mpdclient instance can be used to communicate with the mpdserver.
+        * The config instance can be used to store configuration and state.
+          Please adhere to the philosophy of storing any changes directly.
+          QSettings is used as a backend so storing and retrieving settings is
+          really cheap.
+        """
         QWidget.__init__(self)
         self.view = view
         self.config = config
