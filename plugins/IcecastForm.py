@@ -33,7 +33,8 @@ TUNEIN = "dir.xiph.org"
 TUNEINFORMAT = re.compile(r'/listen/\d+/listen\.(m3u|xspf)$')
 
 class IcecastForm(PluginBase.PluginBase):
-    '''
+    ''' Embeds the xiph.org Icecast yellow pages, and loads the 
+        streams from the m3u and XSPF playlist files.
     '''
     moduleName = 'I&cecast'
     moduleIcon = "network-workgroup"
@@ -59,8 +60,8 @@ class IcecastForm(PluginBase.PluginBase):
         self.connect(self.webPage, SIGNAL('linkClicked(const QUrl&)'), self._processLink)
 
     def _processLink(self, url):
-        urlString = url.toString()
-        urlMatch = TUNEINFORMAT.match(urlString)
+        urlString = unicode(url.toString())
+        urlMatch = TUNEINFORMAT.search(urlString)
         if urlMatch is not None:
             self._playStation(urlString, urlMatch)
         else:
@@ -72,9 +73,9 @@ class IcecastForm(PluginBase.PluginBase):
         format = match.group(1)
         data = self._retreivePlaylist(path)
         if format == 'xspf':
-            adrlist = self.parseXSPF(data)
+            adrlist = self._parseXSPF(data)
         else:
-            adrlist = self.parseM3U(data)
+            adrlist = self._parseM3U(data)
         self.mpdclient.send('command_list_ok_begin')
         try:
             for address in adrlist:
@@ -96,12 +97,14 @@ class IcecastForm(PluginBase.PluginBase):
             Currently we only want the location URLs, so that
             is all we parse for.
         '''
-        xml = etree.parse(StringIO(data))
+        xml = etree.parse(StringIO.StringIO(data))
         root = xml.getroot()
-        locations = root.findall('{http://xspf.org/ns/0/}location')
-        adrlist = [adr.text for adr in locations if adr.text.startswith('http')]
+        locations = root.findall('.//{http://xspf.org/ns/0/}location')
+        adrlist = [adr.text.strip() for adr in locations 
+                   if adr.text.startswith('http://')]
         if not adrlist:
-             raise httplib.HTTPException('Encountered error during parsing of the playlist.')
+             raise httplib.HTTPException('Encountered error during '
+                                         'parsing of the playlist.')
         return adrlist
     
     def _parseM3U(self, data):
@@ -110,7 +113,7 @@ class IcecastForm(PluginBase.PluginBase):
         while data:
             line = data.pop(0)
             if line.startswith('http://'):
-                adrlist.append(value)
+                adrlist.append(line.strip())
         if not adrlist:
              raise httplib.HTTPException('Encountered error during parsing of the playlist.')
         return adrlist
