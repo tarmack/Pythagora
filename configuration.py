@@ -188,6 +188,8 @@ class Configuration(object):
         else:
             print 'debug: no server selected'
             self.server = None
+        self.showNotification = self.setup.showNotification.isChecked()
+        self.notificationTimeout = self.setup.notificationTimeout.value()
         self.musicPath = unicode(self.setup.musicPath.text())
         self.__checkDir("Music",self.musicPath)
         self.scBookmarkFile = unicode(self.setup.scBookmarkFile.text())
