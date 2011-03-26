@@ -210,7 +210,7 @@ def _getSongAttr(song, attrs):
                 return title
     for attr in attrs:
         if attr in song:
-            return song[attr].strip()
+            return song[attr].strip() if isinstance(song[attr], str) else song[attr]
 
 def _getTextField(value):
     if getattr(value, '__iter__', False):
