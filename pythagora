@@ -21,6 +21,7 @@ from PyQt4.QtGui import QApplication, QWidget, QKeySequence
 
 import sys
 import signal
+import os
 
 import mpdthreaded as mpd
 import playControls
@@ -250,6 +251,31 @@ class Update:
         # Set the progress timer up.
         self.timer = QTimer()
         self.view.connect(self.timer, SIGNAL("timeout()"), self.progress)
+        # DBus notifications
+        if self.config.showNotification:
+            try:
+                import dbus
+            except ImportError, e:
+                self.config.showNotification = False
+                return
+            self.notificationId = dbus.UInt32(0)
+            self.appName = unicode(QApplication.applicationName().toUtf8())
+            # app_icon url is correct, doesn't display in Plasma though
+            self.appIcon = 'file://'+os.path.abspath(MainWindow.DATA_DIR+'icons/Pythagora.png')
+            self.notificationSummary = '%s, now playing:' % self.appName
+            self.notificationHints = dbus.Dictionary(
+                {'suppress-sound':  True,
+                 'desktop-entry':   'pythagora',
+                 'image_path':      ''},
+                'sv')
+            try:
+                self.dbusNotification = dbus.SessionBus().get_object(
+                    'org.freedesktop.Notifications',
+                    '/org/freedesktop/Notifications',
+                    'org.freedesktop.Notifications')
+            except dbus.DBusException, e:
+                self.config.showNotification = False
+                print 'debug: error using dbus - %s' % e
 
     def update(self, changes, status):
         self.timer.start(1000)
@@ -295,6 +321,12 @@ class Update:
         self.mixer(status)
 
     def _currentsong(self, currentsong):
+        if (mpdlibrary.isStream(currentsong) and
+            mpdlibrary.songTitle(self.lastSong) ==
+            mpdlibrary.songTitle(currentsong) and
+            mpdlibrary.songArtist(self.lastSong) ==
+            mpdlibrary.songArtist(currentsong)):
+            return # stream metadata hasn't changed, so don't update
         self.setSongLabel(
                 mpdlibrary.songTitle(currentsong),
                 mpdlibrary.songArtist(currentsong),
@@ -337,6 +369,23 @@ class Update:
         label = '<br>'.join((item for item in (title, artist, album, station) if item))
         icon = self.view.currentList.playingItem().iconPath
         self.view.trayIcon.setToolTip(icon, label)
+        self.setNotification(icon, label)
+
+    def setNotification(self, icon, label):
+        if not self.config.showNotification:
+            return
+        iconPath = 'file://%s' % icon if icon else self.appIcon
+        self.notificationHints.update({'image_path':iconPath})
+        # Show notification
+        self.notificationId = self.dbusNotification.Notify(
+            self.appName,                           #app_name
+            self.notificationId,                    #replaces_id
+            self.appIcon,                           #app_icon
+            self.notificationSummary,               #summary
+            label,                                  #body
+            [''],                                   #actions
+            self.notificationHints,                 #hints
+            self.config.notificationTimeout * 1000) #timeout
 
     def setProgress(self, cs, ss=None):
         ''' Moves the progress indicator to the correct position,

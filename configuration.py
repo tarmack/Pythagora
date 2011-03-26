@@ -36,6 +36,8 @@ class Configuration(object):
                 'server':               ['Local','localhost','6600',''],
                 'musicPath':            '~/Music',
                 'scBookmarkFile':       '~/Music/shoutcast-bookmarks.xml',
+                'showNotification':     False,
+                'notificationTimeout':  0,
                 'oneLinePlaylist':      False,
                 'showShoutcast':        False,
                 'tabsIndex':            0,
@@ -120,8 +122,14 @@ class Configuration(object):
         self.setup.setWindowTitle('Pythagora settings')
         self.setup.setWindowIcon(QIcon('Pythagora.png'))
         self.setup.setAttribute(Qt.WA_QuitOnClose, False)
-        # Hide options for functions not yet implemented.
-        self.setup.showNotificationWidget.setVisible(False)
+
+        # Hide dbus options if module not present
+        try:
+            import dbus
+        except ImportError:
+            self.setup.showNotificationWidget.setVisible(False)
+        self.setup.showNotification.setChecked(self.showNotification)
+        self.setup.notificationTimeout.setValue(self.notificationTimeout)
 
         self.setup.musicPath.setText(self.musicPath)
         self.setup.scBookmarkFile.setText(self.scBookmarkFile)
