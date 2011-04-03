@@ -345,7 +345,7 @@ class Update:
         label = '<br>'.join((item for item in (title, artist, album, station) if item))
         icon = self.view.currentList.playingItem().iconPath
         self.view.trayIcon.setToolTip(icon, label)
-        if self.config.showNotification:
+        if self.config.showNotification and self.lastSong:
             if not self.dbusNotification:
                 self._setupNotifications()
             self.showNotification(icon, label)
