@@ -38,7 +38,6 @@ class Configuration(object):
                 'showNotification':     False,
                 'notificationTimeout':  0,
                 'oneLinePlaylist':      False,
-                'showShoutcast':        False,
                 'tabsIndex':            0,
                 'keepPlayingVisible':   False,
                 'playlistControls':     False,
