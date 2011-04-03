@@ -162,14 +162,19 @@ class View(QMainWindow, auxilia.Actions):
         self.playerForm = PlayerForm(self, self.app, self.mpdclient, self.config)
         self.currentList = CurrentPlaylistForm.CurrentPlaylistForm(self, self.app, self.mpdclient, self.config)
         # Plugin views.
-        loadedPlugins = []
+        loadedPlugins = {}
         for plugin in plugins.allPlugins:
-            loadedPlugins.append(plugin.getWidget(self, self.mpdclient, self.config))
+            plugin = plugin.getWidget(self, self.mpdclient, self.config)
+            loadedPlugins[plugin.moduleName] = plugin
         for name in self.config.tabOrder:
-            for plugin in loadedPlugins:
-                if plugin.moduleName == name:
-                    self.tabs.addTab(plugin, auxilia.PIcon(plugin.moduleIcon), plugin.moduleName)
-                    break
+            if name in loadedPlugins:
+                plugin = loadedPlugins.pop(name)
+                self.tabs.addTab(plugin, auxilia.PIcon(plugin.moduleIcon), plugin.moduleName)
+        for plugin in loadedPlugins.values():
+            self.tabs.addTab(plugin, auxilia.PIcon(plugin.moduleIcon), plugin.moduleName)
+            order = self.config.tabOrder
+            order.append(plugin.moduleName)
+            self.config.tabOrder = order
 
     def shutdown(self):
         self.shuttingDown = True
