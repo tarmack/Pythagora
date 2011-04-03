@@ -239,6 +239,7 @@ class Update:
     errorCount = 0
     time = 0
     lastSong = {}
+    dbusNotification = None
     def __init__(self, view, mpdclient, config, playControls):
         self.pauseIcon = auxilia.PIcon("media-playback-pause")
         self.startIcon = auxilia.PIcon("media-playback-start")
@@ -251,31 +252,6 @@ class Update:
         # Set the progress timer up.
         self.timer = QTimer()
         self.view.connect(self.timer, SIGNAL("timeout()"), self.progress)
-        # DBus notifications
-        if self.config.showNotification:
-            try:
-                import dbus
-            except ImportError, e:
-                self.config.showNotification = False
-                return
-            self.notificationId = dbus.UInt32(0)
-            self.appName = unicode(QApplication.applicationName().toUtf8())
-            # app_icon url is correct, doesn't display in Plasma though
-            self.appIcon = 'file://'+os.path.abspath(MainWindow.DATA_DIR+'icons/Pythagora.png')
-            self.notificationSummary = '%s, now playing:' % self.appName
-            self.notificationHints = dbus.Dictionary(
-                {'suppress-sound':  True,
-                 'desktop-entry':   'pythagora',
-                 'image_path':      ''},
-                'sv')
-            try:
-                self.dbusNotification = dbus.SessionBus().get_object(
-                    'org.freedesktop.Notifications',
-                    '/org/freedesktop/Notifications',
-                    'org.freedesktop.Notifications')
-            except dbus.DBusException, e:
-                self.config.showNotification = False
-                print 'debug: error using dbus - %s' % e
 
     def update(self, changes, status):
         self.timer.start(1000)
@@ -369,11 +345,12 @@ class Update:
         label = '<br>'.join((item for item in (title, artist, album, station) if item))
         icon = self.view.currentList.playingItem().iconPath
         self.view.trayIcon.setToolTip(icon, label)
-        self.showNotification(icon, label)
+        if self.config.showNotification:
+            if not self.dbusNotification:
+                self._setupNotifications()
+            self.showNotification(icon, label)
 
     def showNotification(self, icon, label):
-        if not self.config.showNotification:
-            return
         iconPath = 'file://%s' % icon if icon else self.appIcon
         self.notificationHints.update({'image_path':iconPath})
         # Show notification
@@ -403,6 +380,32 @@ class Update:
             self.view.playerForm.progress.setValue(curTime)
             self.view.playerForm.progress.setFormat('/'.join((auxilia.formatTime(curTime), auxilia.formatTime(songTime))))
         self.time = curTime
+
+    def _setupNotifications(self):
+        try:
+            import dbus
+        except ImportError, e:
+            self.config.showNotification = False
+            return
+        self.notificationId = dbus.UInt32(0)
+        self.appName = unicode(QApplication.applicationName().toUtf8())
+        # app_icon url is correct, doesn't display in Plasma though
+        self.appIcon = 'file://'+os.path.abspath(MainWindow.DATA_DIR+'icons/Pythagora.png')
+        self.notificationSummary = '%s, now playing:' % self.appName
+        self.notificationHints = dbus.Dictionary(
+            {'suppress-sound':  True,
+             'desktop-entry':   'pythagora',
+             'image_path':      ''},
+            'sv')
+        try:
+            self.dbusNotification = dbus.SessionBus().get_object(
+                'org.freedesktop.Notifications',
+                '/org/freedesktop/Notifications',
+                'org.freedesktop.Notifications')
+        except dbus.DBusException, e:
+            self.config.showNotification = False
+            print 'debug: error using dbus - %s' % e
+
 
     def __setPlayPauseState(self,state):
         if state == 'play':
