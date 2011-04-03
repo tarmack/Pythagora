@@ -35,7 +35,6 @@ class Configuration(object):
                 'knownHosts':           {'Local': ['localhost','6600','']},
                 'server':               ['Local','localhost','6600',''],
                 'musicPath':            '~/Music',
-                'scBookmarkFile':       '~/Music/shoutcast-bookmarks.xml',
                 'showNotification':     False,
                 'notificationTimeout':  0,
                 'oneLinePlaylist':      False,
@@ -132,7 +131,6 @@ class Configuration(object):
         self.setup.notificationTimeout.setValue(self.notificationTimeout)
 
         self.setup.musicPath.setText(self.musicPath)
-        self.setup.scBookmarkFile.setText(self.scBookmarkFile)
 
         # Setup the serverTable.
         actionRemove = QAction(auxilia.PIcon("list-remove"), 'Remove', self.setup.serverTable)
@@ -165,7 +163,6 @@ class Configuration(object):
 
         self.setup.connect(self.setup.serverTable, SIGNAL('cellChanged(int,int)'), self.__cellChanged)
         self.setup.connect(self.setup.musicDirButton,SIGNAL('clicked()'),self.__selectMusicDir)
-        self.setup.connect(self.setup.scFileButton,SIGNAL('clicked()'),self.__selectBookmarkFile)
         self.setup.connect(self.setup.buttonBox, SIGNAL('accepted()'), self.__accept)
         self.setup.serverTable.keyPressEvent = self.__keyPressEvent
         if modal:
@@ -192,8 +189,6 @@ class Configuration(object):
         self.notificationTimeout = self.setup.notificationTimeout.value()
         self.musicPath = unicode(self.setup.musicPath.text())
         self.__checkDir("Music",self.musicPath)
-        self.scBookmarkFile = unicode(self.setup.scBookmarkFile.text())
-        self.__checkDir("ShoutCast bookmarks",unicode(self.scBookmarkFile).rpartition('/')[0])
         if server[1:] != self.server[1:]:
             self.parent.emit(SIGNAL('reconnect()'))
 
@@ -255,14 +250,4 @@ class Configuration(object):
         if fd.exec_() == 1:
             dir = str(fd.selectedFiles().first())
             self.setup.musicPath.setText(dir)
-
-    def __selectBookmarkFile(self):
-        directory = os.path.expanduser(unicode(self.setup.scBookmarkFile.text()))
-        fd = QFileDialog(self.setup, 'Select: ShoutCast Bookmark File', directory)
-        fd.setNameFilter('XML files (*.xml)')
-        fd.setDefaultSuffix('xml')
-        #fd.setOption(QFileDialog.DontUseNativeDialog, True)
-        if fd.exec_() == 1:
-            dir = str(fd.selectedFiles().first())
-            self.setup.scBookmarkFile.setText(dir)
 
