@@ -297,6 +297,8 @@ class Update:
         self.mixer(status)
 
     def _currentsong(self, currentsong):
+        self.lastSong = currentsong
+        self.view.emit(SIGNAL('currentSong'), currentsong)
         if (mpdlibrary.isStream(currentsong) and
             mpdlibrary.songTitle(self.lastSong) ==
             mpdlibrary.songTitle(currentsong) and
@@ -309,8 +311,6 @@ class Update:
                 mpdlibrary.songAlbum(currentsong),
                 mpdlibrary.songStation(currentsong)
                 )
-        self.lastSong = currentsong
-        self.view.emit(SIGNAL('currentSong'), currentsong)
 
     def mixer(self, status):
         volumeStatus = int(status['volume'])
