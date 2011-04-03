@@ -369,9 +369,9 @@ class Update:
         label = '<br>'.join((item for item in (title, artist, album, station) if item))
         icon = self.view.currentList.playingItem().iconPath
         self.view.trayIcon.setToolTip(icon, label)
-        self.setNotification(icon, label)
+        self.showNotification(icon, label)
 
-    def setNotification(self, icon, label):
+    def showNotification(self, icon, label):
         if not self.config.showNotification:
             return
         iconPath = 'file://%s' % icon if icon else self.appIcon
