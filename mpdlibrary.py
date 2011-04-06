@@ -25,11 +25,11 @@ class Library:
         # parse the list and prepare it for loading in the library browser and the file system view.
         for song in (x for x in mainlist if 'file' in x):
             self._songList.append(song)
-            album = songAlbum(song, 'None')
-            artist = songArtist(song, 'Unknown')
-            genre = song.get('genre', None)
-            appendToList(self._artists, artist, song)
+            album = song.get('album', 'None')
             appendToList(self._albums, album, song)
+            artist = _getField(song, ('artist', 'performer', 'composer'), 'Unknown')
+            appendToList(self._artists, artist, song)
+            genre = song.get('genre', None)
             if genre:
                 appendToList(self._genres, genre, song)
 
@@ -196,26 +196,26 @@ def songTime(song):
 def isStream(song):
     return song.get('file', '').startswith('http://')
 
-def _getSongAttr(song, attrs):
-    '''Returns the value for the first key in attrs that exists.'''
-    if isStream(song):
+def _getField(song, fields, alt):
+    value = alt
+    if ('artist' in fields or 'title' in fields) and song['file'].startswith('http://'):
         # mpd puts stream metadata in the title attribute as "{artist} - {song}"
         value = song.get('title', '')
         if ' - ' in value:
             artist, title = value.split(' - ', 1)
-            if 'artist' in attrs:
-                return artist
-            if 'title' in attrs:
-                return title
-    for attr in attrs:
-        if attr in song:
-            return song[attr].strip() if type(song[attr]) in (str, unicode) else song[attr]
-
-def _getTextField(value):
-    if getattr(value, '__iter__', False):
-        return value[0]
+            if 'artist' in fields:
+                value = artist
+            if 'title' in fields:
+                value = title
     else:
-        return value
+        for field in fields:
+            if field in song:
+                value = song[field]
+                break
+    if getattr(value, '__iter__', False):
+        return value[0].strip()
+    else:
+        return value.strip()
 
 def appendToList(listDict, keys, value, deduplicate=False):
     '''In place add value to listDict at key.
@@ -238,7 +238,10 @@ def appendToList(listDict, keys, value, deduplicate=False):
 class LibraryObject(object):
     _attributes = {}
     def __new__(cls, library, value):
-        string = _getTextField(value)
+        if getattr(value, '__iter__', False):
+            string = value[0]
+        else:
+            string = value
         return unicode.__new__(cls, string)
 
     def __init__(self, library, value):
@@ -328,32 +331,62 @@ class Song(dict, LibraryObject):
 
     def get(self, key, alt=None):
         try:
-            return self.__getitem__(key)
+            value = self.__getitem__(key)
+            if value == '':
+                value = value.__class__(value._library, alt)
         except KeyError:
-            return alt
+            value = alt
+        return alt
 
     def __getitem__(self, item):
-        value = dict(self._value)
         if item == 'artist':
-            return Artist(self._library, songArtist(value))
+            return Artist(self._library,
+                    self._getAttr('artist', 'performer', 'composer'))
         elif item == 'title':
-            return Text(songTitle(value))
+            return Text(self._getAttr('title', 'name', 'file'))
         elif item == 'album':
-            return Album(self._library, songAlbum(value))
+            return Album(self._library,
+                    self._getAttr('album'))
         elif item == 'genre':
-            return Genre(self._library, songGenre(value))
+            value = self._getAttr('genre')
+            if type(value) in (str, unicode):
+                value = value.lower()
+            else:
+                value = [x.lower() for x in value]
+            return Genre(self._library, value)
         elif item == 'file':
-            return File(self._library, value['file'])
-        elif item == 'track':
-            return Text(songTrack(value))
+            return File(self._library,
+                self._getAttr('file'))
         elif item == 'time':
-            return Time(value['time'])
-        elif item == 'station' and isStream(value):
+            return Time(self._getAttr('time'))
+        elif item == 'station':
             # Only applicable when the Song object
             # is created from a play queue item.
-            return Text(songStation(value))
+            if self.isStream:
+                return Text(self._getAttr('name', 'file'))
+            else:
+                return Text('')
         else:
-            return Text(value[item])
+            return Text(self._getAttr(item))
+
+    def _getAttr(self, *attrs):
+        '''Returns the value for the first key in attrs that exists.'''
+        value = ''
+        if ('artist' in attrs or 'title' in attrs) and self.isStream:
+            # mpd puts stream metadata in the title attribute as "{artist} - {song}"
+            value = self.title
+            if ' - ' in value:
+                artist, title = value.split(' - ', 1)
+                if 'artist' in attrs:
+                    value = artist
+                if 'title' in attrs:
+                    value = title
+        else:
+            for attr in attrs:
+                if dict.__contains__(self, attr):
+                    value = dict.__getitem__(self, attr)
+                    break
+        return value.strip() if type(value) in (str, unicode) else value
 
 
 class Path(unicode, LibraryObject):
