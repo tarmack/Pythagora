@@ -21,7 +21,6 @@ from PyQt4 import uic
 from time import time
 
 import auxilia
-import mpdlibrary
 import PluginBase
 
 DATA_DIR = ''
@@ -113,7 +112,7 @@ class LibraryForm(PluginBase.PluginBase, auxilia.Actions):
         self.artistView.setUpdatesEnabled(False)
         artists.sort(auxilia.cmpUnicode)
         for artist in artists:
-            self.artistView.addItem(ArtistWidget(artist, self.library))
+            self.artistView.addItem(ArtistWidget(artist))
         self.artistView.insertItem(0, '--all--')
         self.artistSearch(self.artistSearchField.text())
         self.artistView.setUpdatesEnabled(True)
@@ -124,8 +123,7 @@ class LibraryForm(PluginBase.PluginBase, auxilia.Actions):
         self.albumView.setUpdatesEnabled(False)
         albumlist.sort(cmp=auxilia.cmpUnicode)
         for album in albumlist:
-            artists = self.library.albumArtists(album)
-            albumWidget = AlbumWidget(album, artists, self.library)
+            albumWidget = AlbumWidget(album)
             self.albumView.addItem(albumWidget)
         self.albumView.insertItem(0, '--all--')
         self.albumSearch(self.albumSearchField.text())
@@ -271,35 +269,32 @@ class LibraryForm(PluginBase.PluginBase, auxilia.Actions):
 # Widget subclasses.
 class ArtistWidget(QListWidgetItem):
     '''Simple widget for artists in library view.'''
-    def __init__(self, text, library):
-        self.library = library
+    def __init__(self, artist):
+        self.artist = artist
         QListWidgetItem.__init__(self)
-        self.setText(text)
+        self.setText(artist)
 
     def getDrag(self):
-        return self.library.artistSongs(unicode(self.text()))
+        return self.artist.songs
 
 class AlbumWidget(QListWidgetItem):
     '''Simple for album in library view.'''
-    def __init__(self, text, tooltip, library):
-        self.library = library
+    def __init__(self, album):
+        self.album = album
         QListWidgetItem.__init__(self)
-        self.setText(text)
-        self.setToolTip('\n'.join(tooltip))
+        self.setText(album)
+        self.setToolTip('\n'.join(album.artists))
 
     def getDrag(self):
-        return self.library.albumSongs(unicode(self.text()))
+        return self.album.songs
 
 class TrackWidget(QTreeWidgetItem):
     '''Track widget used in library track view.'''
     def __init__(self, song):
-        QTreeWidgetItem.__init__(self)
+        QTreeWidgetItem.__init__(self, [song.track, song.title, song.time.human])
         self.song = song
-        self.setText(0,mpdlibrary.songTrack(song))
-        self.setText(1,mpdlibrary.songTitle(song))
-        self.setText(2,mpdlibrary.songTime(song))
         self.setToolTip(1, "Artist:\t %s\nAlbum:\t %s\nFile:\t %s"\
-                % (mpdlibrary.songArtist(song), mpdlibrary.songAlbum(song), song['file']))
+                % (song.artist, song.album, song.file))
 
     def getDrag(self):
         return [self.song]
