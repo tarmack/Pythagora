@@ -21,6 +21,7 @@ from PyQt4.QtGui import QMainWindow, QLabel, QMenu, QIcon, QWidget, QAction, QWi
 from PyQt4 import uic
 from time import time
 import sys
+import os
 
 import CurrentPlaylistForm
 import plugins
@@ -49,11 +50,11 @@ class View(QMainWindow, auxilia.Actions):
         self.shuttingDown = False
         self.config = configuration
         self.mpdclient = mpdclient
-        appIcon = QIcon(DATA_DIR+'icons/Pythagora.png')
+        appIcon = os.path.abspath(DATA_DIR+'icons/Pythagora.png')
         uic.loadUi(DATA_DIR+'ui/Pythagora.ui', self)
         self.KDE = KDE
         self.setWindowTitle('Pythagora')
-        self.setWindowIcon(appIcon)
+        self.setWindowIcon(QIcon(appIcon))
         # Load all forms.
         self.createViews()
         # Create 'Connect to' menu.
@@ -376,7 +377,7 @@ if KDE:
             self.connect(self.hideResoreAction, SIGNAL('triggered()'), SIGNAL("activate()"))
             self.icon = icon
             self.parent = parent
-            self.setIconByPixmap(icon)
+            self.setIconByName(icon)
             self.setCategory(1)
             self.setStatus(2)
 
@@ -411,13 +412,13 @@ if KDE:
 else:
     class QTrayIcon(QSystemTrayIcon, auxilia.Actions):
         def __init__(self, icon, parent):
-            QSystemTrayIcon.__init__(self, icon, parent)
+            QSystemTrayIcon.__init__(self, QIcon(icon), parent)
             self.parent = parent
             self.pauseIcon = auxilia.PIcon("media-playback-pause")
             self.startIcon = auxilia.PIcon("media-playback-start")
             self.actionList = []
             self.menu = QMenu('Pythagora MPD client', parent)
-            self.menu.addAction(menuTitle(icon, 'Pythagora', parent))
+            self.menu.addAction(menuTitle(QIcon(icon), 'Pythagora', parent))
             self.setContextMenu(self.menu)
             self.hideResoreAction = QAction('Minimize', self.menu)
             self.connect(self.hideResoreAction, SIGNAL('triggered()'), self.__activated)
