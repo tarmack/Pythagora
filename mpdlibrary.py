@@ -111,15 +111,15 @@ class Library:
             artists = [artists]
         songs = self._albums.get(album, [])
         if artists != []:
-            songs = [Song(self, song) for song in songs if songArtist(song, '') in artists]
-        return songs
+            return [Song(self, song) for song in songs if songArtist(song, '') in artists]
+        return [Song(self, song) for song in songs]
 
     def albumArtists(self, album):
         '''Returns a list containing all artists listed on the album.'''
         songlist = self.albumSongs(album)
         artists = set()
         for song in songlist:
-            artists.add(songArtist(song))
+            artists.add(song.artist)
         return [Artist(self, artist) for artist in artists]
 
     def ls(self, path, fslist=None):
