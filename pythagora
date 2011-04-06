@@ -343,7 +343,11 @@ class Update:
         if album:
             album = 'from <i>%s</i>' % album
         label = '<br>'.join((item for item in (title, artist, album, station) if item))
-        icon = self.view.currentList.playingItem().iconPath
+        current = self.view.currentList.playingItem()
+        if current:
+            icon = current.iconPath
+        else:
+            icon = self.view.appIcon
         self.view.trayIcon.setToolTip(icon, label)
         if self.config.showNotification and self.lastSong:
             if not self.dbusNotification:
