@@ -21,7 +21,6 @@ from sys import getrefcount
 import threading
 import time
 
-import mpdlibrary
 
 DATA_DIR = ''
 
@@ -71,7 +70,7 @@ class Retriever:
         a picture of the artist.'''
         # comment out the next line to disable icon fetching.
         #return NOCOVER
-        if mpdlibrary.isStream(song):
+        if song.isStream:
             return STREAMICON
         cover = None
         cover = self.getFolderImage(song)
@@ -80,8 +79,8 @@ class Retriever:
             if not self.coverPath:
                 return NOCOVER
             try:
-                artist = mpdlibrary.songArtist(song)
-                album = mpdlibrary.songAlbum(song)
+                artist = song.artist
+                album = song.album
                 if artist:
                     if album:
                         cover = self.getAlbumImage(artist,album)

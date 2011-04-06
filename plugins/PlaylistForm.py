@@ -21,7 +21,6 @@ from PyQt4 import uic
 
 import mpd
 import auxilia
-import mpdlibrary
 import PluginBase
 
 DATA_DIR = ''
@@ -316,9 +315,9 @@ class LongSongWidget(QTreeWidgetItem):
         QTreeWidgetItem.__init__(self)
         self.song = song
         self.pos = pos
-        self.setText(0,mpdlibrary.songArtist(song))
-        self.setText(1,mpdlibrary.songTitle(song))
-        self.setText(2,mpdlibrary.songAlbum(song))
+        self.setText(0,song.artist)
+        self.setText(1,song.title)
+        self.setText(2,song.album)
 
     def getDrag(self):
         return [self.song]

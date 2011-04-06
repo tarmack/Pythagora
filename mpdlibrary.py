@@ -153,48 +153,6 @@ class Library:
             return 'directory'
 
 
-def songTitle(song):
-    return _getSongAttr(song, ('title', 'name', 'file'))
-
-def songArtist(song, alt=''):
-    value = _getSongAttr(song, ('artist', 'performer', 'composer'))
-    if not value:
-        value = alt
-    return value
-
-def songAlbum(song, alt=''):
-    return song.get('album', alt)
-
-def songTrack(song, alt=''):
-    return song.get('track', alt)
-
-def songGenre(song):
-    value = song.get('genre', '')
-    if type(value) in (str, unicode):
-        value = value.lower()
-    else:
-        value = [x.lower() for x in value]
-    return value
-
-def songStation(song):
-    if isStream(song):
-        value = _getSongAttr(song, ('name', 'file'))
-        return _getTextField(value)
-    else:
-        return ''
-
-def songTime(song):
-    stime = int(song.get('time', '0'))
-    thour = stime / 3600
-    stime -= thour * 3600
-    tmin = stime / 60
-    tsec = stime - tmin * 60
-    if thour > 0:
-        return '%i:%02i:%02i' % (thour, tmin, tsec)
-    return '%i:%02i' % (tmin, tsec)
-
-def isStream(song):
-    return song.get('file', '').startswith('http://')
 
 def _getField(song, fields, alt):
     value = alt
@@ -265,29 +223,32 @@ class LibraryObject(object):
 class Artist(LibraryObject, unicode):
     def __init__(self, library, value):
         LibraryObject.__init__(self, library, value)
-        self._attributes.update({
-                'songs':    self._library.artistSongs,
-                'albums':   self._library.artistAlbums,
-                'genres':   self._library.artistGenres,
-                })
+        if library:
+            self._attributes.update({
+                    'songs':    library.artistSongs,
+                    'albums':   library.artistAlbums,
+                    'genres':   library.artistGenres,
+                    })
 
 class Album(LibraryObject, unicode):
     def __init__(self, library, value):
         LibraryObject.__init__(self, library, value)
-        self._attributes.update({
-                'songs':    self._library.albumSongs,
-                'artists':  self._library.albumArtists,
-                'genres':   self._library.albumGenres,
-                })
+        if library:
+            self._attributes.update({
+                    'songs':    library.albumSongs,
+                    'artists':  library.albumArtists,
+                    'genres':   library.albumGenres,
+                    })
 
 class Genre(LibraryObject, unicode):
     def __init__(self, library, value):
         LibraryObject.__init__(self, library, value)
-        self._attributes.update({
-                'songs':    self._library.genreSongs,
-                'artists':  self._library.genreArtists,
-                'albums':   self._library.genreAlbums,
-                })
+        if library:
+            self._attributes.update({
+                    'songs':    library.genreSongs,
+                    'artists':  library.genreArtists,
+                    'albums':   library.genreAlbums,
+                    })
 
 class Time(LibraryObject, unicode):
     def __new__(cls, value):
@@ -300,8 +261,18 @@ class Time(LibraryObject, unicode):
                 'hours':    lambda value: value / 3600,
                 'minutes':  lambda value: (value - (value * 3600)) / 60,
                 'seconds':  lambda value: value - ((value - (value / 3600 * 3600)) / 60 * 60),
-                'human':    lambda value: songTime({'time': value}),
+                'human':    self._format,
                 })
+
+    def _format(self, time):
+        thour = time / 3600
+        time -= thour * 3600
+        tmin = time / 60
+        tsec = time - tmin * 60
+        if thour > 0:
+            return '%i:%02i:%02i' % (thour, tmin, tsec)
+        return '%i:%02i' % (tmin, tsec)
+
 
 class Text(LibraryObject, unicode):
     def __new__(cls, value):
@@ -314,6 +285,9 @@ class Song(dict, LibraryObject):
     def __init__(self, library, value):
         dict.__init__(self, value)
         LibraryObject.__init__(self, library, self)
+        self._attributes.update({
+            'isStream': lambda _: self.file.startswith('http://')
+            })
 
     def __getattr__(self, attr):
         try:

@@ -185,7 +185,7 @@ class Manager():
         if isinstance(exc, Exception):
             self.update.setSongLabel('Could not connect to %s at %s.' % (self.config.server[0], self.config.server[1]))
             self.view.serverLabel.setText('Not connected')
-            self.update.currentsong = {}
+            self.update.currentsong = mpdlibrary.Song(update.library, {})
             self.misses += 1
             self.misses = min(30, self.misses)
             self.idleTimer.start(3000*self.misses)
@@ -199,7 +199,7 @@ class Manager():
             if len(self.config.server) > 3 and self.config.server[3] != '':
                 self.mpdclient.send('password', (self.config.server[3],))
             self.view.serverLabel.setText('Connected to %s' % self.config.server[0])
-            self.callback(['playlist', 'database', 'stored_playlist', 'player', 'mixer', 'options'])
+            self.callback(['database', 'playlist', 'stored_playlist', 'player', 'mixer', 'options'])
         self.view.setCursor(Qt.ArrowCursor)
         self.firstConnect = False
 
@@ -240,6 +240,7 @@ class Update:
     time = 0
     lastSong = {}
     dbusNotification = None
+    library = None
     def __init__(self, view, mpdclient, config, playControls):
         self.pauseIcon = auxilia.PIcon("media-playback-pause")
         self.startIcon = auxilia.PIcon("media-playback-start")
@@ -248,6 +249,7 @@ class Update:
         self.config = config
         self.playControls = playControls
         self.view.connect(self.view, SIGNAL('update'), self.update)
+        self.view.connect(self.view, SIGNAL('reloadLibrary'), self._loadLibrary)
         self.view.connect(self.view, SIGNAL('_currentsong'), self._currentsong)
         # Set the progress timer up.
         self.timer = QTimer()
@@ -266,7 +268,7 @@ class Update:
         if self.mpdclient.connected():
             try:
                 if self.state == 'play':
-                    if not mpdlibrary.isStream(self.lastSong):
+                    if not self.lastSong.isStream:
                         self.setProgress(self.time + 1)
                     else:
                         self.setProgress(self.time + 1, 0)
@@ -283,13 +285,13 @@ class Update:
             self.__setPlayPauseState(status['state'])
         # if we're stopped, just call it quits
         if status['state'] == 'stop':
-            self.lastSong = {}
+            self.lastSong = mpdlibrary.Song(self.library, {})
             self.setProgress(0, 0)
             self.setSongLabel('Connected to %s.' % self.config.server[0])
             return
-        if status['songid'] != self.lastSong.get('id') or mpdlibrary.isStream(self.lastSong):
+        if status['songid'] != self.lastSong.get('id') or self.lastSong.isStream:
                 self.mpdclient.send('currentsong', callback=
-                        lambda currentsong: self.view.emit(SIGNAL('_currentsong'), currentsong))
+                        lambda currentsong: self.view.emit(SIGNAL('_currentsong'), mpdlibrary.Song(self.library, currentsong)))
         # format times
         cs, ss = status['time'].split(':')
         self.setProgress(cs, ss)
@@ -298,19 +300,17 @@ class Update:
 
     def _currentsong(self, currentsong):
         self.view.emit(SIGNAL('currentSong'), currentsong)
-        if (mpdlibrary.isStream(currentsong) and
-            mpdlibrary.songTitle(self.lastSong) ==
-            mpdlibrary.songTitle(currentsong) and
-            mpdlibrary.songArtist(self.lastSong) ==
-            mpdlibrary.songArtist(currentsong)):
+        if (currentsong.isStream and
+                self.lastSong.title == currentsong.title and
+                self.lastSong.artist == currentsong.artist):
             return # stream metadata hasn't changed, so don't update
-        self.setSongLabel(
-                mpdlibrary.songTitle(currentsong),
-                mpdlibrary.songArtist(currentsong),
-                mpdlibrary.songAlbum(currentsong),
-                mpdlibrary.songStation(currentsong)
-                )
         self.lastSong = currentsong
+        self.setSongLabel(
+                currentsong.title,
+                currentsong.artist,
+                currentsong.album,
+                currentsong.station
+                )
 
     def mixer(self, status):
         volumeStatus = int(status['volume'])
@@ -408,6 +408,8 @@ class Update:
             self.config.showNotification = False
             print 'debug: error using dbus - %s' % e
 
+    def _loadLibrary(self, library):
+        self.library = library
 
     def __setPlayPauseState(self,state):
         if state == 'play':

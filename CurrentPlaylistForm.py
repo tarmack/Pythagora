@@ -65,6 +65,7 @@ class CurrentPlaylistForm(QWidget, auxilia.Actions):
         self.view.connect(self.view, SIGNAL('playlistChanged'), self.reload)
         self.view.connect(self.view, SIGNAL('clearForms'), self.__resetCurrentList)
         self.view.connect(self.view, SIGNAL('currentSong'), self.setPlaying)
+        self.view.connect(self.view, SIGNAL('reloadLibrary'), self._loadLibrary)
 
         # Connect to the list for double click action.
         self.connect(self.currentList,SIGNAL('itemDoubleClicked(QListWidgetItem*)'),self.__playSong)
@@ -164,45 +165,46 @@ class CurrentPlaylistForm(QWidget, auxilia.Actions):
         if plist:
             oldPos = int(plist[0]['pos'])
             for song in plist:
-                song['pos'] = int(song['pos'])
+                song = mpdlibrary.Song(self.library, song)
+                song.pos = int(song.pos)
                 # if the song is in our parralel id list.
-                if song['id'] in self.idlist:
+                if song.id in self.idlist:
                     # get the id position.
-                    index = self.idlist.index(song['id'])
+                    index = self.idlist.index(song.id)
                     # take the item.
                     item = self._takeItem(index)
                     item.setSong(song)
                     # If the old position is after the new position (moving up).
-                    if index > song['pos']:
+                    if index > song.pos:
                         # take all songs that were between old and new position and put them in a dict.
-                        for x in range(song['pos'], index):
-                            holditem = self._takeItem(song['pos'])
-                            itemlist[holditem.song['id']] = holditem
+                        for x in range(song.pos, index):
+                            holditem = self._takeItem(song.pos)
+                            itemlist[holditem.song.id] = holditem
                     # put the item back in the list at the right position.
-                    self._insertItem(song['pos'], item)
+                    self._insertItem(song.pos, item)
                 # if ist in our 'hold on to' list.
-                elif song['id'] in itemlist:
-                    if oldPos+1 < song['pos']:
+                elif song.id in itemlist:
+                    if oldPos+1 < song.pos:
                         items = []
                         for item in itemlist.values():
-                            if int(item.song['pos']) > oldPos and int(item.song['pos']) < song['pos']:
+                            if item.song.pos > oldPos and item.song.pos < song.pos:
                                 items.append(item)
-                        items.sort(key=lambda x: x.song['pos'], reverse=True)
+                        items.sort(key=lambda x: x.song.pos, reverse=True)
                         for item in items:
                             self._insertItem(oldPos+1, item)
                     # pick the item from the dict.
-                    item = itemlist[song['id']]
+                    item = itemlist[song.id]
                     # update the song atribute.
                     item.setSong(song)
                     # put it in place in the view.
-                    self._insertItem(song['pos'], item)
+                    self._insertItem(song.pos, item)
                 else:
                     # If the song is not in the parallel or the 'hold on to' list. Just insert a new item at the correct position.
                     item = CurrentListWidget(song, oneLine)
-                    self._insertItem(song['pos'], item)
-                oldPos = song['pos']
+                    self._insertItem(song.pos, item)
+                oldPos = song.pos
                 # select the song again if needed.
-                if song['id'] in self.selection: item.setSelected(True)
+                if song.id in self.selection: item.setSelected(True)
 
         # If the playlist has shrunk, delete the songs from the end.
         last = int(status['playlistlength'])
@@ -430,6 +432,9 @@ class CurrentPlaylistForm(QWidget, auxilia.Actions):
     def _setEditing(self, i=0):
         self.editing = time()
 
+    def _loadLibrary(self, library):
+        self.library = library
+
 
 # Widget subclas.
 class CurrentListWidget(QListWidgetItem):
@@ -465,18 +470,20 @@ class CurrentListWidget(QListWidgetItem):
         return [self.song]
 
     def _updateText(self):
-        if not self._playing and mpdlibrary.isStream(self.song):
-            title = mpdlibrary.songStation(self.song)
+        if not self._playing and self.song.isStream:
+            title = self.song.station
             artist = ''
         else:
-            artist = mpdlibrary.songArtist(self.song)
-            title = mpdlibrary.songTitle(self.song)
+            artist = self.song.artist
+            title = self.song.title
         if self.oneLine:
             self.setText(artist + ' - ' + title)
         else:
             self.setText(title + '\n' + artist)
-        if mpdlibrary.isStream(self.song):
-            self.setToolTip("Station:\t %s\nurl:\t %s" % (mpdlibrary.songStation(self.song), self.song['file']))
+        if self.song.isStream:
+            self.setToolTip("Station:\t %s\nurl:\t %s"
+                    % (self.song.station, self.song.file))
         else:
-            self.setToolTip("Album:\t %s\nTime:\t %s\nFile:\t %s" % (mpdlibrary.songAlbum(self.song), str(mpdlibrary.songTime(self.song)) , self.song['file']))
+            self.setToolTip("Album:\t %s\nTime:\t %s\nFile:\t %s"
+                    % (self.song.album, self.song.time.human , self.song.file))
 
