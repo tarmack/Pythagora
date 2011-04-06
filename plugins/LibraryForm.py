@@ -283,7 +283,12 @@ class AlbumWidget(QListWidgetItem):
         self.album = album
         QListWidgetItem.__init__(self)
         self.setText(album)
-        self.setToolTip('\n'.join(album.artists))
+
+    def data(self, role):
+        if role == Qt.ToolTipRole:
+            return '\n'.join(self.album.artists)
+        else:
+            return QListWidgetItem.data(self, role)
 
     def getDrag(self):
         return self.album.songs
@@ -293,8 +298,14 @@ class TrackWidget(QTreeWidgetItem):
     def __init__(self, song):
         QTreeWidgetItem.__init__(self, [song.track, song.title, song.time.human])
         self.song = song
-        self.setToolTip(1, "Artist:\t %s\nAlbum:\t %s\nFile:\t %s"\
-                % (song.artist, song.album, song.file))
+
+    def data(self, column, role):
+        if role == Qt.ToolTipRole:
+            text = "Artist:\t %s\nAlbum:\t %s\nFile:\t %s"\
+                    % (self.song.artist, self.song.album, self.song.file)
+            return text
+        else:
+            return QTreeWidgetItem.data(self, column, role)
 
     def getDrag(self):
         return [self.song]
