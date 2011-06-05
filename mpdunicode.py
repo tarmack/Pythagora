@@ -29,6 +29,7 @@ from mpd import *
 ENCODING = 'utf-8'
 
 if hasattr(MPDClient, '_writecommand'):
+    print 'mpdunicode: Using python-mpd version 2.1 or older.'
     class MPDClient(MPDClient):
         ''' This proxy class wraps round the python-mpd module.
         It converts the dictionary values in the output to unicode
@@ -54,6 +55,7 @@ if hasattr(MPDClient, '_writecommand'):
             return item
 
 else:
+    print 'mpdunicode: Using python-mpd version 3.0 or later.'
     class MPDClient(MPDClient):
         ''' This proxy class wraps round the python-mpd module.
         It converts the dictionary values in the output to unicode
