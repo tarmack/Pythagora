@@ -360,7 +360,7 @@ class Update:
         self.notificationId = self.dbusNotification.Notify(
             self.appName,                           #app_name
             self.notificationId,                    #replaces_id
-            self.appIcon,                           #app_icon
+            self.view.appIcon,                      #app_icon
             self.notificationSummary,               #summary
             label,                                  #body
             [''],                                   #actions
@@ -393,7 +393,6 @@ class Update:
         self.notificationId = dbus.UInt32(0)
         self.appName = unicode(QApplication.applicationName().toUtf8())
         # app_icon url is correct, doesn't display in Plasma though
-        self.appIcon = 'file://'+os.path.abspath(MainWindow.DATA_DIR+'icons/Pythagora.png')
         self.notificationSummary = '%s, now playing:' % self.appName
         self.notificationHints = dbus.Dictionary(
             {'suppress-sound':  True,
