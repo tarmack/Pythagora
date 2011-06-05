@@ -238,7 +238,7 @@ class Update:
     misses = 0
     errorCount = 0
     time = 0
-    lastSong = {}
+    lastSong = mpdlibrary.Song({}, None)
     dbusNotification = None
     library = None
     def __init__(self, view, mpdclient, config, playControls):
