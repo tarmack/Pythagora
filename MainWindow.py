@@ -50,11 +50,11 @@ class View(QMainWindow, auxilia.Actions):
         self.shuttingDown = False
         self.config = configuration
         self.mpdclient = mpdclient
-        appIcon = os.path.abspath(DATA_DIR+'icons/Pythagora.png')
+        self.appIcon = os.path.abspath(DATA_DIR+'icons/Pythagora.png')
         uic.loadUi(DATA_DIR+'ui/Pythagora.ui', self)
         self.KDE = KDE
         self.setWindowTitle('Pythagora')
-        self.setWindowIcon(QIcon(appIcon))
+        self.setWindowIcon(QIcon(self.appIcon))
         # Load all forms.
         self.createViews()
         # Create 'Connect to' menu.
@@ -92,9 +92,9 @@ class View(QMainWindow, auxilia.Actions):
 
         # Set up trayicon and menu.
         if KDE:
-            self.trayIcon = KTrayIcon(appIcon, self)
+            self.trayIcon = KTrayIcon(self.appIcon, self)
         else:
-            self.trayIcon = QTrayIcon(appIcon, self)
+            self.trayIcon = QTrayIcon(self.appIcon, self)
         connectMenuAction = self.menuConnect.menuAction()
         self.trayIcon.addMenuItem(connectMenuAction)
         self.trayIcon.addMenuItem(self.actionSettings)
