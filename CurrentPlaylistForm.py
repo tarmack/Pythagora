@@ -355,7 +355,6 @@ class CurrentPlaylistForm(QWidget, auxilia.Actions):
         '''Clear the current playlist'''
         self.mpdclient.send('stop')
         self.mpdclient.send('clear')
-        self.reload()
 
     def __removeSelected(self):
         '''Remove the selected item(s) from the current playlist'''
