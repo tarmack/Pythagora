@@ -113,7 +113,7 @@ class LibraryForm(PluginBase.PluginBase, auxilia.Actions):
         artists.sort(auxilia.cmpUnicode)
         for artist in artists:
             self.artistView.addItem(ArtistWidget(artist))
-        self.artistView.insertItem(0, '--all--')
+        self.artistView.insertItem(0, ArtistWidget('--all--'))
         self.artistSearch(self.artistSearchField.text())
         self.artistView.setUpdatesEnabled(True)
 
@@ -125,7 +125,7 @@ class LibraryForm(PluginBase.PluginBase, auxilia.Actions):
         for album in albumlist:
             albumWidget = AlbumWidget(album)
             self.albumView.addItem(albumWidget)
-        self.albumView.insertItem(0, '--all--')
+        self.albumView.insertItem(0, AlbumWidget('--all--'))
         self.albumSearch(self.albumSearchField.text())
         self.albumView.setUpdatesEnabled(True)
 
