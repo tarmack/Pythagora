@@ -22,6 +22,7 @@ from PyQt4 import uic
 import mpd
 import auxilia
 import PluginBase
+import mpdlibrary
 
 DATA_DIR = ''
 
@@ -34,6 +35,8 @@ class PlaylistForm(PluginBase.PluginBase, auxilia.Actions):
     '''Display and manage the currently known playlists.'''
     moduleName = '&PlayLists'
     moduleIcon = 'document-multiple'
+
+    library = None
 
     def load(self):
         self.currentPlaylist = None
@@ -52,6 +55,7 @@ class PlaylistForm(PluginBase.PluginBase, auxilia.Actions):
         self.connect(self.newButton,SIGNAL('clicked()'),self.__newList)
         self.connect(self.loadButton,SIGNAL('clicked()'),self.__loadList)
         self.connect(self.deleteButton,SIGNAL('clicked()'),self.__deleteList)
+        self.connect(self.view,SIGNAL('reloadLibrary'),self._setLibrary)
         self.connect(self, SIGNAL('showPlaylist'), self.__showPlaylist)
         self.connect(self.playlistSplitter, SIGNAL('splitterMoved(int, int)'), self.__storeSplitter)
 
@@ -187,7 +191,7 @@ class PlaylistForm(PluginBase.PluginBase, auxilia.Actions):
             self.playlistList.setCurrentItem(self.playlistList.findItems(plname, Qt.MatchExactly)[0])
         self.currentPlaylist = plname
         self.mpdclient.send('listplaylistinfo', (plname,), callback=
-                lambda songlist: self.emit(SIGNAL('showPlaylist'), songlist))
+                lambda songlist: self.emit(SIGNAL('showPlaylist'), [mpdlibrary.Song(song, self.library) for song in songlist]))
 
     def __showPlaylist(self, songlist):
         if isinstance(songlist, Exception):
@@ -293,6 +297,9 @@ class PlaylistForm(PluginBase.PluginBase, auxilia.Actions):
                 self.mpdclient.send('playlistdelete', (self.currentPlaylist, item.pos))
         finally:
             self.mpdclient.send('command_list_end')
+
+    def _setLibrary(self, library):
+        self.library = library
 
     def __storeSplitter(self):
         self.config.playlistSplit = self.playlistSplitter.sizes()
