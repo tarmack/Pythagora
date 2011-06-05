@@ -143,27 +143,26 @@ class LibraryForm(PluginBase.PluginBase, auxilia.Actions):
     def artistFilter(self):
         songlist = []
         albumlist = []
-        artists = self.artistView.selectedItems()
+        artists = [item.artist for item in self.artistView.selectedItems()]
         if len(artists) < 1:
             self.__loadAlbumView(self.library.albums())
             self.__loadTracksView(self.library.songs())
             return
         for artist in artists:
-            artist = unicode(artist.text())
             if artist == '--all--':
-                if '--all--' in (unicode(x.text()) for x in self.albumView.selectedItems()):
+                if '--all--' in (self.albumView.selectedItems()):
                     self.__loadTracksView(self.library.songs())
                 self.__loadAlbumView(self.library.albums())
                 return
-            songlist.extend(self.library.artistSongs(artist))
-            albumlist.extend(self.library.artistAlbums(artist))
+            songlist.extend(artist.songs)
+            albumlist.extend(artist.albums)
         self.__loadAlbumView(albumlist)
         self.__loadTracksView(songlist)
 
     def albumFilter(self):
         songlist = []
-        albums = self.albumView.selectedItems()
-        artists = [unicode(artist.text()) for artist in self.artistView.selectedItems()]
+        albums = [item.album for item in self.albumView.selectedItems()]
+        artists = [item.artist for item in self.artistView.selectedItems()]
         if len(albums) < 1:
             if artists:
                 self.artistFilter()
@@ -171,7 +170,6 @@ class LibraryForm(PluginBase.PluginBase, auxilia.Actions):
                 self.__loadTracksView(self.library.songs())
             return
         for album in albums:
-            album = unicode(album.text())
             if album == '--all--':
                 self.artistFilter()
                 return
