@@ -200,7 +200,7 @@ class CurrentPlaylistForm(QWidget, auxilia.Actions):
                     self._insertItem(song.pos, item)
                 else:
                     # If the song is not in the parallel or the 'hold on to' list. Just insert a new item at the correct position.
-                    item = CurrentListWidget(song, oneLine)
+                    item = CurrentListWidget(song, oneLine, self)
                     self._insertItem(song.pos, item)
                 oldPos = song.pos
                 # select the song again if needed.
@@ -407,13 +407,11 @@ class CurrentPlaylistForm(QWidget, auxilia.Actions):
 
     def __setOneLinePlaylist(self, value):
         self.config.oneLinePlaylist = value
-        self.__resetCurrentList()
+        self.emit(SIGNAL('oneLinePlaylist'), value)
         if value:
             self.currentList.setIconSize(QSize(16, 16))
         else:
             self.currentList.setIconSize(QSize(32, 32))
-        self.mpdclient.send('status', callback=
-                lambda status: self.view.emit(SIGNAL('update'), ['playlist'], status))
 
     def __togglePlaylistTools(self, value=None):
         text = ('Show Playlist Tools', 'Hide Playlist Tools')
@@ -441,12 +439,19 @@ class CurrentListWidget(QListWidgetItem):
     '''Song, album, cover in a tree widget item'''
     # Used in CurrentPlaylistForm
     _playing = False
-    def __init__(self, song, oneLine=False):
+    def __init__(self, song, oneLine, parent):
         QListWidgetItem.__init__(self)
         self.oneLine = oneLine
         self.iconPath = ''
         self.song = song
-        self._updateText()
+        parent.connect(parent, SIGNAL('oneLinePlaylist'), self._setOneLine)
+
+    def data(self, role):
+        if role == Qt.DisplayRole:
+            return self._getText()
+        if role == Qt.ToolTipRole:
+            return self._getTooltip()
+        return QListWidgetItem.data(self, role)
 
     def setIcon(self, icon):
         self.iconPath = icon
@@ -454,7 +459,6 @@ class CurrentListWidget(QListWidgetItem):
 
     def setSong(self, song):
         self.song = song
-        self._updateText()
 
     def playing(self, playing):
         font = self.font()
@@ -464,12 +468,11 @@ class CurrentListWidget(QListWidgetItem):
             font.setWeight(50)
         self.setFont(font)
         self._playing = playing
-        self._updateText()
 
     def getDrag(self):
         return [self.song]
 
-    def _updateText(self):
+    def _getText(self):
         if not self._playing and self.song.isStream:
             title = self.song.station
             artist = ''
@@ -477,13 +480,19 @@ class CurrentListWidget(QListWidgetItem):
             artist = self.song.artist
             title = self.song.title
         if self.oneLine:
-            self.setText(artist + ' - ' + title)
+            return artist + ' - ' + title
         else:
-            self.setText(title + '\n' + artist)
+            return title + '\n' + artist
+
+    def _getTooltip(self):
         if self.song.isStream:
             self.setToolTip("Station:\t %s\nurl:\t %s"
                     % (self.song.station, self.song.file))
         else:
             self.setToolTip("Album:\t %s\nTime:\t %s\nFile:\t %s"
                     % (self.song.album, self.song.time.human , self.song.file))
+
+    def _setOneLine(self, value):
+        self.oneLine = value
+        self.setData(Qt.DisplayRole, '')
 
