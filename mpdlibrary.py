@@ -191,8 +191,11 @@ def appendToList(listDict, keys, value, deduplicate=False):
         listDict[key] = part + value
 
 
+
 class LibraryObject(object):
     def __new__(cls, value, library):
+        if not value:
+            value = ''
         if getattr(value, '__iter__', False):
             string = value[0]
         else:
@@ -213,10 +216,9 @@ class LibraryObject(object):
     def __getattr__(self, attr):
         try:
             funt = self._attributes[attr]
-            print "debug: Type of '%s' attribute is %s" % (attr, type(funt))
             return funt(self)
         except KeyError:
-            raise AttributeError("'%s' object has no attribute '%s'"
+            raise AttributeError("LibraryObject '%s' has no attribute '%s'"
                     % (self.__class__.__name__, attr))
 
 
@@ -286,15 +288,15 @@ class Song(dict, LibraryObject):
         dict.__init__(self, value)
         LibraryObject.__init__(self, self, library)
         self._attributes.update({
-            'isStream': lambda _: self.file.startswith('http://')
+            'isStream': lambda _: self.file.startswith('http://'),
+            'track':    lambda _: ''
             })
 
     def __getattr__(self, attr):
         try:
             return self.__getitem__(attr)
         except KeyError:
-            raise AttributeError("'%s' object has no attribute '%s'"
-                    % (self.__class__.__name__, attr))
+            return LibraryObject.__getattr__(self, attr)
 
     def __contains__(self, key):
         try:
@@ -315,7 +317,7 @@ class Song(dict, LibraryObject):
     def __getitem__(self, item):
         if item == 'artist':
             return Artist(self._getAttr('artist', 'performer', 'composer'),
-                    self.library)
+                    self._library)
         elif item == 'title':
             return Text(self._getAttr('title', 'name', 'file'),
                     self._library)
@@ -324,15 +326,15 @@ class Song(dict, LibraryObject):
                     self._library)
         elif item == 'genre':
             value = self._getAttr('genre')
-            if type(value) in (str, unicode):
+            if type(value) != list:
                 value = [value]
-            return Genre([x.lower() for x in value],
+            return Genre([x.lower() for x in value if type(value) in (str, unicode)],
                     self._library)
         elif item == 'file':
             return File(self._getAttr('file'),
                     self._library)
         elif item == 'time':
-            return Time(self._getAttr('time'),
+            return Time(self._getAttr('time') or 0,
                     self._library)
         elif item == 'station':
             # Only applicable when the Song object
@@ -343,15 +345,17 @@ class Song(dict, LibraryObject):
             else:
                 return Text('', self._library)
         else:
-            return Text(self._getAttr(item),
-                    self._library)
+            value = self._getAttr(item)
+            if value is None:
+                raise KeyError
+            return Text(value, self._library)
 
     def _getAttr(self, *attrs):
         '''Returns the value for the first key in attrs that exists.'''
-        value = ''
+        value = None
         if ('artist' in attrs or 'title' in attrs) and self.isStream:
             # mpd puts stream metadata in the title attribute as "{artist} - {song}"
-            value = self.title
+            value = dict.get(self, 'title', '')
             if ' - ' in value:
                 artist, title = value.split(' - ', 1)
                 if 'artist' in attrs:
