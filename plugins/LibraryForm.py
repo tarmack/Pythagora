@@ -272,6 +272,11 @@ class ArtistWidget(QListWidgetItem):
         QListWidgetItem.__init__(self)
         self.setText(artist)
 
+    def data(self, role):
+        if role == Qt.DisplayRole:
+            return unicode(self.artist)
+        return QListWidgetItem.data(self, role)
+
     def getDrag(self):
         return self.artist.songs
 
@@ -280,7 +285,6 @@ class AlbumWidget(QListWidgetItem):
     def __init__(self, album):
         self.album = album
         QListWidgetItem.__init__(self)
-        self.setText(album)
 
     def data(self, role):
         if role == Qt.ToolTipRole:
@@ -288,8 +292,9 @@ class AlbumWidget(QListWidgetItem):
             s = '\n'.join(self.album.artists)
             print "debug: ToolTip:", s
             return s
-        else:
-            return QListWidgetItem.data(self, role)
+        if role == Qt.DisplayRole:
+            return unicode(self.album)
+        return QListWidgetItem.data(self, role)
 
     def getDrag(self):
         return self.album.songs
@@ -297,7 +302,8 @@ class AlbumWidget(QListWidgetItem):
 class TrackWidget(QTreeWidgetItem):
     '''Track widget used in library track view.'''
     def __init__(self, song):
-        QTreeWidgetItem.__init__(self, [song.track, song.title, song.time.human])
+        QTreeWidgetItem.__init__(self, [])
+        #QTreeWidgetItem.__init__(self, [song.track, song.title, song.time.human])
         self.song = song
 
     def data(self, column, role):
@@ -305,8 +311,14 @@ class TrackWidget(QTreeWidgetItem):
             text = "Artist:\t %s\nAlbum:\t %s\nFile:\t %s"\
                     % (self.song.artist, self.song.album, self.song.file)
             return text
-        else:
-            return QTreeWidgetItem.data(self, column, role)
+        if role == Qt.DisplayRole:
+            if column == 0:
+                return unicode(self.song.track)
+            if column == 1:
+                return unicode(self.song.title)
+            if column == 2:
+                return self.song.time.human
+        return QTreeWidgetItem.data(self, column, role)
 
     def getDrag(self):
         return [self.song]
