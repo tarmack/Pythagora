@@ -92,7 +92,6 @@ class Library:
         '''Returns a list containing all artists listed on the album.'''
         artists = set()
         for song in self.albumSongs(album):
-            print song.artist
             artists.update(song.artist.all())
         return [Artist(artist, self) for artist in artists]
 
