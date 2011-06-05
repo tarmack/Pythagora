@@ -349,7 +349,7 @@ class Update:
         else:
             icon = self.view.appIcon
         self.view.trayIcon.setToolTip(icon, label)
-        if self.config.showNotification and self.lastSong:
+        if self.config.showNotification and self.state != 'stop':
             if not self.dbusNotification:
                 self._setupNotifications()
             self.showNotification(icon, label)
