@@ -355,8 +355,7 @@ class Update:
             self.showNotification(icon, label)
 
     def showNotification(self, icon, label):
-        iconPath = 'file://%s' % icon if icon else self.appIcon
-        self.notificationHints.update({'image_path':iconPath})
+        self.notificationHints.update({'image_path': icon})
         # Show notification
         self.notificationId = self.dbusNotification.Notify(
             self.appName,                           #app_name
