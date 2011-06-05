@@ -185,7 +185,7 @@ class Manager():
         if isinstance(exc, Exception):
             self.update.setSongLabel('Could not connect to %s at %s.' % (self.config.server[0], self.config.server[1]))
             self.view.serverLabel.setText('Not connected')
-            self.update.currentsong = mpdlibrary.Song(update.library, {})
+            self.update.currentsong = mpdlibrary.Song({}, update.library)
             self.misses += 1
             self.misses = min(30, self.misses)
             self.idleTimer.start(3000*self.misses)
@@ -285,13 +285,13 @@ class Update:
             self.__setPlayPauseState(status['state'])
         # if we're stopped, just call it quits
         if status['state'] == 'stop':
-            self.lastSong = mpdlibrary.Song(self.library, {})
+            self.lastSong = mpdlibrary.Song({}, self.library)
             self.setProgress(0, 0)
             self.setSongLabel('Connected to %s.' % self.config.server[0])
             return
         if status['songid'] != self.lastSong.get('id') or self.lastSong.isStream:
                 self.mpdclient.send('currentsong', callback=
-                        lambda currentsong: self.view.emit(SIGNAL('_currentsong'), mpdlibrary.Song(self.library, currentsong)))
+                        lambda currentsong: self.view.emit(SIGNAL('_currentsong'), mpdlibrary.Song(currentsong, self.library)))
         # format times
         cs, ss = status['time'].split(':')
         self.setProgress(cs, ss)

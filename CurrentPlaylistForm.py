@@ -165,7 +165,7 @@ class CurrentPlaylistForm(QWidget, auxilia.Actions):
         if plist:
             oldPos = int(plist[0]['pos'])
             for song in plist:
-                song = mpdlibrary.Song(self.library, song)
+                song = mpdlibrary.Song(song, self.library)
                 song.pos = int(song.pos)
                 # if the song is in our parralel id list.
                 if song.id in self.idlist:

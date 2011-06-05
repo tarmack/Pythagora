@@ -286,7 +286,10 @@ class AlbumWidget(QListWidgetItem):
 
     def data(self, role):
         if role == Qt.ToolTipRole:
-            return '\n'.join(self.album.artists)
+            print "debug: Type of data in AlbumWidget is", type(self.album)
+            s = '\n'.join(self.album.artists)
+            print "debug: ToolTip:", s
+            return s
         else:
             return QListWidgetItem.data(self, role)
 
