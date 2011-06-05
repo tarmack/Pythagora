@@ -85,7 +85,7 @@ class Library:
             artists = [artists]
         songs = (Song(song, self) for song in self._albums.get(album, []))
         if artists != []:
-            songs = [song for song in songs if (song, '') in artists]
+            songs = [song for song in songs if song.artist in artists]
         return songs
 
     def albumArtists(self, album):
