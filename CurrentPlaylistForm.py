@@ -486,11 +486,9 @@ class CurrentListWidget(QListWidgetItem):
 
     def _getTooltip(self):
         if self.song.isStream:
-            self.setToolTip("Station:\t %s\nurl:\t %s"
-                    % (self.song.station, self.song.file))
+            return "Station:\t %s\nurl:\t %s" % (self.song.station, self.song.file)
         else:
-            self.setToolTip("Album:\t %s\nTime:\t %s\nFile:\t %s"
-                    % (self.song.album, self.song.time.human , self.song.file))
+            return "Album:\t %s\nTime:\t %s\nFile:\t %s" % (self.song.album, self.song.time.human , self.song.file)
 
     def _setOneLine(self, value):
         self.oneLine = value
