@@ -354,13 +354,18 @@ class Song(dict, LibraryObject):
         value = None
         if ('artist' in attrs or 'title' in attrs) and self.isStream:
             # mpd puts stream metadata in the title attribute as "{artist} - {song}"
-            value = dict.get(self, 'title', '')
-            if ' - ' in value:
-                artist, title = value.split(' - ', 1)
-                if 'artist' in attrs:
-                    value = artist
-                if 'title' in attrs:
-                    value = title
+            value = dict.get(self, 'title', None)
+            if value is not None:
+                if ' - ' in value:
+                    artist, title = value.split(' - ', 1)
+                    if 'artist' in attrs:
+                        value = artist
+                    if 'title' in attrs:
+                        value = title
+                elif 'title' not in attrs:
+                    value = ''
+            elif 'title' in attrs:
+                value = self.station
         else:
             for attr in attrs:
                 if dict.__contains__(self, attr):
