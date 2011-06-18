@@ -21,7 +21,6 @@ from PyQt4.QtGui import QApplication, QWidget, QKeySequence
 
 import sys
 import signal
-import os
 
 import mpdthreaded as mpd
 import playControls
@@ -290,8 +289,8 @@ class Update:
             self.setSongLabel('Connected to %s.' % self.config.server[0])
             return
         if status['songid'] != self.lastSong.get('id') or self.lastSong.isStream:
-                self.mpdclient.send('currentsong', callback=
-                        lambda currentsong: self.view.emit(SIGNAL('_currentsong'), mpdlibrary.Song(currentsong, self.library)))
+            self.mpdclient.send('currentsong', callback=
+                    lambda currentsong: self.view.emit(SIGNAL('_currentsong'), mpdlibrary.Song(currentsong, self.library)))
         # format times
         cs, ss = status['time'].split(':')
         self.setProgress(cs, ss)

@@ -19,7 +19,6 @@ from PyQt4.QtCore import SIGNAL, Qt, QSize#, QTimer
 from PyQt4.QtGui import QWidget, QInputDialog, QKeySequence, QListWidget, QIcon, QListWidgetItem
 from PyQt4 import uic
 from time import time
-from sys import getrefcount
 
 import auxilia
 import iconretriever
