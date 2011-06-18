@@ -265,6 +265,11 @@ class LibraryObject(object):
     def __init__(self, value, library):
         self._attributes = {}
         self._library = library
+        if not value:
+            if isinstance(self, unicode):
+                value = u''
+            elif isinstance(self, int):
+                value = 0
         self._value = value
 
     def all(self):
