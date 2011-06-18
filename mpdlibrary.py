@@ -226,6 +226,13 @@ class LibraryObject(object):
                     % (self.__class__.__name__, attr))
 
 
+class Text(LibraryObject, unicode):
+    def __new__(cls, value, library=None):
+        return LibraryObject.__new__(cls, value, library)
+
+    def __init__(self, value, library=None):
+        LibraryObject.__init__(self, value, library)
+
 class Artist(LibraryObject, unicode):
     def __init__(self, value, library):
         LibraryObject.__init__(self, value, library)
@@ -280,12 +287,15 @@ class Time(LibraryObject, int):
         return '%i:%02i' % (tmin, tsec)
 
 
-class Text(LibraryObject, unicode):
-    def __new__(cls, value, library=None):
-        return LibraryObject.__new__(cls, value, library)
+class Track(Text):
+    def __int__(self):
+        track = str(self)
+        if '/' in track:
+            track = track.split('/', 1)[0]
+        if track == '':
+            track = 0
+        return int(track)
 
-    def __init__(self, value, library=None):
-        LibraryObject.__init__(self, value, library)
 
 class Song(dict, LibraryObject):
     def __init__(self, value, library):
@@ -293,7 +303,6 @@ class Song(dict, LibraryObject):
         LibraryObject.__init__(self, self, library)
         self._attributes.update({
             'isStream': lambda _: self.file.startswith('http://'),
-            'track':    lambda _: ''
             })
 
     def __getattr__(self, attr):
@@ -339,6 +348,9 @@ class Song(dict, LibraryObject):
                     self._library)
         elif item == 'time':
             return Time(self._getAttr('time') or 0,
+                    self._library)
+        elif item == 'track':
+            return Track(self._getAttr('track') or '',
                     self._library)
         elif item == 'station':
             # Only applicable when the Song object
