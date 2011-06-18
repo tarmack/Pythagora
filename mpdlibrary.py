@@ -257,8 +257,15 @@ class Album(LibraryObject, unicode):
                     })
 
 class Genre(LibraryObject, unicode):
+    def __new__(cls, value, library):
+        string = LibraryObject.__new__(cls, value, library)
+        return unicode.__new__(cls, string.lower())
+
     def __init__(self, value, library):
         LibraryObject.__init__(self, value, library)
+        if type(value) != list:
+            value = [value]
+        self.value = [x.lower() for x in value if type(value) in (str, unicode)]
         if library:
             self._attributes.update({
                     'songs':    library.genreSongs,
@@ -341,10 +348,7 @@ class Song(dict, LibraryObject):
             return Album(self._getAttr('album'),
                     self._library)
         elif item == 'genre':
-            value = self._getAttr('genre')
-            if type(value) != list:
-                value = [value]
-            return Genre([x.lower() for x in value if type(value) in (str, unicode)],
+            return Genre(self._getAttr('genre'),
                     self._library)
         elif item == 'file':
             return File(self._getAttr('file'),
