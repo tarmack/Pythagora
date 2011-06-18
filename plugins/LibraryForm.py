@@ -22,6 +22,7 @@ from time import time
 
 import auxilia
 import PluginBase
+import mpdlibrary
 
 DATA_DIR = ''
 
@@ -289,7 +290,10 @@ class AlbumWidget(QListWidgetItem):
     def data(self, role):
         if role == Qt.ToolTipRole:
             print "debug: Type of data in AlbumWidget is", type(self.album)
-            s = '\n'.join(self.album.artists)
+            if isinstance(self.album, mpdlibrary.Album):
+                s = '\n'.join(self.album.artists)
+            else:
+                s = ''
             print "debug: ToolTip:", s
             return s
         if role == Qt.DisplayRole:
