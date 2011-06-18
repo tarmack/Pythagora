@@ -241,6 +241,7 @@ class Update:
     lastSong = mpdlibrary.Song({}, None)
     dbusNotification = None
     library = mpdlibrary.Library()
+    library.ignoreCase = True
     def __init__(self, view, mpdclient, config, playControls):
         self.pauseIcon = auxilia.PIcon("media-playback-pause")
         self.startIcon = auxilia.PIcon("media-playback-start")

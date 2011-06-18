@@ -14,7 +14,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #-------------------------------------------------------------------------------
+import unicodedata
+
 class Library:
+    ignoreCase = False
+    fuzzy = False
     '''Supplies a storage model for the mpd database.'''
     def __init__(self, mainlist=[]):
         self.reload(mainlist)
@@ -22,23 +26,20 @@ class Library:
     def reload(self, mainlist):
         '''Reloads the current instance with the new list from MPD. Returns the instance for your convenience'''
         self._songList = []
-        self._artists = {}
-        self._albums = {}
-        self._genres = {}
+        self._artists = listDict(self)
+        self._albums = listDict(self)
+        self._genres = listDict(self)
         self._filesystem = {}
         # parse the list and prepare it for loading in the library browser and the file system view.
         for song in (x for x in mainlist if 'file' in x):
             self._songList.append(song)
             album = song.get('album', 'None')
-            appendToList(self._albums, album, song)
+            self._albums[album] = song
             artist = _getField(song, ('artist', 'performer', 'composer'), 'Unknown')
-            appendToList(self._artists, artist, song)
+            self._artists[artist] = song
             genre = song.get('genre', None)
             if genre:
-                if isinstance(genre, list):
-                    appendToList(self._genres, [g.lower() for g in genre], song)
-                else:
-                    appendToList(self._genres, genre.lower(), song)
+                    self._genres[genre] = song
 
             # Build the file system tree.
             fslist = self._filesystem
@@ -183,23 +184,72 @@ def _getField(song, fields, alt):
     else:
         return value.strip()
 
-def appendToList(listDict, keys, value, deduplicate=False):
-    '''In place add value to listDict at key.
-    If any of them are lists the values in those lists are used as value and
-    key. Everything gets added to everything. The optional deduplicate makes
-    appendToList only add values that are not yet in the list.
-    '''
-    if type(value) != list:
-        value = [value]
-    if type(keys) != list:
-        keys = [keys]
-    for key in keys:
-        part = listDict.get(key, [])
-        if deduplicate:
-            # filter all that are already in there.
-            value = [x for x in value if x not in part]
-        listDict[key] = part + value
 
+class listDict(dict):
+    '''A dictionary for storing the library data.
+
+    It is able to do case insensitive and fuzzy key lookup. It takes a parent
+    argument, this parent must provide the configuration to determine which
+    type of lookup to perform.
+    '''
+    _lcase = {}
+    _fuzzy = {}
+    def __init__(self, parent):
+        self.parent = parent
+        dict.__init__(self)
+
+    def get(self, key, default=None):
+        try:
+            return self.__getitem__(key)
+        except KeyError:
+            return default
+
+    def __setitem__(self, key, value):
+        if type(value) != list:
+            value = [value]
+        if type(key) != list:
+            key = [key]
+        self._setitems(self, key, value)
+        key = [x.lower() for x in key]
+        self._setitems(self._lcase, key, value)
+        key = [_simplify(x) for x in key]
+        self._setitems(self._fuzzy, key, value)
+
+    def _setitems(self, store, keys, values):
+        for key in keys:
+            part = store.get(key, [])
+            # filter all that are already in there.
+            values = [x for x in values if x not in part]
+            dict.__setitem__(store, key, part + values)
+
+    def __getitem__(self, key):
+        store = self
+        if self.parent.ignoreCase:
+            store = self._lcase
+            key = key.lower()
+        if self.parent.fuzzy:
+            store = self._fuzzy
+            key = _simplify(key)
+        return dict.__getitem__(store, key)
+
+def _simplify(string):
+    '''Simplify strings for fuzzy matching.'''
+    # If the string is not of type unicode, make it.
+    if not isinstance(string, unicode):
+        string = unicode(string)
+    # Lowercase the input.
+    result = string.lower()
+    # Strip prefixed/suffixed "The".
+    result = result.strip('the ')
+    result = result.strip(', the')
+    # Replace non-ASCII characters with an ASCII representation.
+    temp = unicodedata.normalize('NFKD', result).encode('ASCII', 'ignore')
+    # Never strip all (non whitespace) characters!
+    if len(temp) != 0:
+        result = temp
+    # Compact whitespace.
+    result = ' '.join(result.split())
+    return result
 
 
 class LibraryObject(object):
