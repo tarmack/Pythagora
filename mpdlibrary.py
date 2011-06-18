@@ -16,7 +16,11 @@
 #-------------------------------------------------------------------------------
 class Library:
     '''Supplies a storage model for the mpd database.'''
-    def __init__(self, mainlist):
+    def __init__(self, mainlist=[]):
+        self.reload(mainlist)
+
+    def reload(self, mainlist):
+        '''Reloads the current instance with the new list from MPD. Returns the instance for your convenience'''
         self._songList = []
         self._artists = {}
         self._albums = {}
@@ -43,6 +47,7 @@ class Library:
                 else:
                     fslist[part] = fslist.get(part, {})
                     fslist = fslist[part]
+        return self
 
     def artists(self):
         '''Returns a list containing all artists in the library.'''

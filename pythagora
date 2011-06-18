@@ -185,7 +185,7 @@ class Manager():
         if isinstance(exc, Exception):
             self.update.setSongLabel('Could not connect to %s at %s.' % (self.config.server[0], self.config.server[1]))
             self.view.serverLabel.setText('Not connected')
-            self.update.currentsong = mpdlibrary.Song({}, update.library)
+            self.update.currentsong = mpdlibrary.Song({}, self.update.library)
             self.misses += 1
             self.misses = min(30, self.misses)
             self.idleTimer.start(3000*self.misses)
@@ -240,7 +240,7 @@ class Update:
     time = 0
     lastSong = mpdlibrary.Song({}, None)
     dbusNotification = None
-    library = None
+    library = mpdlibrary.Library()
     def __init__(self, view, mpdclient, config, playControls):
         self.pauseIcon = auxilia.PIcon("media-playback-pause")
         self.startIcon = auxilia.PIcon("media-playback-start")
@@ -249,7 +249,6 @@ class Update:
         self.config = config
         self.playControls = playControls
         self.view.connect(self.view, SIGNAL('update'), self.update)
-        self.view.connect(self.view, SIGNAL('reloadLibrary'), self._loadLibrary)
         self.view.connect(self.view, SIGNAL('_currentsong'), self._currentsong)
         # Set the progress timer up.
         self.timer = QTimer()
@@ -328,7 +327,7 @@ class Update:
 
     def database(self, status):
         self.mpdclient.send('listallinfo', callback=
-                lambda mainlist: self.view.emit(SIGNAL('reloadLibrary'), mpdlibrary.Library(mainlist)))
+                lambda mainlist: self.view.emit(SIGNAL('reloadLibrary'), self.library.reload(mainlist)))
 
     def setSongLabel(self, title='', artist='', album='', station=''):
         self.view.playerForm.songLabel.setText(title, artist, album, station)
@@ -407,9 +406,6 @@ class Update:
         except dbus.DBusException, e:
             self.config.showNotification = False
             print 'debug: error using dbus - %s' % e
-
-    def _loadLibrary(self, library):
-        self.library = library
 
     def __setPlayPauseState(self,state):
         if state == 'play':
