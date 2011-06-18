@@ -88,9 +88,10 @@ class Library:
         The optional artist argument can be used to only get the songs of a particular artist or list of artists.'''
         if type(artists) in (str, unicode):
             artists = [artists]
-        songs = (Song(song, self) for song in self._albums.get(album, []))
+        songs = [Song(song, self) for song in self._albums.get(album, [])]
         if artists != []:
             songs = [song for song in songs if song.artist in artists]
+        songs.sort(_sortAlbumSongs)
         return songs
 
     def albumArtists(self, album):
@@ -155,6 +156,8 @@ class Library:
         else:
             return 'directory'
 
+def _sortAlbumSongs(x, y):
+    return cmp(int(x.track), int(y.track))
 
 def _getField(song, fields, alt):
     value = alt
