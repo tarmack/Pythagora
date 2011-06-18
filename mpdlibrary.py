@@ -35,7 +35,10 @@ class Library:
             appendToList(self._artists, artist, song)
             genre = song.get('genre', None)
             if genre:
-                appendToList(self._genres, genre, song)
+                if isinstance(genre, list):
+                    appendToList(self._genres, [g.lower() for g in genre], song)
+                else:
+                    appendToList(self._genres, genre.lower(), song)
 
             # Build the file system tree.
             fslist = self._filesystem
