@@ -369,9 +369,6 @@ class Song(dict, LibraryObject):
     def __init__(self, value, library):
         dict.__init__(self, value)
         LibraryObject.__init__(self, self, library)
-        self._attributes.update({
-            'isStream': lambda _: self.file.startswith('http://'),
-            })
 
     def __getattr__(self, attr):
         try:
@@ -425,6 +422,8 @@ class Song(dict, LibraryObject):
                     self._library)
             else:
                 return Text('', self._library)
+        elif item == 'isStream':
+            return self.file.startswith('http://')
         else:
             value = self._getAttr(item)
             if value is None:
