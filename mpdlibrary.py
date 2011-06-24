@@ -192,9 +192,9 @@ class listDict(dict):
     argument, this parent must provide the configuration to determine which
     type of lookup to perform.
     '''
-    _lcase = {}
-    _fuzzy = {}
     def __init__(self, parent):
+        self._lcase = {}
+        self._fuzzy = {}
         self.parent = parent
         dict.__init__(self)
 
