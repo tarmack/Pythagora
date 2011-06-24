@@ -340,8 +340,7 @@ class Time(LibraryObject, int):
         self._value = int(value)
         self._attributes.update({
                 'hours':    lambda value: value / 3600,
-                'minutes':  lambda value: (value - (value * 3600)) / 60,
-                'seconds':  lambda value: value - ((value - (value / 3600 * 3600)) / 60 * 60),
+                'minutes':  lambda value: value / 60,
                 'human':    self._format,
                 })
 
