@@ -393,13 +393,13 @@ class Song(dict, LibraryObject):
 
     def __getitem__(self, item):
         if item == 'artist':
-            return Artist(self._getAttr('artist', 'performer', 'composer'),
+            return Artist(self._getAttr('artist', 'performer', 'composer') or 'Unknown',
                     self._library)
         elif item == 'title':
             return Text(self._getAttr('title', 'name', 'file'),
                     self._library)
         elif item == 'album':
-            return Album(self._getAttr('album'),
+            return Album(self._getAttr('album') or 'None',
                     self._library)
         elif item == 'genre':
             return Genre(self._getAttr('genre'),
