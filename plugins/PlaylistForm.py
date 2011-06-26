@@ -184,7 +184,8 @@ class PlaylistForm(PluginBase.PluginBase, auxilia.Actions):
                 plname = unicode(self.playlistList.selectedItems()[0].text())
             except:
                 return
-        else: self.playlistList.setCurrentItem(self.playlistList.findItems(plname, Qt.MatchExactly)[0])
+        else:
+            self.playlistList.setCurrentItem(self.playlistList.findItems(plname, Qt.MatchExactly)[0])
         self.currentPlaylist = plname
         self.mpdclient.send('listplaylistinfo', (plname,), callback=
                 lambda songlist: self.emit(SIGNAL('showPlaylist'), songlist))
@@ -192,6 +193,7 @@ class PlaylistForm(PluginBase.PluginBase, auxilia.Actions):
     def __showPlaylist(self, songlist):
         if isinstance(songlist, Exception):
             return
+        self.songList.clear()
         for i, song in enumerate(songlist):
             self.songList.addTopLevelItem(LongSongWidget(song, i))
         for i in range(3):
