@@ -96,12 +96,13 @@ class MPDThread(MPDClientBase, threading.Thread):
     def __init__(self, server, port, callback, callbackArgs):
         threading.Thread.__init__(self)
         self.daemon = True
-        self.queue = Queue.Queue()
+        self.queue = Queue.PriorityQueue(256)
         self._lock = threading.RLock()
         super(MPDThread, self).__init__()
         self.connecting = False
         self.exit = False
         self.abort = False
+        self.priority = 0
         if server != None:
             self.connecting = True
             self.send('connect', (server, port), callback, callbackArgs)
@@ -113,7 +114,13 @@ class MPDThread(MPDClientBase, threading.Thread):
         first argument and additional arguments from the tuple given in
         callbackArgs.
         '''
-        self.queue.put((command, args, callback, callbackArgs))
+        if self.queue.empty():
+            self.priority = 0
+        self.priority += 1
+        priority = self.priority
+        if command == 'idle':
+            priority += 256
+        self.queue.put((priority, command, args, callback, callbackArgs))
         if command != 'noidle' and self._idle:
             self._write_proxy('noidle', [])
 
@@ -148,7 +155,7 @@ class MPDThread(MPDClientBase, threading.Thread):
 
     def run(self):
         while True:
-            command, args, callback, callbackArgs = self.queue.get()
+            _, command, args, callback, callbackArgs = self.queue.get()
             print 'debug: got ', command, ' with arguments ', args, 'from queue.'
             try:
                 value = self.__do(command, args)
