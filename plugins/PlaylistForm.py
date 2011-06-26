@@ -102,7 +102,7 @@ class PlaylistForm(PluginBase.PluginBase, auxilia.Actions):
 
     def newListDropEvent(self, event):
         print 'dropped new playlist'
-        self.__newList()
+        self.currentPlaylist = None
         self.songListDropEvent(event, -1)
 
     def playlistListDropEvent(self, event):
