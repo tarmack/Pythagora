@@ -129,11 +129,15 @@ class PlaylistForm(PluginBase.PluginBase, auxilia.Actions):
         else:
             itemList = event.source().selectedItems()
             itemList = [item.getDrag() for item in itemList]
+            count = self.songList.topLevelItemCount()
+            if not self.currentPlaylist:
+                name = self.__newList()
+                if name is not None:
+                    self.currentPlaylist = name
+                else:
+                    return
             try:
                 self.view.setCursor(Qt.WaitCursor)
-                count = self.songList.topLevelItemCount()
-                if not self.currentPlaylist:
-                    self.currentPlaylist = self.__newList()
                 self.mpdclient.send('command_list_ok_begin')
                 for item in itemList:
                     for i, song in enumerate(item):
@@ -233,19 +237,17 @@ class PlaylistForm(PluginBase.PluginBase, auxilia.Actions):
         if ok == True:
             while self.playlistList.findItems(name, Qt.MatchExactly):
                 (name,ok) = QInputDialog.getText(self
-                        , 'new Playlist'
+                        , 'New Playlist'
                         , 'The playlist %s already exists.\nPlease enter a different name' % name
                         , 0
                         , 'New Playlist')
                 if ok != True:
-                    return self.currentPlaylist
-            self.playlistList.addItem(PlaylistWidget(name))
+                    return None
+            self.playlistList.addItem(PlaylistWidget(name, self.mpdclient))
             try:
                 self.playlistList.setCurrentItem(self.playlistList.findItems(name, Qt.MatchExactly)[0])
             except:
                 pass
-            self.songList.clear()
-            self.currentPlaylist = name
             return name
 
     def __deleteList(self):
