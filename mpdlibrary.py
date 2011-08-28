@@ -161,7 +161,8 @@ class Library:
             return 'directory'
 
 def _sortAlbumSongs(x, y):
-    return cmp(int(x.track), int(y.track))
+    # Sorting album songs by disc number, then by track number
+    return cmp(int(x.disc), int(y.disc)) or cmp(int(x.track), int(y.track))
 
 def _getField(song, fields, alt):
     value = alt
@@ -364,6 +365,16 @@ class Track(Text):
         return int(track)
 
 
+class DiscNumber(Text):
+    def __int__(self):
+        disc_number = str(self)
+        if '/' in disc_number:
+            disc_number = disc_number.split('/', 1)[0]
+        if disc_number == '':
+            disc_number = 0
+        return int(disc_number)
+
+
 class Song(dict, LibraryObject):
     def __init__(self, value, library):
         dict.__init__(self, value)
@@ -412,6 +423,9 @@ class Song(dict, LibraryObject):
                     self._library)
         elif item == 'track':
             return Track(self._getAttr('track') or '',
+                    self._library)
+        elif item == 'disc':
+            return DiscNumber(self._getAttr('disc') or '',
                     self._library)
         elif item == 'station':
             # Only applicable when the Song object
