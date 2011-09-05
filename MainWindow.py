@@ -349,7 +349,7 @@ class SongLabel(QLabel):
             text = getattr(self, part)
             if text:
                 self.__write(self.prepends.get(part, ''), self.font(), gradient)
-            self.__write(text, font, gradient)
+                self.__write(text, font, gradient)
         self.songInToolTip = True if self.spaceLeft.width() <= 0 else False
         self.setToolTip(self.getToolTip())
 

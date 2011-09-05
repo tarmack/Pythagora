@@ -340,6 +340,8 @@ class Update:
                 lambda mainlist: self.view.emit(SIGNAL('libraryReload'), mainlist))
 
     def setSongLabel(self, title='', artist='', album='', station=''):
+        if album == 'None':
+            album = ''
         self.view.playerForm.songLabel.setText(title, artist, album, station)
         if station and station != title:
             station = 'on <i>%s</i>' % station
