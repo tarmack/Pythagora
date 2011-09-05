@@ -295,10 +295,12 @@ class Update:
             self.lastSong = mpdlibrary.Song({}, self.library)
             self.setProgress(0, 0)
             self.setSongLabel('Connected to %s.' % self.config.server[0])
+            self.view.playerForm.songLabel.setBitrate(None)
             return
         if status['songid'] != self.lastSong.get('id') or self.lastSong.isStream:
             self.mpdclient.send('currentsong', callback=
                     lambda currentsong: self.view.emit(SIGNAL('_currentsong'), mpdlibrary.Song(currentsong, self.library)))
+        self.view.playerForm.songLabel.setBitrate(status['bitrate'])
         # format times
         cs, ss = status['time'].split(':')
         self.setProgress(cs, ss)

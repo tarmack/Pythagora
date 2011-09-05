@@ -288,6 +288,7 @@ class SongLabel(QLabel):
     artist = 'artist'
     album = 'album'
     station = 'station'
+    bitrate = ''
     parts = ('title', 'artist', 'album', 'station')
     prepends = {
             'artist': 'by',
@@ -317,6 +318,29 @@ class SongLabel(QLabel):
             self.station = ''
         self.repaint()
 
+    def setBitrate(self, bitrate):
+        self.bitrate = bitrate if bitrate and bitrate != '0' else ''
+        self.setToolTip(self.getToolTip())
+
+    def getToolTip(self):
+        title = ''
+        artist = ''
+        album = ''
+        station = ''
+        bitrate = ''
+        if self.songInToolTip:
+            if self.title:
+                title = '<b><big>%s</big></b>' % self.title
+            if self.artist:
+                artist = 'by <big>%s</big>' % self.artist
+            if self.album:
+                album = 'from <i>%s</i>' % self.album
+            if self.station:
+                station = 'on <i>%s</i>' % self.station
+        if self.bitrate:
+            bitrate = 'bitrate: %skbps' % self.bitrate
+        return '<br>'.join((item for item in (title, artist, album, station, bitrate) if item))
+
     def paintEvent(self, event):
         gradient = self.__gradient()
         self.spaceLeft = self.contentsRect()
@@ -326,22 +350,8 @@ class SongLabel(QLabel):
             if text:
                 self.__write(self.prepends.get(part, ''), self.font(), gradient)
             self.__write(text, font, gradient)
-        if self.spaceLeft.width() <= 0:
-            title = ''
-            artist = ''
-            album = ''
-            station = ''
-            if self.title:
-                title = '<b><big>%s</big></b>' % self.title
-            if self.artist:
-                artist = 'by <big>%s</big>' % self.artist
-            if self.album:
-                album = 'from <i>%s</i>' % self.album
-            if self.station:
-                station = 'on <i>%s</i>' % self.station
-            tooltip = '<br>'.join((item for item in (title, artist, album, station) if item))
-            self.setToolTip(tooltip)
-        else: self.setToolTip('')
+        self.songInToolTip = True if self.spaceLeft.width() <= 0 else False
+        self.setToolTip(self.getToolTip())
 
     def __write(self, text, font, pen):
         width = QFontMetrics(font).width(text+' ')
