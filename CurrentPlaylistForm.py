@@ -450,11 +450,13 @@ class CurrentListWidget(QListWidgetItem):
             return self._getText()
         if role == Qt.ToolTipRole:
             return self._getTooltip()
+        if role == Qt.DecorationRole:
+            return QIcon(self.iconPath)
         return QListWidgetItem.data(self, role)
 
     def setIcon(self, icon):
         self.iconPath = icon
-        QListWidgetItem.setIcon(self, QIcon(icon))
+        self.setData(Qt.DecorationRole, QIcon(self.iconPath))
 
     def setSong(self, song):
         self.song = song
