@@ -149,7 +149,7 @@ class LibraryForm(PluginBase.PluginBase, auxilia.Actions):
             return
         for artist in artists:
             if artist == '--all--':
-                if '--all--' in (self.albumView.selectedItems()):
+                if '--all--' in (x.text() for x in self.albumView.selectedItems()):
                     self.__loadTracksView(self.library.songs())
                 self.__loadAlbumView(self.library.albums())
                 return
