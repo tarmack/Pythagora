@@ -17,16 +17,12 @@
 from PyQt4.QtCore import SIGNAL, QUrl, QEvent
 from PyQt4.QtGui import QVBoxLayout
 from PyQt4.QtWebKit import QWebView, QWebPage
-try:
-    from lxml import etree
-except ImportError:
-    import xml.etree.ElementTree as etree
-import StringIO
 
 import re
 import httplib
 
 import PluginBase
+import streamTools
 
 HOMEURL = "http://dir.xiph.org/"
 TUNEIN = "dir.xiph.org"
@@ -72,16 +68,20 @@ class IcecastForm(PluginBase.PluginBase):
         path = match.group(0)
         format = match.group(1)
         data = self._retreivePlaylist(path)
-        if format == 'xspf':
-            adrlist = self._parseXSPF(data)
-        else:
-            adrlist = self._parseM3U(data)
-        self.mpdclient.send('command_list_ok_begin')
-        try:
-            for address in adrlist:
-                self.mpdclient.send('add', (address,))
-        finally:
-            self.mpdclient.send('command_list_end')
+        if data:
+            try:
+                if format == 'xspf':
+                    adrlist = streamTools._parseXSPF(data)
+                else:
+                    adrlist = streamTools._parseM3U(data)
+            except streamTools.ParseError:
+                return
+            self.mpdclient.send('command_list_ok_begin')
+            try:
+                for address in adrlist:
+                    self.mpdclient.send('add', (address,))
+            finally:
+                self.mpdclient.send('command_list_end')
 
     def _retreivePlaylist(self, path):
         conn = httplib.HTTPConnection(TUNEIN)
@@ -91,32 +91,6 @@ class IcecastForm(PluginBase.PluginBase):
             return resp.read()
         else:
             raise httplib.HTTPException('Got bad status code.')
-
-    def _parseXSPF(self, data):
-        ''' XSPF spec: http://www.xspf.org/xspf-v1.html
-            Currently we only want the location URLs, so that
-            is all we parse for.
-        '''
-        xml = etree.parse(StringIO.StringIO(data))
-        root = xml.getroot()
-        locations = root.findall('.//{http://xspf.org/ns/0/}location')
-        adrlist = [adr.text.strip() for adr in locations 
-                   if adr.text.startswith('http://')]
-        if not adrlist:
-             raise httplib.HTTPException('Encountered error during '
-                                         'parsing of the playlist.')
-        return adrlist
-    
-    def _parseM3U(self, data):
-        adrlist = []
-        data = data.split('\n')
-        while data:
-            line = data.pop(0)
-            if line.startswith('http://'):
-                adrlist.append(line.strip())
-        if not adrlist:
-             raise httplib.HTTPException('Encountered error during parsing of the playlist.')
-        return adrlist
 
 
 def getWidget(view, mpdclient, config, library):

@@ -21,6 +21,7 @@ from PyQt4.QtNetwork import QNetworkCookie, QNetworkCookieJar
 import httplib
 
 import PluginBase
+import streamTools
 
 HOMEURL = "http://www.shoutcast.com/radio/top"
 TUNEIN = "yp.shoutcast.com"
@@ -74,38 +75,26 @@ class ShoutCastForm(PluginBase.PluginBase):
 
     def _playStation(self, url):
         data = self._retreivePLS(url)
-        adrlist = self._parsePLS(data)
-        self.mpdclient.send('command_list_ok_begin')
-        try:
-            for address in adrlist:
-                self.mpdclient.send('add', (address,))
-        finally:
-            self.mpdclient.send('command_list_end')
+        if data:
+            try:
+                adrlist = streamTools._parsePLS(data)
+            except streamTools.ParseError:
+                return
+            self.mpdclient.send('command_list_ok_begin')
+            try:
+                for address in adrlist:
+                    self.mpdclient.send('add', (address,))
+            finally:
+                self.mpdclient.send('command_list_end')
 
     def _retreivePLS(self, url):
         conn = httplib.HTTPConnection(TUNEIN)
         conn.request("GET", TUNEINFORMAT % url.split('=')[-1])
         resp = conn.getresponse()
         if resp.status == 200:
-            return resp.read().split('\n')
+            return resp.read()
         else:
             raise httplib.HTTPException('Got bad status code.')
-
-    def _parsePLS(self, data):
-        adrlist = []
-        state = ''
-        while data:
-            line = data.pop(0)
-            if state == '' and line == '[playlist]':
-                state = 'playlist'
-            elif state == 'playlist':
-                if '=' in line:
-                    key, value = line.split('=', 1)
-                    if key.startswith('File'):
-                        adrlist.append(value)
-            else:
-                raise httplib.HTTPException('Encountered error during parsing of the playlist.')
-        return adrlist
 
 
 def getWidget(view, mpdclient, config, library):

@@ -19,10 +19,12 @@ from PyQt4.QtCore import SIGNAL, Qt, QSize#, QTimer
 from PyQt4.QtGui import QWidget, QInputDialog, QKeySequence, QListWidget, QIcon, QListWidgetItem
 from PyQt4 import uic
 from time import time
+import httplib
 
 import auxilia
 import iconretriever
 import mpdlibrary
+import streamTools
 
 DATA_DIR = ''
 
@@ -74,6 +76,7 @@ class CurrentPlaylistForm(QWidget, auxilia.Actions):
         self.connect(self.currentRemove,SIGNAL('clicked()'),self.__removeSelected)
         self.connect(self.currentClear,SIGNAL('clicked()'),self.__clearCurrent)
         self.connect(self.currentSave,SIGNAL('clicked()'),self.__saveCurrent)
+        self.connect(self.addStream,SIGNAL('clicked()'),self.__addStream)
 
         self.currentList.dropEvent = self.dropEvent
         self.currentList.dragEnterEvent = self.dragEnterEvent
@@ -425,6 +428,51 @@ class CurrentPlaylistForm(QWidget, auxilia.Actions):
         self.currentBottom.setArrowType(int(value)+1)
         self.currentBottom.setText(text[value])
         self.config.playlistControls = bool(self.playlistTools.isVisible())
+
+    def __addStream(self):
+        '''Ask the user for the url of the stream to add.'''
+        (url,ok) = QInputDialog.getText(self
+                , 'Add Stream'
+                , 'Please enter the url of the stream you like to add to the playlist.'
+                , 0
+                , 'Add Stream')
+        url = str(url)
+        if ok == True and url:
+            adrlist = self._getStream(url)
+            self.mpdclient.send('command_list_ok_begin')
+            try:
+                for address in adrlist:
+                    self.mpdclient.send('add', (address,))
+            finally:
+                self.mpdclient.send('command_list_end')
+
+    def _getStream(self, url):
+        data = self._retreiveURL(url)
+        if data:
+            try:
+                if url.endswith('.pls'):
+                    adrlist = streamTools._parsePLS(data)
+                elif url.endswith('.m3u'):
+                    adrlist = streamTools._parseM3U(data)
+                elif url.endswith('.xspf'):
+                    adrlist = streamTools._parseXSPF(data)
+                else:
+                    adrlist = [url]
+            except streamTools.ParseError:
+                return
+            return adrlist
+
+    def _retreiveURL(self, url):
+        if url.startswith('http://'):
+            url = url[7:]
+        server, path = url.split('/', 1)
+        conn = httplib.HTTPConnection(server)
+        conn.request("GET", '/'+path)
+        resp = conn.getresponse()
+        if resp.status == 200:
+            return resp.read()
+        else:
+            raise httplib.HTTPException('Got bad status code.')
 
     def _setEditing(self, i=0):
         self.editing = time()
