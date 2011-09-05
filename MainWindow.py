@@ -25,7 +25,6 @@ import os
 
 import CurrentPlaylistForm
 import plugins
-import mpdlibrary
 import auxilia
 
 DATA_DIR = ''
@@ -43,20 +42,19 @@ except ImportError:
     KDE = False
 
 class View(QMainWindow, auxilia.Actions):
-    def __init__(self, configuration, mpdclient, app):
+    def __init__(self, configuration, mpdclient, library, app):
         QMainWindow.__init__(self)
         self.app = app
         self.focus = time()
         self.shuttingDown = False
         self.config = configuration
         self.mpdclient = mpdclient
+        self.library = library
         self.appIcon = os.path.abspath(DATA_DIR+'icons/Pythagora.png')
         uic.loadUi(DATA_DIR+'ui/Pythagora.ui', self)
         self.KDE = KDE
         self.setWindowTitle('Pythagora')
         self.setWindowIcon(QIcon(self.appIcon))
-        # Load all forms.
-        self.createViews()
         # Create 'Connect to' menu.
         self.menuConnect = QMenu('Connect To')
         self.menuConnect.menuAction().setIcon(auxilia.PIcon('network-disconnect'))
@@ -64,6 +62,9 @@ class View(QMainWindow, auxilia.Actions):
         self.connectButton.setPopupMode(QToolButton.InstantPopup)
         self.connectButton.setIcon(auxilia.PIcon('network-disconnect'))
         self.connectButton.setMenu(self.menuConnect)
+        # Create standard views.
+        self.playerForm = PlayerForm(self, self.app, self.mpdclient, self.config)
+        self.currentList = CurrentPlaylistForm.CurrentPlaylistForm(self, self.app, self.mpdclient, self.library, self.config)
         # Create 'MDP' menu.
         self.menuMPD = QMenu('MPD')
         self.menuMPD.menuAction().setIcon(auxilia.PIcon('network-workgroup'))
@@ -153,19 +154,15 @@ class View(QMainWindow, auxilia.Actions):
 
     def __libReload(self):
         self.mpdclient.send('listallinfo', callback=
-                lambda mainlist: self.emit(SIGNAL('reloadLibrary'), mpdlibrary.Library(mainlist)))
+                lambda mainlist: self.emit(SIGNAL('libraryReload'), mainlist))
 
 #==============================================================================
 
-    def createViews(self):
-        '''Set up our different view handlers.'''
-        # Standard views.
-        self.playerForm = PlayerForm(self, self.app, self.mpdclient, self.config)
-        self.currentList = CurrentPlaylistForm.CurrentPlaylistForm(self, self.app, self.mpdclient, self.config)
-        # Plugin views.
+    def createPluginViews(self):
+        '''Set all plugin tabs up.'''
         loadedPlugins = {}
         for plugin in plugins.allPlugins:
-            plugin = plugin.getWidget(self, self.mpdclient, self.config)
+            plugin = plugin.getWidget(self, self.mpdclient, self.config, self.library)
             loadedPlugins[plugin.moduleName] = plugin
         for name in self.config.tabOrder:
             if name in loadedPlugins:

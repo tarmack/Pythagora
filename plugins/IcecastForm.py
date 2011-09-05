@@ -119,5 +119,5 @@ class IcecastForm(PluginBase.PluginBase):
         return adrlist
 
 
-def getWidget(view, mpdclient, config):
-    return IcecastForm(view, mpdclient, config)
+def getWidget(view, mpdclient, config, library):
+    return IcecastForm(view, mpdclient, config, library)

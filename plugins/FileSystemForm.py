@@ -31,7 +31,6 @@ class FileSystemForm(PluginBase.PluginBase, auxilia.Actions):
     moduleIcon = 'folder-sound'
 
     def load(self):
-        self.library = None
         # Load and place the FileSystem form.
         if self.view.KDE:
             uic.loadUi(DATA_DIR+'ui/FileSystemForm.ui', self)
@@ -43,11 +42,10 @@ class FileSystemForm(PluginBase.PluginBase, auxilia.Actions):
 
         self.connect(self.filesystemTree, SIGNAL('itemExpanded(QTreeWidgetItem*)'), lambda item: item.loadChildren())
 
-    def reload(self, mpdLibrary):
+    def reload(self):
         try:
             self.view.setCursor(Qt.WaitCursor)
             self.filesystemTree.setUpdatesEnabled(False)
-            self.library = mpdLibrary
             t = time()
             self.__loadFileSystemView('/')
             print 'load FS took %.3f seconds' % (time() - t)
@@ -115,5 +113,5 @@ class FilesystemWidget(QTreeWidgetItem):
         self.loadChildren = lambda : None
 
 
-def getWidget(view, mpdclient, config):
-    return FileSystemForm(view, mpdclient, config)
+def getWidget(view, mpdclient, config, library):
+    return FileSystemForm(view, mpdclient, config, library)

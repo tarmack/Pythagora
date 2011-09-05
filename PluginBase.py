@@ -36,7 +36,7 @@ class PluginBase(QWidget):
     # plugin.
     moduleIcon = ''
 
-    def __init__(self, view, mpdclient, config):
+    def __init__(self, view, mpdclient, config, library):
         """ Initiates the plugin providing the view, mpdclient and config
         instances.
         * The view class can be used to connect to signals and emit them if needed.
@@ -50,4 +50,5 @@ class PluginBase(QWidget):
         self.view = view
         self.config = config
         self.mpdclient = mpdclient
+        self.library = library
         self.load()

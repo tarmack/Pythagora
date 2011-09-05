@@ -38,12 +38,13 @@ class CurrentPlaylistForm(QWidget, auxilia.Actions):
     editing = 0
     playing = -1
     currentPlayTime = 0
-    def __init__(self, view, app, mpdclient, config):
+    def __init__(self, view, app, mpdclient, library, config):
         QWidget.__init__(self)
         self.app = app
         self.view = view
         self.mpdclient = mpdclient
         self.config = config
+        self.library = library
         if self.view.KDE:
             uic.loadUi(DATA_DIR+'ui/CurrentListForm.ui', self)
         else:
@@ -64,7 +65,6 @@ class CurrentPlaylistForm(QWidget, auxilia.Actions):
         self.view.connect(self.view, SIGNAL('playlistChanged'), self.reload)
         self.view.connect(self.view, SIGNAL('clearForms'), self.__resetCurrentList)
         self.view.connect(self.view, SIGNAL('currentSong'), self.setPlaying)
-        self.view.connect(self.view, SIGNAL('reloadLibrary'), self._loadLibrary)
 
         # Connect to the list for double click action.
         self.connect(self.currentList,SIGNAL('itemDoubleClicked(QListWidgetItem*)'),self.__playSong)
@@ -428,9 +428,6 @@ class CurrentPlaylistForm(QWidget, auxilia.Actions):
 
     def _setEditing(self, i=0):
         self.editing = time()
-
-    def _loadLibrary(self, library):
-        self.library = library
 
 
 # Widget subclas.

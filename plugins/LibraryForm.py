@@ -35,7 +35,6 @@ class LibraryForm(PluginBase.PluginBase, auxilia.Actions):
     moduleIcon = 'server-database'
 
     def load(self):
-        self.library = None
         # Load and place the Library form.
         if self.view.KDE:
             uic.loadUi(DATA_DIR+'ui/LibraryForm.ui', self)
@@ -82,7 +81,7 @@ class LibraryForm(PluginBase.PluginBase, auxilia.Actions):
 
         #=======================================================================
 
-    def reload(self, mpdLibrary):
+    def reload(self):
         if not self.config.server:
             return
         try:
@@ -90,7 +89,6 @@ class LibraryForm(PluginBase.PluginBase, auxilia.Actions):
             self.view.setCursor(Qt.WaitCursor)
             p = time()
             t = time()
-            self.library = mpdLibrary
 
             print 'library parsing took %.3f seconds' % (time() - t); t = time()
             self.__loadArtistView(self.library.artists())
@@ -328,5 +326,5 @@ class TrackWidget(QTreeWidgetItem):
         return [self.song]
 
 
-def getWidget(view, mpdclient, config):
-    return LibraryForm(view, mpdclient, config)
+def getWidget(view, mpdclient, config, library):
+    return LibraryForm(view, mpdclient, config, library)

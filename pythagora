@@ -56,6 +56,8 @@ class Manager():
     '''Creates and links up the management display items.'''
     oldVolume = 0
     misses = 0
+    library = mpdlibrary.Library()
+    library.ignoreCase = True
     def __init__(self, app):
         self.app = app
         self.firstConnect = True
@@ -63,11 +65,13 @@ class Manager():
         self.idleTimer = QTimer()
         self.idleTimer.setSingleShot(True)
         self.config = configuration.Configuration()
-        self.view = MainWindow.View(self.config, self.mpdclient, app)
+        self.view = MainWindow.View(self.config, self.mpdclient, self.library, app)
         self.playControls = playControls.PlayControls(self.mpdclient)
-        self.update = Update(self.view, self.mpdclient, self.config, self.playControls)
+        self.update = Update(self.view, self.mpdclient, self.config, self.library, self.playControls)
         self.__connectSignals()
         self.__connectMPD()
+        # Load the plugin forms.
+        self.view.createPluginViews()
 
         # Set global shortcuts if KDE is available otherwise overload keyPressEvent.
         if MainWindow.KDE:
@@ -202,6 +206,10 @@ class Manager():
         self.view.setCursor(Qt.ArrowCursor)
         self.firstConnect = False
 
+    def __libraryReload(self, mainlist):
+        self.library.reload(mainlist)
+        self.view.emit(SIGNAL('reloadLibrary'))
+
     def _error(self):
         print 'error: Lost connection to mpd server.'
         if self.config.server:
@@ -223,6 +231,7 @@ class Manager():
         self.view.connect(self.view, SIGNAL('reconnect()'), self.__connectMPD)
         self.view.connect(self.view, SIGNAL('ConnectionError()'), self._error)
         self.view.connect(self.view, SIGNAL('connectionTry'), self.__connectionTry)
+        self.view.connect(self.view, SIGNAL('libraryReload'), self.__libraryReload)
 
     def keyboardInterrupt(self, signum, frame):
         print 'debug: KeyboardInterrupt'
@@ -239,14 +248,13 @@ class Update:
     time = 0
     lastSong = mpdlibrary.Song({}, None)
     dbusNotification = None
-    library = mpdlibrary.Library()
-    library.ignoreCase = True
-    def __init__(self, view, mpdclient, config, playControls):
+    def __init__(self, view, mpdclient, config, library, playControls):
         self.pauseIcon = auxilia.PIcon("media-playback-pause")
         self.startIcon = auxilia.PIcon("media-playback-start")
         self.view = view
         self.mpdclient = mpdclient
         self.config = config
+        self.library = library
         self.playControls = playControls
         self.view.connect(self.view, SIGNAL('update'), self.update)
         self.view.connect(self.view, SIGNAL('_currentsong'), self._currentsong)
@@ -327,7 +335,7 @@ class Update:
 
     def database(self, status):
         self.mpdclient.send('listallinfo', callback=
-                lambda mainlist: self.view.emit(SIGNAL('reloadLibrary'), self.library.reload(mainlist)))
+                lambda mainlist: self.view.emit(SIGNAL('libraryReload'), mainlist))
 
     def setSongLabel(self, title='', artist='', album='', station=''):
         self.view.playerForm.songLabel.setText(title, artist, album, station)

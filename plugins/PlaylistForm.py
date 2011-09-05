@@ -36,8 +36,6 @@ class PlaylistForm(PluginBase.PluginBase, auxilia.Actions):
     moduleName = '&PlayLists'
     moduleIcon = 'document-multiple'
 
-    library = None
-
     def load(self):
         self.currentPlaylist = None
         self.view.connect(self.view,SIGNAL('reloadPlaylists'),self.reload)
@@ -55,7 +53,6 @@ class PlaylistForm(PluginBase.PluginBase, auxilia.Actions):
         self.connect(self.newButton,SIGNAL('clicked()'),self.__newList)
         self.connect(self.loadButton,SIGNAL('clicked()'),self.__loadList)
         self.connect(self.deleteButton,SIGNAL('clicked()'),self.__deleteList)
-        self.connect(self.view,SIGNAL('reloadLibrary'),self._setLibrary)
         self.connect(self, SIGNAL('showPlaylist'), self.__showPlaylist)
         self.connect(self.playlistSplitter, SIGNAL('splitterMoved(int, int)'), self.__storeSplitter)
 
@@ -298,9 +295,6 @@ class PlaylistForm(PluginBase.PluginBase, auxilia.Actions):
         finally:
             self.mpdclient.send('command_list_end')
 
-    def _setLibrary(self, library):
-        self.library = library
-
     def __storeSplitter(self):
         self.config.playlistSplit = self.playlistSplitter.sizes()
 
@@ -330,5 +324,5 @@ class LongSongWidget(QTreeWidgetItem):
         return [self.song]
 
 
-def getWidget(view, mpdclient, config):
-    return PlaylistForm(view, mpdclient, config)
+def getWidget(view, mpdclient, config, library):
+    return PlaylistForm(view, mpdclient, config, library)

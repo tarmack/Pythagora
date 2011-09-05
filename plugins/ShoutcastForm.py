@@ -108,5 +108,5 @@ class ShoutCastForm(PluginBase.PluginBase):
         return adrlist
 
 
-def getWidget(view, mpdclient, config):
-    return ShoutCastForm(view, mpdclient, config)
+def getWidget(view, mpdclient, config, library):
+    return ShoutCastForm(view, mpdclient, config, library)
