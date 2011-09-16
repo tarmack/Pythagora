@@ -16,8 +16,8 @@
 # limitations under the License.
 #-------------------------------------------------------------------------------
 from PyQt4.QtCore import SIGNAL, SLOT, QTimer, Qt, QObject, QEvent, QPoint, QPointF
-from PyQt4.QtGui import QMainWindow, QLabel, QMenu, QIcon, QWidget, QAction, QWidgetAction, QToolButton,\
-        QBrush, QFontMetrics, QPainter, QLinearGradient, QPalette, QPen
+from PyQt4.QtGui import QMainWindow, QLabel, QMenu, QIcon, QWidget, QAction, QWidgetAction, QToolButton, \
+        QBrush, QFontMetrics, QPainter, QLinearGradient, QPalette, QPen, QApplication
 from PyQt4 import uic
 from time import time
 import sys
@@ -42,6 +42,8 @@ except ImportError:
     KDE = False
 
 class View(QMainWindow, auxilia.Actions):
+    partyMode = False
+
     def __init__(self, configuration, mpdclient, library, app):
         QMainWindow.__init__(self)
         self.app = app
@@ -146,6 +148,7 @@ class View(QMainWindow, auxilia.Actions):
             self.tabTimer.start(500)
         self.tabPos = tabPos
 
+
     def __selectTab(self):
         '''Changes the view to the tab where the mouse was hovering above.'''
         index = self.tabs.tabBar().tabAt(self.tabPos)
@@ -158,12 +161,19 @@ class View(QMainWindow, auxilia.Actions):
 
 #==============================================================================
 
+    def keyPressEvent(self, event):
+        if event.key() == Qt.Key_F11:
+            self._togglePartymode()
+        else:
+            super(View, self).keyPressEvent(event)
+
     def createPluginViews(self):
         '''Set all plugin tabs up.'''
         loadedPlugins = {}
         for plugin in plugins.allPlugins:
             plugin = plugin.getWidget(self, self.mpdclient, self.config, self.library)
-            loadedPlugins[plugin.moduleName] = plugin
+            if plugin:
+                loadedPlugins[plugin.moduleName] = plugin
         for name in self.config.tabOrder:
             if name in loadedPlugins:
                 plugin = loadedPlugins.pop(name)
@@ -233,6 +243,19 @@ class View(QMainWindow, auxilia.Actions):
                 icon = auxilia.PIcon('network-connect')
             else: icon = auxilia.PIcon('network-disconnect')
             self.menuConnect.addAction(icon, server)
+
+    def _togglePartymode(self):
+        if self.partyMode:
+            self.toolBar.show()
+            self.showNormal()
+            QApplication.instance().processEvents()
+            if self.partyMode != self.geometry().size():
+                self.showMaximized()
+            self.partyMode = False
+        else:
+            self.partyMode = self.geometry().size()
+            self.toolBar.hide()
+            self.showFullScreen()
 
 
 class PlayerForm(QWidget):
