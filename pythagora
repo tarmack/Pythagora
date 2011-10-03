@@ -93,6 +93,12 @@ class Manager():
         self.__connectMPD()
         self.config.save()
 
+    def toggleOutput(self, action):
+        if action.isChecked():
+            self.mpdclient.send('enableoutput', (action.outputid,))
+        else:
+            self.mpdclient.send('disableoutput', (action.outputid,))
+
     def callback(self, changes):
         '''Remember, this is executed from another thread.'''
         print 'debug: called back with "%s"' % changes
@@ -226,6 +232,7 @@ class Manager():
     def __connectSignals(self):
         self.playControls.connectSignals(self.view)
         self.view.connect(self.view.menuConnect, SIGNAL('triggered(QAction *)'), self.connectTo)
+        self.view.connect(self.view.menuOutputs, SIGNAL('triggered(QAction *)'), self.toggleOutput)
 
         self.view.connect(self.idleTimer, SIGNAL("timeout()"), self.__runIdle)
         self.view.connect(self.view, SIGNAL('reconnect()'), self.__connectMPD)
@@ -266,7 +273,10 @@ class Update:
         self.timer.start(1000)
         if changes:
             for change in changes:
-                getattr(self, change)(status)
+                try:
+                    getattr(self, change)(status)
+                except AttributeError:
+                    print "error: Update received change group '{0}' which is not implemented.".format(change)
         else:
             self.player(status)
 

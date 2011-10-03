@@ -79,8 +79,16 @@ class View(QMainWindow, auxilia.Actions):
         self.reloadLibrary = self.actionLibReload(self.menuMPD, self.__libReload)
         self.updateLibrary = self.actionLibUpdate(self.menuMPD, lambda: self.mpdclient.send('update'))
         self.rescanLibrary = self.actionLibRescan(self.menuMPD, lambda: self.mpdclient.send('rescan'))
+        # Create 'Outputs' menu.
+        self.menuOutputs = QMenu('Outputs')
+        self.menuOutputs.menuAction().setIcon(auxilia.PIcon('audio-card'))
+        self.outputsButton = QToolButton()
+        self.outputsButton.setPopupMode(QToolButton.InstantPopup)
+        self.outputsButton.setIcon(auxilia.PIcon('audio-card'))
+        self.outputsButton.setMenu(self.menuOutputs)
         # Fill Toolbar.
         self.toolBar.addWidget(self.connectButton)
+        self.toolBar.addWidget(self.outputsButton)
         self.toolBar.addWidget(self.mpdButton)
         # Fill Statusbar.
         self.serverLabel = QLabel('Not connected')
@@ -91,6 +99,7 @@ class View(QMainWindow, auxilia.Actions):
         self.statusbar.addPermanentWidget(self.playTimeLabel)
 
         self.connect(self.menuConnect, SIGNAL('aboutToShow()'), self.__buildConnectTo)
+        self.connect(self.menuOutputs, SIGNAL('aboutToShow()'), self.__buildOutputs)
         self.connect(self.actionExit,SIGNAL('triggered()'),self.app.quit)
         self.connect(self.actionSettings,SIGNAL('triggered()'),self.showConfig)
 
@@ -100,7 +109,9 @@ class View(QMainWindow, auxilia.Actions):
             self.trayIcon = KTrayIcon(self.appIcon, self)
         else:
             self.trayIcon = QTrayIcon(self.appIcon, self)
+        outputsMenuAction = self.menuOutputs.menuAction()
         connectMenuAction = self.menuConnect.menuAction()
+        self.trayIcon.addMenuItem(outputsMenuAction)
         self.trayIcon.addMenuItem(connectMenuAction)
         self.trayIcon.addMenuItem(self.actionSettings)
         self.connect(self.trayIcon, SIGNAL('activate()'), self.toggleHideRestore)
@@ -252,6 +263,17 @@ class View(QMainWindow, auxilia.Actions):
                 icon = auxilia.PIcon('network-connect')
             else: icon = auxilia.PIcon('network-disconnect')
             self.menuConnect.addAction(icon, server)
+
+    def __buildOutputs(self):
+        self.menuOutputs.clear()
+        if self.mpdclient.connected():
+            print 'debug: Building output menu.'
+            for output in self.mpdclient.outputs():
+                action = QAction(output.get('outputname', 'No name'), self.menuOutputs)
+                action.setCheckable(True)
+                action.setChecked(output.get('outputenabled', '0') == '1')
+                action.outputid = output.get('outputid')
+                self.menuOutputs.addAction(action)
 
     def _togglePartymode(self):
         if self.partyMode:
