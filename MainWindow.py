@@ -43,10 +43,12 @@ except ImportError:
 
 class View(QMainWindow, auxilia.Actions):
     partyMode = False
+    hide_window = True
 
     def __init__(self, configuration, mpdclient, library, app):
         QMainWindow.__init__(self)
         self.app = app
+        self.app.commitData = self.commitData
         self.focus = time()
         self.shuttingDown = False
         self.config = configuration
@@ -191,13 +193,20 @@ class View(QMainWindow, auxilia.Actions):
         self.config.mgrSize = self.size()
         print 'debug: shutdown finished'
 
+    def commitData(self, sessionManager):
+        self.hide_window = False
+        QApplication.commitData(self.app, sessionManager)
+
     def showConfig(self):
         self.config.showConfiguration(self)
 
     def closeEvent(self, event):
         '''Catch MainWindow's close event so we can hide it instead.'''
-        self.hide()
-        event.ignore()
+        if self.hide_window:
+            self.hide()
+            event.ignore()
+        else:
+            QMainWindow.closeEvent(self, event)
 
     def __storeSplitter(self):
         self.config.mgrSplit = self.splitter.sizes()
