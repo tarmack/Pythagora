@@ -60,20 +60,20 @@ class PlayControls:
 
     def volumeUp(self, value=2):
         print 'debug: volup'
-        self.mpdclient.send('volume', (value,))
+        self._changeVolume(value)
 
     def volumeDown(self, value=2):
         print 'debug: voldown'
-        self.mpdclient.send('volume', (-value,))
+        self._changeVolume(-value)
 
-    def setVolume(self,value):
+    def setVolume(self, value):
         '''Change the volume'''
-        if value != self.currentVolume:
-            try:
-                self.mpdclient.send('volume', (value - self.currentVolume,))
-            except:
-                pass
-            self.currentVolume = value
+        self.currentVolume = value
+        self.mpdclient.send('setvol', (value,))
+
+    def _changeVolume(self, value):
+        self.currentVolume += value
+        self.mpdclient.send('setvol', (self.currentVolume,))
 
     def toggleMute(self):
         if self.currentVolume == 0:
