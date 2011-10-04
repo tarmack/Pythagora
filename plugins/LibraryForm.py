@@ -90,7 +90,6 @@ class LibraryForm(PluginBase.PluginBase, auxilia.Actions):
             p = time()
             t = time()
 
-            print 'library parsing took %.3f seconds' % (time() - t); t = time()
             self.__loadArtistView(self.library.artists())
             print 'load Artist took %.3f seconds' % (time() - t); t = time()
             self.__loadAlbumView(self.library.albums())

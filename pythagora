@@ -21,6 +21,7 @@ from PyQt4.QtGui import QApplication, QWidget, QKeySequence
 
 import sys
 import time
+import thread
 import signal
 
 import mpdthreaded as mpd
@@ -214,8 +215,12 @@ class Manager():
         self.firstConnect = False
 
     def __libraryReload(self, mainlist):
-        self.library.reload(mainlist)
-        self.view.emit(SIGNAL('reloadLibrary'))
+        def reload(mainlist):
+            start = time.time()
+            self.library.reload(mainlist)
+            print 'library parsing took {0:.3} seconds'.format(time.time() - start)
+            self.view.emit(SIGNAL('reloadLibrary'))
+        thread.start_new_thread(reload, (mainlist,))
 
     def _error(self):
         print 'error: Lost connection to mpd server.'
