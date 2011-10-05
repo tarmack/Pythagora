@@ -219,10 +219,11 @@ class Manager():
     def __libraryReload(self, mainlist):
         def reload(mainlist):
             start = time.time()
+            server = self.config.server
             self.mutex.lock(self.library.reload, mainlist)
             self.mutex.unlock()
             print 'library parsing took {0:.3} seconds'.format(time.time() - start)
-            if not self.mutex.test():
+            if self.config.server == server:
                 self.view.emit(SIGNAL('reloadLibrary'))
         thread.start_new_thread(reload, (mainlist,))
 
