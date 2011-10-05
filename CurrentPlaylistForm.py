@@ -53,7 +53,7 @@ class CurrentPlaylistForm(QWidget, auxilia.Actions):
             uic.loadUi(DATA_DIR+'ui/CurrentListForm.ui.Qt', self)
         self.view.currentListLayout.addWidget(self)
 
-        self.retriever = iconretriever.ThreadedRetriever(config.musicPath)
+        self.retriever = iconretriever.ThreadedRetriever(config.coverPath)
         if config.oneLinePlaylist:
             self.oneLinePlaylist.setChecked(True)
             self.currentList.setIconSize(QSize(16, 16))
@@ -316,7 +316,7 @@ class CurrentPlaylistForm(QWidget, auxilia.Actions):
         self.currentList.insertItem(row, item)
         self.idlist.insert(row, item.song['id'])
         if not item.iconPath:
-            self.retriever.fetchIcon(item, self.config.musicPath)
+            self.retriever.fetchIcon(item, self.config.coverPath)
         self.currentPlayTime += int(item.song.get('time','0'))
 
     def __resetCurrentList(self):

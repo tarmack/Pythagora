@@ -25,7 +25,7 @@
       </attribute>
       <layout class="QGridLayout" name="gridLayout">
        <item row="4" column="1">
-        <widget class="QLineEdit" name="musicPath">
+        <widget class="QLineEdit" name="coverPath">
          <property name="toolTip">
           <string>Path to the mpd library root to use folder.jpg's as cover art.
 If no folder.jpg can be found the cover art will be downloaded and cached in the 'covers' subdirectory.</string>
@@ -33,7 +33,7 @@ If no folder.jpg can be found the cover art will be downloaded and cached in the
         </widget>
        </item>
        <item row="4" column="2" colspan="2">
-        <widget class="QPushButton" name="musicDirButton">
+        <widget class="QPushButton" name="coverDirButton">
          <property name="toolTip">
           <string>Browse for the directory.</string>
          </property>
@@ -116,13 +116,13 @@ If no folder.jpg can be found the cover art will be downloaded and cached in the
 If no folder.jpg can be found the cover art will be downloaded and cached in the 'covers' subdirectory.</string>
          </property>
          <property name="text">
-          <string>Music directory:</string>
+          <string>Cover directory:</string>
          </property>
          <property name="alignment">
           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
          </property>
          <property name="buddy">
-          <cstring>musicPath</cstring>
+          <cstring>coverPath</cstring>
          </property>
         </widget>
        </item>
@@ -190,8 +190,8 @@ If no folder.jpg can be found the cover art will be downloaded and cached in the
  </widget>
  <tabstops>
   <tabstop>tabs</tabstop>
-  <tabstop>musicPath</tabstop>
-  <tabstop>musicDirButton</tabstop>
+  <tabstop>coverPath</tabstop>
+  <tabstop>coverDirButton</tabstop>
   <tabstop>serverTable</tabstop>
   <tabstop>buttonBox</tabstop>
  </tabstops>

@@ -37,19 +37,18 @@ def absolutePath(funct):
     return decorate
 
 class Retriever:
-    def __init__(self, musicPath):
+    def __init__(self, coverPath):
         self.lastContact = time.time()
         self.unavailebleAlbums = []
         self.unavailebleArtists = []
-        self.path = musicPath
-        musicPath = os.path.expanduser(unicode(musicPath))
-        if not os.path.isdir(musicPath):
+        self.path = coverPath
+        coverPath = os.path.expanduser(unicode(coverPath))
+        if not os.path.isdir(coverPath):
             print 'debug: Music dir does not exist, bad config.'
             self.coverPath = None
-            self.musicPath = None
+            self.coverPath = None
         else:
-            self.musicPath = musicPath
-            self.coverPath = os.path.join(musicPath, 'covers')
+            self.coverPath = coverPath
             if not os.path.isdir(self.coverPath):
                 try:
                     os.mkdir(self.coverPath)
@@ -94,11 +93,11 @@ class Retriever:
         return NOCOVER
 
     def getFolderImage(self, song):
-        if not self.musicPath:
+        if not self.coverPath:
             return None
         x = song['file'].rfind('/')
         dir = song['file'][:x]
-        iconname = os.path.expanduser(self.musicPath) + '/' + dir + '/folder.jpg'
+        iconname = os.path.expanduser(self.coverPath) + '/' + dir + '/folder.jpg'
         if os.path.exists(iconname):
             return iconname
         else:
@@ -187,9 +186,9 @@ class Retriever:
         return None
 
 class RetrieverThread(threading.Thread, Retriever):
-    def __init__(self, musicPath):
+    def __init__(self, coverPath):
         threading.Thread.__init__(self)
-        Retriever.__init__(self, musicPath)
+        Retriever.__init__(self, coverPath)
         self.event = threading.Event()
         self.daemon = True
         self.toFetch = []
@@ -220,16 +219,16 @@ class RetrieverThread(threading.Thread, Retriever):
         self.join()
 
 class ThreadedRetriever:
-    def __init__(self, musicPath):
-        self.retriever = RetrieverThread(musicPath)
+    def __init__(self, coverPath):
+        self.retriever = RetrieverThread(coverPath)
         self.icons = self.retriever.icons
         self.retriever.start()
 
-    def fetchIcon(self, item, musicPath):
-        if musicPath != self.retriever.path:
+    def fetchIcon(self, item, coverPath):
+        if coverPath != self.retriever.path:
             self.retriever.exit()
         if not self.retriever.isAlive():
-            self.retriever = RetrieverThread(musicPath)
+            self.retriever = RetrieverThread(coverPath)
             self.icons = self.retriever.icons
             self.retriever.start()
         self.retriever.toFetch.append(item)
