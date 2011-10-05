@@ -501,7 +501,7 @@ class CurrentListWidget(QListWidgetItem):
 
     def setIcon(self, icon):
         self.iconPath = icon
-        self.setData(Qt.DecorationRole, QIcon(self.iconPath))
+        self.setData(Qt.DecorationRole, None)
 
     def setSong(self, song):
         self.song = song
