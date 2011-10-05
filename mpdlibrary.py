@@ -14,13 +14,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #-------------------------------------------------------------------------------
-import unicodedata
 
 class Library:
-    ignoreCase = False
-    fuzzy = False
     '''Supplies a storage model for the mpd database.'''
-    def __init__(self, mainlist=[]):
+    def __init__(self, mainlist=[], ignoreCase=False):
+        self.ignoreCase = ignoreCase
         self.reload(mainlist)
 
     def reload(self, mainlist):
@@ -195,7 +193,6 @@ class listDict(dict):
     '''
     def __init__(self, parent):
         self._lcase = {}
-        self._fuzzy = {}
         self.parent = parent
         dict.__init__(self)
 
@@ -213,8 +210,6 @@ class listDict(dict):
         self._setitems(self, key, value)
         key = [x.lower() for x in key]
         self._setitems(self._lcase, key, value)
-        key = [_simplify(x) for x in key]
-        self._setitems(self._fuzzy, key, value)
 
     def _setitems(self, store, keys, values):
         for key in keys:
@@ -228,29 +223,7 @@ class listDict(dict):
         if self.parent.ignoreCase:
             store = self._lcase
             key = key.lower()
-        if self.parent.fuzzy:
-            store = self._fuzzy
-            key = _simplify(key)
         return dict.__getitem__(store, key)
-
-def _simplify(string):
-    '''Simplify strings for fuzzy matching.'''
-    # If the string is not of type unicode, make it.
-    if not isinstance(string, unicode):
-        string = unicode(string)
-    # Lowercase the input.
-    result = string.lower()
-    # Strip prefixed/suffixed "The".
-    result = result.strip('the ')
-    result = result.strip(', the')
-    # Replace non-ASCII characters with an ASCII representation.
-    temp = unicodedata.normalize('NFKD', result).encode('ASCII', 'ignore')
-    # Never strip all (non whitespace) characters!
-    if len(temp) != 0:
-        result = temp
-    # Compact whitespace.
-    result = ' '.join(result.split())
-    return result
 
 
 class LibraryObject(object):

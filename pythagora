@@ -59,8 +59,8 @@ class Manager():
     '''Creates and links up the management display items.'''
     oldVolume = 0
     misses = 0
-    library = mpdlibrary.Library()
-    library.ignoreCase = True
+    library = mpdlibrary.Library(ignoreCase=True)
+
     def __init__(self, app):
         self.app = app
         self.firstConnect = True
