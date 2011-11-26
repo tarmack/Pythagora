@@ -363,15 +363,6 @@ class Song(dict, LibraryObject):
         except KeyError:
             return False
 
-    def get(self, key, alt=None):
-        try:
-            value = self.__getitem__(key)
-            if value == '':
-                value = value.__class__(alt, value._library)
-        except KeyError:
-            value = alt
-        return value
-
     def __getitem__(self, item):
         if item == 'artist':
             return Artist(self._getAttr('artist', 'performer', 'composer') or 'Unknown',
