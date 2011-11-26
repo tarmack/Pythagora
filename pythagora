@@ -310,7 +310,7 @@ class Update:
     def player(self, status):
         #try:
         if self.state != status['state']:
-            self.__setPlayPauseState(status['state'])
+            self.__setPlayerState(status['state'])
         # if we're stopped, just call it quits
         if status['state'] == 'stop':
             self.lastSong = mpdlibrary.Song({}, self.library)
@@ -444,7 +444,7 @@ class Update:
             self.config.showNotification = False
             print 'debug: error using dbus - %s' % e
 
-    def __setPlayPauseState(self,state):
+    def __setPlayerState(self,state):
         if state == 'play':
             self.view.playerForm.play.setIcon(self.pauseIcon)
         else:

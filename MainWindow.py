@@ -448,8 +448,10 @@ if KDE:
         def setState(self, state):
             if state == 'play':
                 self.setIconByName("media-playback-start")
-            else:
+            elif state == 'pause':
                 self.setIconByName("media-playback-pause")
+            else:
+                self.setIconByName("media-playback-stop")
 
         def setToolTip(self, iconPath, text):
             if not iconPath:
@@ -477,6 +479,7 @@ else:
             self.parent = parent
             self.pauseIcon = auxilia.PIcon("media-playback-pause")
             self.startIcon = auxilia.PIcon("media-playback-start")
+            self.stopIcon = auxilia.PIcon("media-playback-stop")
             self.actionList = []
             self.menu = QMenu('Pythagora MPD client', parent)
             self.menu.addAction(menuTitle(QIcon(icon), 'Pythagora', parent))
@@ -493,8 +496,10 @@ else:
         def setState(self, state):
             if state == 'play':
                 self.setIcon(self.startIcon)
-            else:
+            elif state == 'pause':
                 self.setIcon(self.pauseIcon)
+            else:
+                self.setIcon(self.stopIcon)
 
         def setToolTip(self, iconPath, text):
             super(QTrayIcon, self).setToolTip('Pythagora,&nbsp;Now&nbsp;Playing:<br>%s' % text)
