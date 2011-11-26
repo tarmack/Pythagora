@@ -108,7 +108,7 @@ class LibraryForm(PluginBase.PluginBase, auxilia.Actions):
     def __loadArtistView(self, artists):
         self.artistView.clear()
         self.artistView.setUpdatesEnabled(False)
-        artists.sort(auxilia.cmpUnicode)
+        #artists.sort(auxilia.cmpUnicode)
         for artist in artists:
             self.artistView.addItem(ArtistWidget(artist))
         self.artistView.insertItem(0, ArtistWidget('--all--'))
@@ -119,7 +119,7 @@ class LibraryForm(PluginBase.PluginBase, auxilia.Actions):
         '''Reloads the list with the list presented'''
         self.albumView.clear()
         self.albumView.setUpdatesEnabled(False)
-        albumlist.sort(cmp=auxilia.cmpUnicode)
+        #albumlist.sort(cmp=auxilia.cmpUnicode)
         for album in albumlist:
             albumWidget = AlbumWidget(album)
             self.albumView.addItem(albumWidget)

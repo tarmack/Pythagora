@@ -14,6 +14,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #-------------------------------------------------------------------------------
+import locale
+
+locale.setlocale(locale.LC_ALL, "")
+
 
 class Library:
     '''Supplies a storage model for the mpd database.'''
@@ -53,80 +57,79 @@ class Library:
 
     def artists(self):
         '''Returns a list containing all artists in the library.'''
-        return [Artist(value, self) for value in self._artists.keys()]
+        return (Artist(value, self) for value in sorted(self._artists.keys(), locale.strcoll))
 
     def albums(self):
         '''Returns a list containing all albums in the library.'''
-        return [Album(album, self) for album in self._albums.keys()]
+        return (Album(album, self) for album in sorted(self._albums.keys(), locale.strcoll))
 
     def songs(self):
         '''Returns a list containing all songs in the library.'''
-        return [Song(song, self) for song in self._songList]
+        return (Song(song, self) for song in self._songList)
 
     def genres(self):
         '''Returns a list containing all genres in the library.'''
-        return [Genre(genre, self) for genre in self._genres.keys()]
+        return (Genre(genre, self) for genre in self._genres.keys())
 
     def artistSongs(self, artist):
         '''Returns a list containing all songs from the supplied artist.'''
-        return [Song(song, self) for song in self._artists.get(artist, [])]
+        return (Song(song, self) for song in self._artists.get(artist, []))
 
     def artistAlbums(self, artist):
         '''Returns a list containing all albums the artist is listed on.'''
         albums = set()
         for song in self.artistSongs(artist):
             albums.update(song.album.all())
-        return [Album(album, self) for album in albums]
+        return (Album(album, self) for album in albums)
 
     def artistGenres(self, artist):
         '''Returns a list containing all genres listed in songs by the given artist.'''
         genres = set()
         for song in self.artistSongs(artist):
             genres.update(song.genre.all())
-        return [Genre(genre, self) for genre in genres]
+        return (Genre(genre, self) for genre in genres)
 
     def albumSongs(self, album, artists=[]):
         '''Returns a list containing all songs on the supplied album title.
         The optional artist argument can be used to only get the songs of a particular artist or list of artists.'''
         if type(artists) in (str, unicode):
             artists = [artists]
-        songs = [Song(song, self) for song in self._albums.get(album, [])]
-        if artists != []:
-            songs = [song for song in songs if song.artist in artists]
-        songs.sort(_sortAlbumSongs)
-        return songs
+        songs = (Song(song, self) for song in self._albums.get(album, []))
+        for song in sorted(songs, _sortAlbumSongs):
+            if artists == [] or song.artist in artists:
+                yield song
 
     def albumArtists(self, album):
         '''Returns a list containing all artists listed on the album.'''
         artists = set()
         for song in self.albumSongs(album):
             artists.update(song.artist.all())
-        return [Artist(artist, self) for artist in artists]
+        return (Artist(artist, self) for artist in artists)
 
     def albumGenres(self, album):
         '''Returns a list containing all genres listed in songs on the given album.'''
         genres = set()
         for song in self.albumSongs(album):
             genres.update(song.genre.all())
-        return [Genre(genre, self) for genre in genres]
+        return (Genre(genre, self) for genre in genres)
 
     def genreSongs(self, genre):
         '''Returns a list containing all songs in the given genre.'''
-        return [Song(song, self) for song in self._genres.get(genre.lower(), [])]
+        return (Song(song, self) for song in self._genres.get(genre.lower(), []))
 
     def genreArtists(self, genre):
         '''Returns a list containing all artists in the given genre.'''
         artists = set()
         for song in self.genreSongs(genre):
             artists.update(song.artist.all())
-        return [Artist(artist, self) for artist in artists]
+        return (Artist(artist, self) for artist in artists)
 
     def genreAlbums(self, genre):
         '''Returns a list containing all albums in the given genre.'''
         albums = set()
         for song in self.genreSongs(genre):
             albums.update(song.album.all())
-        return [Album(album, self) for album in albums]
+        return (Album(album, self) for album in albums)
 
     def ls(self, path, fslist=None):
         '''Returns a list of songs and directories contained in the given path.'''
