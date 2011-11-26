@@ -196,12 +196,6 @@ class listDict(dict):
         self.parent = parent
         dict.__init__(self)
 
-    def get(self, key, default=None):
-        try:
-            return self.__getitem__(key)
-        except KeyError:
-            return default
-
     def __setitem__(self, key, value):
         if type(value) != list:
             value = [value]
