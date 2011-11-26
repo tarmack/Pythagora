@@ -171,7 +171,8 @@ class LibraryForm(PluginBase.PluginBase, auxilia.Actions):
             if album == '--all--':
                 self.artistFilter()
                 return
-            if album.lower() == 'greatest hits' and artists: # If album is a greatest hits assume only one artist is on there.
+            if (album == 'None' or album.lower() == 'greatest hits') and artists and '--all--' not in artists:
+                # If album is a greatest hits or None assume only one artist is on there.
                 songlist.extend(self.library.albumSongs(album, artists))
             else:
                 songlist.extend(self.library.albumSongs(album))
