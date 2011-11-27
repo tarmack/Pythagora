@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>400</width>
+    <width>414</width>
     <height>300</height>
    </rect>
   </property>
@@ -33,12 +33,15 @@
        <number>0</number>
       </property>
       <item>
-       <widget class="QListWidget" name="currentList">
+       <widget class="QListView" name="currentList">
         <property name="contextMenuPolicy">
          <enum>Qt::ActionsContextMenu</enum>
         </property>
         <property name="acceptDrops">
          <bool>true</bool>
+        </property>
+        <property name="editTriggers">
+         <set>QAbstractItemView::NoEditTriggers</set>
         </property>
         <property name="dragDropMode">
          <enum>QAbstractItemView::DragDrop</enum>
@@ -48,6 +51,9 @@
         </property>
         <property name="selectionMode">
          <enum>QAbstractItemView::ExtendedSelection</enum>
+        </property>
+        <property name="selectionBehavior">
+         <enum>QAbstractItemView::SelectRows</enum>
         </property>
         <property name="iconSize">
          <size>

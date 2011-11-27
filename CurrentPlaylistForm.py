@@ -15,8 +15,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #-------------------------------------------------------------------------------
-from PyQt4.QtCore import SIGNAL, Qt, QSize#, QTimer
-from PyQt4.QtGui import QWidget, QInputDialog, QKeySequence, QListWidget, QIcon, QListWidgetItem
+from PyQt4.QtCore import SIGNAL, Qt, QSize, QAbstractListModel
+from PyQt4.QtGui import QWidget, QInputDialog, QKeySequence, QListWidget, QIcon, QFont
 from PyQt4 import uic
 from time import time
 import httplib
@@ -38,7 +38,6 @@ class CurrentPlaylistForm(QWidget, auxilia.Actions):
     '''List and controls for the currently loaded playlist'''
     updating = False
     editing = 0
-    playing = -1
     currentPlayTime = 0
     def __init__(self, view, app, mpdclient, library, config):
         QWidget.__init__(self)
@@ -47,13 +46,14 @@ class CurrentPlaylistForm(QWidget, auxilia.Actions):
         self.mpdclient = mpdclient
         self.config = config
         self.library = library
+        self.playQueue = PlayQueue(config)
         if self.view.KDE:
             uic.loadUi(DATA_DIR+'ui/CurrentListForm.ui', self)
         else:
             uic.loadUi(DATA_DIR+'ui/CurrentListForm.ui.Qt', self)
         self.view.currentListLayout.addWidget(self)
+        self.currentList.setModel(self.playQueue)
 
-        self.retriever = iconretriever.ThreadedRetriever(config.coverPath)
         if config.oneLinePlaylist:
             self.oneLinePlaylist.setChecked(True)
             self.currentList.setIconSize(QSize(16, 16))
@@ -62,10 +62,9 @@ class CurrentPlaylistForm(QWidget, auxilia.Actions):
         self.keepPlayingVisible.setChecked(self.config.keepPlayingVisible)
         self.__togglePlaylistTools(self.config.playlistControls)
         self.version = 0
-        self.idlist = []
         self.trackKey = ''
         self.view.connect(self.view, SIGNAL('playlistChanged'), self.reload)
-        self.view.connect(self.view, SIGNAL('clearForms'), self.__resetCurrentList)
+        self.view.connect(self.view, SIGNAL('clearForms'), self.playQueue.clear)
         self.view.connect(self.view, SIGNAL('currentSong'), self.setPlaying)
 
         # Connect to the list for double click action.
@@ -135,97 +134,32 @@ class CurrentPlaylistForm(QWidget, auxilia.Actions):
     def setPlaying(self, currentsong):
         playing = int(currentsong['pos'])
         print 'debug: setPlaying to ', playing
-        beforeScroll = self.currentList.verticalScrollBar().value()
-        item = self.currentList.item(self.playing)
-        if item:
-            item.playing(False)
-        if playing >= 0:
-            item = self.currentList.item(playing)
-            if item:
-                item.playing(True)
-                self.playing = playing
-            else: self.playing = -1
-        else: self.playing = -1
-        self.__scrollList(beforeScroll)
+        self.playQueue.setPlaying(playing)
 
     def playingItem(self):
-        return self.currentList.item(self.playing)
+        return #self.currentList.item(self.playing)
 
     def reload(self, plist, status):
         '''Causes the current play list to be reloaded from the server'''
         if not self.config.server:
             return
-        oneLine = self.config.oneLinePlaylist
-        beforeScroll = self.currentList.verticalScrollBar().value()
-        self.selection = [item.song['id'] for item in self.currentList.selectedItems()]
-        itemlist = {}
         version = int(status['playlist'])
         if version <= self.version:
             return
-        # Get the song id's of the selected songs.
-        self.currentList.setUpdatesEnabled(False)
-        if plist:
-            oldPos = int(plist[0]['pos'])
-            for song in plist:
-                song = mpdlibrary.Song(song, self.library)
-                song.pos = int(song.pos)
-                # if the song is in our parralel id list.
-                if song.id in self.idlist:
-                    # get the id position.
-                    index = self.idlist.index(song.id)
-                    # take the item.
-                    item = self._takeItem(index)
-                    item.setSong(song)
-                    # If the old position is after the new position (moving up).
-                    if index > song.pos:
-                        # take all songs that were between old and new position and put them in a dict.
-                        for x in range(song.pos, index):
-                            holditem = self._takeItem(song.pos)
-                            itemlist[holditem.song.id] = holditem
-                    # put the item back in the list at the right position.
-                    self._insertItem(song.pos, item)
-                # if ist in our 'hold on to' list.
-                elif song.id in itemlist:
-                    if oldPos+1 < song.pos:
-                        items = []
-                        for item in itemlist.values():
-                            if item.song.pos > oldPos and item.song.pos < song.pos:
-                                items.append(item)
-                        items.sort(key=lambda x: x.song.pos, reverse=True)
-                        for item in items:
-                            self._insertItem(oldPos+1, item)
-                    # pick the item from the dict.
-                    item = itemlist[song.id]
-                    # update the song atribute.
-                    item.setSong(song)
-                    # put it in place in the view.
-                    self._insertItem(song.pos, item)
-                else:
-                    # If the song is not in the parallel or the 'hold on to' list. Just insert a new item at the correct position.
-                    item = CurrentListWidget(song, oneLine, self)
-                    self._insertItem(song.pos, item)
-                oldPos = song.pos
-                # select the song again if needed.
-                if song.id in self.selection: item.setSelected(True)
+        self.playQueue.update((PlayQueueItem(song, self.library) for song in plist), status)
 
-        # If the playlist has shrunk, delete the songs from the end.
-        last = int(status['playlistlength'])
-        for x in range(last, self.currentList.count()):
-            self._takeItem(last)
+        # select the songs again if needed.
+        #if song.id in self.selection: item.setSelected(True)
 
         self.view.numSongsLabel.setText(status['playlistlength']+' Songs')
         self.__setPlayTime()
 
-        self.__scrollList(beforeScroll)
         self.version = version
         self.setPlaying({'pos': status.get('song', -1)})
         key = unicode(self.currentFilter.text())
         if key != '':
             self.trackSearch(key)
         self.currentList.setUpdatesEnabled(True)
-
-    def loadIcons(self):
-        self.retriever.setIcons()
 
     def trackSearch(self, key):
         print 'debug: trackSearch starting.'
@@ -320,7 +254,7 @@ class CurrentPlaylistForm(QWidget, auxilia.Actions):
         self.currentPlayTime += int(item.song.get('time','0'))
 
     def __resetCurrentList(self):
-        self.currentList.clear()
+        self.playQueue.clear()
         self.idlist = []
         self.version = 0
         self.playing = -1
@@ -478,65 +412,123 @@ class CurrentPlaylistForm(QWidget, auxilia.Actions):
         self.editing = time()
 
 
-# Widget subclas.
-class CurrentListWidget(QListWidgetItem):
-    '''Song, album, cover in a tree widget item'''
-    # Used in CurrentPlaylistForm
-    _playing = False
-    def __init__(self, song, oneLine, parent):
-        QListWidgetItem.__init__(self)
-        self.oneLine = oneLine
-        self.iconPath = ''
-        self.song = song
-        parent.connect(parent, SIGNAL('oneLinePlaylist'), self._setOneLine)
+class PlayQueue(QAbstractListModel):
+    def __init__(self, config):
+        QAbstractListModel.__init__(self)
+        self._playing = -1
+        self._oneLine = False
+        self._songs = []
+        self.config = config
+        self.retriever = iconretriever.ThreadedRetriever(config.coverPath)
 
-    def data(self, role):
+    def setOneLine(self, value):
+        if self._oneLine != value:
+            self._oneLine = value
+            self.emit(SIGNAL('dataChanged(const QModelIndex &, const QModelIndex &)'),
+                    self.createIndex(0, 0), self.createIndex(len(self._songs), 0))
+
+    def setPlaying(self, row):
+        if self._playing != row:
+            self.emit(SIGNAL('dataChanged(const QModelIndex &, const QModelIndex &)'),
+                    self.createIndex(self._playing, 0), self.createIndex(self._playing, 0))
+            self._playing = row
+            self.emit(SIGNAL('dataChanged(const QModelIndex &, const QModelIndex &)'),
+                    self.createIndex(self._playing, 0), self.createIndex(self._playing, 0))
+
+    def update(self, plist, status):
+        first = len(self._songs)
+        last = 0
+        for song in plist:
+            index = self.id_index(song.id)
+            if index:
+                first = min(first, index)
+                last = max(last, index)
+                old = self.pop(index)
+                song.iconPath = old.iconPath
+            pos = int(song.pos)
+            self.insert(pos, song)
+            first = min(first, pos)
+            last = max(last, pos)
+        length = int(status['playlistlength'])
+        last = len(self._songs) if length < len(self._songs) else last
+        first = min(first, length)
+        del self._songs[length:]
+
+        # emit dataChanged(first, last) here.
+        self.emit(SIGNAL('dataChanged(const QModelIndex &, const QModelIndex &)'),
+                self.createIndex(first, 0), self.createIndex(last, 0))
+
+    def clear(self):
+        last = len(self._songs)
+        self._songs = []
+        self.emit(SIGNAL('dataChanged(const QModelIndex &, const QModelIndex &)'), 
+                self.createIndex(0, 0), self.createIndex(0, last))
+
+    def rowCount(self, index):
+        return len(self._songs)
+
+    def data(self, index, role):
+        row = index.row()
         if role == Qt.DisplayRole:
-            return self._getText()
+            return self._getText(row)
         if role == Qt.ToolTipRole:
-            return self._getTooltip()
+            return self._getTooltip(row)
         if role == Qt.DecorationRole:
-            return QIcon(self.iconPath)
-        return QListWidgetItem.data(self, role)
+            #print "Data requested DecorationRole, iconPath is: '%s'" % self._songs[row].iconPath
+            return QIcon(self._songs[row].iconPath)
+        if role == Qt.FontRole:
+            font = QFont()
+            if row == self._playing:
+                font.setBold(True)
+            return font
+        #return QAbstractListModel.data(self, index, role)
 
-    def setIcon(self, icon):
-        self.iconPath = icon
-        self.setData(Qt.DecorationRole, None)
-
-    def setSong(self, song):
-        self.song = song
-
-    def playing(self, playing):
-        font = self.font()
-        if playing:
-            font.setWeight(75)
-        else:
-            font.setWeight(50)
-        self.setFont(font)
-        self._playing = playing
-
-    def getDrag(self):
-        return [self.song]
-
-    def _getText(self):
-        if not self._playing and self.song.isStream:
-            title = self.song.station
+    def _getText(self, index):
+        song = self._songs[index]
+        if self._playing != int(song.pos) and song.isStream:
+            title = song.station
             artist = ''
         else:
-            artist = self.song.artist
-            title = self.song.title
-        if self.oneLine:
-            return artist + ' - ' + title
+            artist = song.artist
+            title = song.title
+        if self._oneLine:
+            return ' - '.join((artist, title))
         else:
-            return title + '\n' + artist
+            return '\n'.join((title, artist))
 
-    def _getTooltip(self):
-        if self.song.isStream:
-            return "Station:\t %s\nurl:\t %s" % (self.song.station, self.song.file)
+    def _getTooltip(self, index):
+        song = self._songs[index]
+        if song.isStream:
+            return "Station:\t %s\nurl:\t %s" % (song.station, song.file)
         else:
-            return "Album:\t %s\nTime:\t %s\nFile:\t %s" % (self.song.album, self.song.time.human , self.song.file)
+            return "Album:\t %s\nTime:\t %s\nFile:\t %s" % (song.album, song.time.human , song.file)
 
-    def _setOneLine(self, value):
-        self.oneLine = value
-        self.setData(Qt.DisplayRole, '')
+    def id_index(self, id):
+        for index, song in enumerate(self._songs):
+            if song.id == id:
+                return index
+
+    def pop(self, row):
+        return self._songs.pop(row)
+
+    def insert(self, row, song):
+        song.iconChanged = lambda pos: self.emit(
+                SIGNAL('dataChanged(const QModelIndex &, const QModelIndex &)'),
+                self.createIndex(pos, 0), self.createIndex(pos, 0))
+        self._songs.insert(row, song)
+        if not song.iconPath:
+            self.retriever.fetchIcon(song)
+
+
+class PlayQueueItem(mpdlibrary.Song):
+    ''' Class that extends the mpdLibrary Song object to catch the setting of `iconPath`.'''
+    iconChanged = None
+    iconPath = ''
+    def __setattr__(self, attr, value):
+        if attr == 'iconPath' and value == self.iconPath:
+            return
+        mpdlibrary.Song.__setattr__(self, attr, value)
+        if attr == 'iconPath':
+            if self.iconChanged:
+                self.iconChanged(int(self.pos))
 

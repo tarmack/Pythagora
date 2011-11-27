@@ -292,7 +292,6 @@ class Update:
             self.player(status)
 
     def progress(self):
-        self.view.currentList.loadIcons()
         if self.mpdclient.connected():
             try:
                 if self.state == 'play':

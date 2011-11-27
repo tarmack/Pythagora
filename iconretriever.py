@@ -19,6 +19,7 @@ import urllib
 from glob import glob
 from sys import getrefcount
 import threading
+import Queue
 import time
 
 
@@ -189,28 +190,21 @@ class RetrieverThread(threading.Thread, Retriever):
     def __init__(self, coverPath):
         threading.Thread.__init__(self)
         Retriever.__init__(self, coverPath)
-        self.event = threading.Event()
         self.daemon = True
-        self.toFetch = []
-        self.icons = []
+        self.toFetch = Queue.Queue()
         self.running = True
 
     def run(self):
         while self.running:
-            if self.toFetch:
-                item = self.toFetch.pop(0)
-                try:
-                    # if we are the only one holding on to the item, get rid of it.
-                    if getrefcount(item) > 2:
-                        icon = self.songIcon(item.song)
-                        self.icons.append((item, icon,))
-                    else: print 'debug: '+unicode(item.text())
-                except:
-                    print 'debug: error while fetching icon'
-                    raise
-            else:
-                self.event.wait()
-                self.event.clear()
+            song = self.toFetch.get()
+            try:
+                # if we are the only one holding on to the item, get rid of it.
+                if getrefcount(song) > 2:
+                    icon = self.songIcon(song)
+                    song.iconPath = icon
+            except:
+                print 'debug: error while fetching icon'
+                raise
         print 'debug: exit iconfetcher'
 
     def exit(self):
@@ -221,24 +215,15 @@ class RetrieverThread(threading.Thread, Retriever):
 class ThreadedRetriever:
     def __init__(self, coverPath):
         self.retriever = RetrieverThread(coverPath)
-        self.icons = self.retriever.icons
         self.retriever.start()
 
-    def fetchIcon(self, item, coverPath):
-        if coverPath != self.retriever.path:
+    def fetchIcon(self, song, coverPath=None):
+        if coverPath and coverPath != self.retriever.path:
             self.retriever.exit()
         if not self.retriever.isAlive():
             self.retriever = RetrieverThread(coverPath)
-            self.icons = self.retriever.icons
             self.retriever.start()
-        self.retriever.toFetch.append(item)
-        self.retriever.event.set()
-
-    def setIcons(self):
-        while self.retriever.icons:
-            item, icon = self.retriever.icons.pop(0)
-            if getrefcount(item) > 2:
-                item.setIcon(icon)
+        self.retriever.toFetch.put(song)
 
     def killRetriever(self):
         self.retriever.exit()
