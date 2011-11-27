@@ -312,6 +312,7 @@ class Update:
             self.__setPlayerState(status['state'])
         # if we're stopped, just call it quits
         if status['state'] == 'stop':
+            self.view.emit(SIGNAL('currentSong'), {'pos':-1})
             self.lastSong = mpdlibrary.Song({}, self.library)
             self.setProgress(0, 0)
             self.setSongLabel('Connected to %s.' % self.config.server[0])
