@@ -116,11 +116,15 @@ class Retriever:
         # We don't have it in cache, get it from the web.
         # get the address of the cover file from last.fm.
         try:
+            timeSinceLast = time.time() - self.lastContact
+            if timeSinceLast <= SECONDS_BETWEEN_REQUESTS:
+                time.sleep(SECONDS_BETWEEN_REQUESTS - timeSinceLast)
             #print 'debug: Try to get an album cover from last.fm.'
             address = 'http://ws.audioscrobbler.com/2.0/?method=album.getinfo&api_key=%s&artist=%s&album=%s'
             handle = urllib.urlopen(address %
                     (APIKEY, urllib.quote_plus(artist.encode('utf-8')), urllib.quote_plus(album.encode('utf-8'))))
             cover = self._cacheImage(handle, coverFile)
+            self.lastContact = time.time()
         except Exception, e:
             print 'error: ', e,'\n', 'error: ', repr(urllib.quote_plus(artist.encode('utf-8'))),'\n', 'error: ', repr(urllib.quote_plus(album.encode('utf-8')))
             return None
@@ -140,10 +144,14 @@ class Retriever:
         # We don't have it in cache, get it from the web.
         # get the address of the picture from last.fm.
         try:
+            timeSinceLast = time.time() - self.lastContact
+            if timeSinceLast <= SECONDS_BETWEEN_REQUESTS:
+                time.sleep(SECONDS_BETWEEN_REQUESTS - timeSinceLast)
             #print 'debug: No album cover, a picture of the artist perhaps?.'
             address = 'http://ws.audioscrobbler.com/2.0/?method=artist.getinfo&artist=%s&api_key=%s'
             handle = urllib.urlopen(address % (urllib.quote_plus(artist.encode('utf-8')),APIKEY))
             cover = self._cacheImage(handle,coverFile)
+            self.lastContact = time.time()
         except Exception, e:
             print 'error: ', e,'\n', 'error: ', repr(urllib.quote_plus(artist.encode('utf-8')))
             return None
@@ -180,10 +188,6 @@ class Retriever:
         covers = glob(coverPath+'.*')
         if covers != [] and os.path.isfile(covers[0]):
             return covers[0]
-        timeSinceLast = time.time() - self.lastContact
-        if timeSinceLast <= SECONDS_BETWEEN_REQUESTS:
-            time.sleep(SECONDS_BETWEEN_REQUESTS - timeSinceLast)
-        self.lastContact = time.time()
         return None
 
 class RetrieverThread(threading.Thread, Retriever):
