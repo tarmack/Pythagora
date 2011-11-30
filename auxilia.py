@@ -157,17 +157,16 @@ def PIcon(icon):
 
 def formatTime(seconds):
     seconds = int(seconds)
-    form = '%i'
-    result = []
-    units = (60*60*24, 60*60, 60)
-    for size in units:
-        if seconds > size-1 or form == '%02i':
-            count = seconds / size
-            seconds -= (count * size)
-            result.append(form % count)
-            form = '%02i'
-    result.append('%02i' % seconds)
-    if len(result) < 2:
-        result.insert(0, '0')
-    return ':'.join(result)
+    minutes = seconds / 60
+    seconds = seconds - (minutes * 60)
+    hours = minutes / 60
+    minutes -= hours * 60
+    days = hours / 24
+    hours -= days * 24
+    if days == 1:
+        return '%d day %02d:%02d:%02d' % (days, hours, minutes, seconds)
+    elif days > 1:
+        return '%d days %02d:%02d:%02d' % (days, hours, minutes, seconds)
+    else:
+        return '%02d:%02d:%02d' % (hours, minutes, seconds)
 
