@@ -167,6 +167,8 @@ def formatTime(seconds):
         return '%d day %02d:%02d:%02d' % (days, hours, minutes, seconds)
     elif days > 1:
         return '%d days %02d:%02d:%02d' % (days, hours, minutes, seconds)
+    elif hours == 0:
+        return '%02d:%02d' % (minutes, seconds)
     else:
         return '%02d:%02d:%02d' % (hours, minutes, seconds)
 
