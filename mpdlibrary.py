@@ -131,35 +131,22 @@ class Library:
             albums.update(song.album.all())
         return (Album(album, self) for album in albums)
 
-    def ls(self, path, fslist=None):
+    def ls(self, path):
         '''Returns a list of songs and directories contained in the given path.'''
         if path.startswith('/'):
             path = path[1:]
-        if fslist is None:
-            fslist = self._filesystem
-        part, sep, path = path.partition('/')
-        if part == '':
-            if type(fslist.get('file', None)) in (str, unicode):
-                #return Song(self, fslist)
-                return fslist
+        fslist = self._fsNode(path)
+        for key, value in sorted(fslist.items()):
+            if 'file' in value:
+                yield File(value['file'], self)
             else:
-                #return [Dir(self, path) for path in fslist.keys()]
-                return fslist.keys()
-        fslist = fslist.get(part, {})
-        return self.ls(path, fslist)
+                yield Dir(path + '/' + key, self)
 
-    def attributes(self, path):
-        '''Returns whether path is a directory or a song file.'''
-        if path.startswith('/'):
-            path = path[1:]
+    def _fsNode(self, path):
         fslist = self._filesystem
-        for part in path.split('/'):
-            if part:
-                fslist = fslist[part]
-        if fslist.get('file', None) == path:
-            return 'file'
-        else:
-            return 'directory'
+        for part in (x for x in path.split('/') if x):
+            fslist = fslist.get(part, {})
+        return fslist
 
 def _sortAlbumSongs(x, y):
     # Sorting album songs by disc number, then by track number
@@ -403,7 +390,7 @@ class Song(dict, LibraryObject):
             else:
                 return Text('', self._library)
         elif item == 'isStream':
-            return self.file.startswith('http://')
+            return dict.get(self, 'file', '').startswith('http://')
         else:
             value = self._getAttr(item)
             if value is None:
@@ -435,25 +422,35 @@ class Song(dict, LibraryObject):
         return value.strip() if type(value) in (str, unicode) else value
 
 
-class Path(unicode, LibraryObject):
+class Path(LibraryObject, unicode):
     def __new__(cls, value, library=None):
-        return unicode.__new__(cls, value)
+        return unicode.__new__(cls, value.rsplit('/', 1)[-1])
 
-    def __init__(self, value, library):
-        LibraryObject.__init__(self, value, library)
-        if isinstance(value, Dir):
-            self._parent = value
+    @property
+    def absolute(self):
+        return self._value
 
+    @property
     def parent(self):
-        return self._parent.parent() + self._parent
+        return Dir('/'.join(self._value.split('/')[:-1]), self._library)
 
 class File(Path):
-    def dir(self):
-        return Dir(self.rsplit('/', 1)[0],
-                self._library)
+    @property
+    def song(self):
+        return Song(self._library._fsNode(self._value), self._library)
 
 class Dir(Path):
-    def ls(self):
-        return self._library.ls(self)
+    def __len__(self):
+        return len(self._library._fsNode(self._value))
 
+    def __iter__(self):
+        return self._library.ls(self._value)
 
+    def __getitem__(self, index):
+        if not hasattr(self, 'node'):
+            self.node = sorted(self._library._fsNode(self._value).items())
+        key, value = self.node[index]
+        if 'file' in value:
+            return File(value['file'], self._library)
+        else:
+            return Dir(self._value + '/' + key, self._library)
