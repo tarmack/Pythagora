@@ -257,6 +257,9 @@ class LibraryObject(object):
             raise AttributeError("LibraryObject '%s' has no attribute '%s'"
                     % (self.__class__.__name__, attr))
 
+    def __eq__(self, other):
+        return super(LibraryObject, self).__eq__(other)
+
 
 class Text(LibraryObject, unicode):
     def __new__(cls, value, library=None):
@@ -314,6 +317,9 @@ class Time(LibraryObject, int):
                 'minutes':  lambda value: value / 60,
                 'human':    self._format,
                 })
+
+    def __eq__(self, other):
+        return int(self) == other
 
     def _format(self, time):
         thour = time / 3600
