@@ -213,7 +213,7 @@ class RetrieverThread(threading.Thread, Retriever):
 
     def exit(self):
         self.running = False
-        self.event.set()
+        self.toFetch.put({})
         self.join()
 
 class ThreadedRetriever:

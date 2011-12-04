@@ -15,103 +15,148 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #-------------------------------------------------------------------------------
-from PyQt4.QtCore import SIGNAL, Qt
-from PyQt4.QtGui import QTreeWidgetItem
+from PyQt4.QtCore import SIGNAL, Qt, QAbstractItemModel, QModelIndex, QMimeData
+from PyQt4.QtGui import QIcon
 from PyQt4 import uic
 from time import time
-import os
+import cPickle as pickle
 
 import auxilia
 import PluginBase
+import mpdlibrary
 
 DATA_DIR = ''
+
+def getWidget(view, mpdclient, config, library):
+    return FileSystemForm(view, mpdclient, config, library)
 
 class FileSystemForm(PluginBase.PluginBase, auxilia.Actions):
     moduleName = 'F&ileSystem'
     moduleIcon = 'folder-sound'
 
     def load(self):
+        self.fileSystemModel = FileSystemModel(self.library)
         # Load and place the FileSystem form.
         if self.view.KDE:
             uic.loadUi(DATA_DIR+'ui/FileSystemForm.ui', self)
         else:
             uic.loadUi(DATA_DIR+'ui/FileSystemForm.ui.Qt', self)
+        self.filesystemTree.setModel(self.fileSystemModel)
 
         self.view.connect(self.view,SIGNAL('reloadLibrary'),self.reload)
-        self.view.connect(self.view,SIGNAL('clearForms'),self.filesystemTree.clear)
-
-        self.connect(self.filesystemTree, SIGNAL('itemExpanded(QTreeWidgetItem*)'), lambda item: item.loadChildren())
+        self.view.connect(self.view,SIGNAL('clearForms'),self.fileSystemModel.clear)
 
     def reload(self):
         try:
             self.view.setCursor(Qt.WaitCursor)
-            self.filesystemTree.setUpdatesEnabled(False)
             t = time()
-            self.__loadFileSystemView('/')
+            self.fileSystemModel.reload()
             print 'load FS took %.3f seconds' % (time() - t)
         finally:
-            self.filesystemTree.setUpdatesEnabled(True)
             self.view.setCursor(Qt.ArrowCursor)
 
 
+class FileSystemModel(QAbstractItemModel):
+    file_icon = QIcon(auxilia.PIcon('audio-x-generic'))
+    dir_icon = QIcon(auxilia.PIcon('folder-sound'))
 
-    def __loadFileSystemView(self, path):
-        parent = self.filesystemTree.invisibleRootItem()
-        self.filesystemTree.clear()
-        filelist = self.library.ls(path)
-        for name in filelist:
-            nextPath = os.path.join(path, name)
-            attr = self.library.attributes(nextPath)
-            item = FilesystemWidget(name, attr, self.library)
-            parent.addChild(item)
-        parent.sortChildren(0, 0)
-
-class FilesystemWidget(QTreeWidgetItem):
-    '''Widget used in the filesystem tree.'''
-    def __init__(self, text, attr, library):
+    def __init__(self, library):
+        QAbstractItemModel.__init__(self)
+        self.cache = {}
         self.library = library
-        QTreeWidgetItem.__init__(self)
-        self.setText(0, text)
-        if attr == 'file':
-            self.setIcon(0, auxilia.PIcon('audio-x-generic'))
+        self.root = mpdlibrary.Dir('', self.library)
+
+    def reload(self):
+        self.root = mpdlibrary.Dir('', self.library)
+        self.reset()
+
+    def clear(self):
+        self.root = None
+        self.cache = {}
+        self.reset()
+
+    def rowCount(self, parent):
+        if parent.isValid():
+            parent = parent.internalPointer()
+            return len(parent)
         else:
-            self.setChildIndicatorPolicy(QTreeWidgetItem.ShowIndicator)
-            self.setIcon(0, auxilia.PIcon('folder-sound'))
+            return len(self.root)
 
-    def getPath(self, path=''):
-        text = unicode(self.text(0))
-        if path == '':
-            path = text
+    def columnCount(self, parent):
+        return 1
+
+    def index(self, row, column, parent):
+        if parent.isValid():
+            parent = parent.internalPointer()
         else:
-            path = os.path.join(text, path)
-        parent = self.parent()
-        if parent:
-            return parent.getPath(path)
+            parent = self.root
+        return self.createIndex(row, column, parent[row])
+
+    def createIndex(self, row, column, item):
+        old = self.cache.get(item._value)
+        if old is None:
+            self.cache[item._value] = item
         else:
-            return path
+            item = old
+        return QAbstractItemModel.createIndex(self, row, column, item)
 
-    def getDrag(self):
-        song = self.library.ls(self.getPath())
-        if 'file' in song:
-            return [song]
-        songList = []
-        self.loadChildren()
-        for i in xrange(self.childCount()):
-            child = self.child(i)
-            songList.extend(child.getDrag())
-        return songList
+    def hasChildren(self, index):
+        if index.isValid():
+            item = index.internalPointer()
+        else:
+            item = self.root
+        return isinstance(item, mpdlibrary.Dir) and len(item) > 0
 
-    def loadChildren(self):
-        path = self.getPath()
-        filelist = self.library.ls(path)
-        for name in filelist:
-            nextPath = os.path.join(path, name)
-            attr = self.library.attributes(nextPath)
-            item = FilesystemWidget(name, attr, self.library)
-            self.addChild(item)
-        self.sortChildren(0, 0)
-        self.loadChildren = lambda : None
+    def parent(self, index):
+        if not index.isValid():
+            return QModelIndex()
+        item = index.internalPointer()
+        parent = item.parent
+        if parent == '':
+            return QModelIndex()
+        row = parent.parent.index(parent)
+        return self.createIndex(row, 0, parent)
 
+    def headerData(self, section, orientation, role):
+        if orientation == Qt.Horizontal:
+            if role == Qt.DisplayRole:
+                return 'File System'
 
-def getWidget(view, mpdclient, config, library):
-    return FileSystemForm(view, mpdclient, config, library)
+    def flags(self, index):
+        defaultFlags = QAbstractItemModel.flags(self, index)
+        if index.isValid():
+            return Qt.ItemIsDragEnabled | defaultFlags
+        else:
+            return defaultFlags
+
+    def data(self, index, role):
+        if index.isValid():
+            item = index.internalPointer()
+        else:
+            return
+        if role == Qt.DisplayRole:
+            return unicode(item) or '/'
+        if role == Qt.DecorationRole:
+            if isinstance(item, mpdlibrary.Dir):
+                return self.dir_icon
+            else:
+                return self.file_icon
+
+    def mimeData(self, indexes):
+        items = (index.internalPointer() for index in indexes if index.isValid())
+        uri_list = self._getURIs(items)
+        uri_list.sort()
+        data = QMimeData()
+        data.setData('mpd/uri', pickle.dumps(uri_list))
+        return data
+
+    def _getURIs(self, items, uri_list=None):
+        if uri_list is None:
+            uri_list = []
+        for item in items:
+            if isinstance(item, mpdlibrary.Dir):
+                self._getURIs(item, uri_list)
+            else:
+                uri_list.append(unicode(item.absolute))
+        return uri_list
+

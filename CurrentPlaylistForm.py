@@ -452,7 +452,7 @@ class PlayQueueModel(QAbstractListModel):
 
     def mimeTypes(self):
         ''' Returns the MIME types items dragged form this model get supplied with. '''
-        return ['mpd/playqueue_id']
+        return ['mpd/playqueue_id', 'mpd/uri']
 
     def mimeData(self, indexes):
         ''' Encodes the data for the items in indexes in MIME types for drag and drop actions. '''
@@ -468,7 +468,7 @@ class PlayQueueModel(QAbstractListModel):
         ''' Decodes the MIME data from a drop and inserts the items in the mod playqueue. '''
         self.lastEdit = time()
         if row == -1:
-            row = len(self._songs)-1
+            row = len(self._songs)
         if data.hasFormat('mpd/playqueue_id'):
             # Moving inside the play queue.
             id_list = pickle.loads(str(data.data('mpd/playqueue_id')))
@@ -481,10 +481,10 @@ class PlayQueueModel(QAbstractListModel):
             finally:
                 self.mpdclient.send('command_list_end')
             return True
-        elif data.hasFormat('mpd/uri_list'):
+        elif data.hasFormat('mpd/uri'):
             # List of uris to add, can be files from the DB or streams or
             # whatever, as long as mpd can add it to the play queue. 
-            uri_list = pickle.loads(str(data.data('mpd/uri_list')))
+            uri_list = pickle.loads(str(data.data('mpd/uri')))
             self.mpdclient.send('command_list_ok_begin')
             try:
                 for uri in reversed(uri_list):

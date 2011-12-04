@@ -454,3 +454,13 @@ class Dir(Path):
             return File(value['file'], self._library)
         else:
             return Dir(self._value + '/' + key, self._library)
+
+    def index(self, item):
+        item = unicode(item)
+        if not hasattr(self, 'node'):
+            self.node = sorted(self._library._fsNode(self._value).items())
+        for index, (path, subNode) in enumerate(self.node):
+            if path == item:
+                return index
+
+

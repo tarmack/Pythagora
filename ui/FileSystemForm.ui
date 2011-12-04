@@ -15,12 +15,18 @@
   </property>
   <layout class="QHBoxLayout" name="horizontalLayout">
    <item>
-    <widget class="QTreeWidget" name="filesystemTree">
+    <widget class="QTreeView" name="filesystemTree">
      <property name="contextMenuPolicy">
       <enum>Qt::ActionsContextMenu</enum>
      </property>
+     <property name="editTriggers">
+      <set>QAbstractItemView::NoEditTriggers</set>
+     </property>
      <property name="dragEnabled">
       <bool>true</bool>
+     </property>
+     <property name="dragDropMode">
+      <enum>QAbstractItemView::DragOnly</enum>
      </property>
      <property name="selectionMode">
       <enum>QAbstractItemView::ExtendedSelection</enum>
@@ -28,14 +34,21 @@
      <property name="selectionBehavior">
       <enum>QAbstractItemView::SelectItems</enum>
      </property>
+     <property name="iconSize">
+      <size>
+       <width>16</width>
+       <height>16</height>
+      </size>
+     </property>
+     <property name="verticalScrollMode">
+      <enum>QAbstractItemView::ScrollPerPixel</enum>
+     </property>
+     <property name="uniformRowHeights">
+      <bool>true</bool>
+     </property>
      <property name="animated">
       <bool>true</bool>
      </property>
-     <column>
-      <property name="text">
-       <string>Track</string>
-      </property>
-     </column>
     </widget>
    </item>
   </layout>
