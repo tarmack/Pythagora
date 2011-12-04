@@ -15,6 +15,8 @@
 # limitations under the License.
 #-------------------------------------------------------------------------------
 import locale
+import time
+import gc
 
 locale.setlocale(locale.LC_ALL, "")
 
@@ -32,6 +34,9 @@ class Library:
         self._albums = listDict(self)
         self._genres = listDict(self)
         self._filesystem = {}
+        start = time.time()
+        print 'Garbage collection %i freed items in %.3f seconds.' % (gc.collect(), time.time() - start)
+        print 'There are %i items which can not be deleted' % len(gc.garbage)
         # parse the list and prepare it for loading in the library browser and the file system view.
         for song in (x for x in mainlist if 'file' in x):
             self._songList.append(song)
