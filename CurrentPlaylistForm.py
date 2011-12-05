@@ -56,6 +56,7 @@ class CurrentPlaylistForm(QWidget, auxilia.Actions):
         self.playQueueProxy.setSourceModel(self.playQueue)
         self.playQueueProxy.setFilterCaseSensitivity(Qt.CaseInsensitive)
         self.playQueueProxy.setDynamicSortFilter(True)
+        self.playQueueProxy.setFilterRole(Qt.AccessibleTextRole)
         self.currentList.setModel(self.playQueueProxy)
         self.currentList.setItemDelegateForColumn(0, self.playQueueDelegate)
 
@@ -73,7 +74,7 @@ class CurrentPlaylistForm(QWidget, auxilia.Actions):
         # Connect to the view for double click action.
         self.connect(self.currentList, SIGNAL('doubleClicked(const QModelIndex &)'), self._playSong)
 
-        self.connect(self.currentFilter,SIGNAL('textEdited(QString)'),self.playQueueProxy.setFilterRegExp)
+        self.connect(self.currentFilter,SIGNAL('textEdited(QString)'),self.playQueueProxy.setFilterFixedString)
 
         self.connect(self.currentRemove,SIGNAL('clicked()'),self._removeSelected)
         self.connect(self.currentClear,SIGNAL('clicked()'),self._clearCurrent)
@@ -545,6 +546,13 @@ class PlayQueueModel(QAbstractListModel):
             if row == self.playing:
                 font.setBold(True)
             return font
+        if role == Qt.AccessibleTextRole:
+            song = self._songs[row]
+            if row != self.playing and song.isStream:
+                return unicode(song.station)
+            else:
+                return '%s by %s' % (unicode(song.title), unicode(song.artist))
+
 
     def _getTooltip(self, index):
         ''' Returns the text that should be used for the tooltip of the item at `index`. '''
