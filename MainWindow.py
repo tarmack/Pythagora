@@ -22,6 +22,7 @@ from PyQt4 import uic
 from time import time
 import sys
 import os
+import cPickle as pickle
 
 import CurrentPlaylistForm
 import plugins
@@ -76,7 +77,7 @@ class View(QMainWindow, auxilia.Actions):
         self.mpdButton.setPopupMode(QToolButton.InstantPopup)
         self.mpdButton.setIcon(auxilia.PIcon('network-workgroup'))
         self.mpdButton.setMenu(self.menuMPD)
-        self.reloadLibrary = self.actionLibReload(self.menuMPD, self.__libReload)
+        self.reloadLibrary = self.actionLibReload(self.menuMPD, self._libReload)
         self.updateLibrary = self.actionLibUpdate(self.menuMPD, lambda: self.mpdclient.send('update'))
         self.rescanLibrary = self.actionLibRescan(self.menuMPD, lambda: self.mpdclient.send('rescan'))
         # Create 'Outputs' menu.
@@ -136,9 +137,9 @@ class View(QMainWindow, auxilia.Actions):
 
         # Instantiate timer
         self.tabTimer = QTimer()
-        self.connect(self.tabTimer, SIGNAL('timeout()'), self.__selectTab)
+        self.connect(self.tabTimer, SIGNAL('timeout()'), self._selectTab)
 
-        # Overload the default dragEvents. (none?)
+        # Overload the default dragEvents.
         self.tabs.dragLeaveEvent = self.dragLeaveEvent
         self.tabs.dragEnterEvent = self.dragEnterEvent
         self.tabs.dragMoveEvent = self.dragMoveEvent
@@ -162,13 +163,13 @@ class View(QMainWindow, auxilia.Actions):
         self.tabPos = tabPos
 
 
-    def __selectTab(self):
+    def _selectTab(self):
         '''Changes the view to the tab where the mouse was hovering above.'''
         index = self.tabs.tabBar().tabAt(self.tabPos)
         self.tabs.setCurrentIndex(index)
         self.tabTimer.stop()
 
-    def __libReload(self):
+    def _libReload(self):
         self.mpdclient.send('listallinfo', callback=
                 lambda mainlist: self.emit(SIGNAL('libraryReload'), mainlist))
 
@@ -307,27 +308,37 @@ class PlayerForm(QWidget):
         self.songLabel = SongLabel()
         self.setAcceptDrops(True)
         self.titleLayout.addWidget(self.songLabel)
-        self.progress.mouseReleaseEvent = self.__mouseReleaseEvent
-        self.progress.mouseMoveEvent = self.__mouseMoveEvent
+        self.progress.mouseReleaseEvent = self._mouseReleaseEvent
+        self.progress.mouseMoveEvent = self._mouseMoveEvent
         self.progress.setMouseTracking(True)
         self.connect(self, SIGNAL('songSeek'), self.songSeek)
 
     def dragEnterEvent(self, event):
-        if hasattr(event.source().selectedItems()[0], 'getDrag'):
+        if event.provides('mpd/uri'):
             event.accept()
 
     def dropEvent(self, event):
-        event.accept()
-        self.view.currentList.dropEvent(event, clear=True)
-        self.mpdclient.send('play')
+        if event.provides('mpd/uri'):
+            event.accept()
+            data = event.mimeData()
+            uri_list = pickle.loads(str(data.data('mpd/uri')))
+            self.mpdclient.send('clear')
+            self.mpdclient.send('addid', (uri_list.pop(0),), callback=
+                    lambda song_id: self.mpdclient.send('playid', (song_id,)))
+            try:
+                self.mpdclient.send('command_list_ok_begin')
+                for uri in uri_list:
+                    self.mpdclient.send('addid', (uri,))
+            finally:
+                return self.mpdclient.send('command_list_end')
 
-    def __mouseReleaseEvent(self, event):
+    def _mouseReleaseEvent(self, event):
         if event.button() == Qt.LeftButton:
             position = float(event.x()) / int(self.progress.geometry().width())
             self.mpdclient.send('currentsong', callback=
                     lambda currentsong: self.emit(SIGNAL('songSeek'), currentsong, position))
 
-    def __mouseMoveEvent(self, event):
+    def _mouseMoveEvent(self, event):
         position = float(event.x()) / int(self.progress.geometry().width())
         seconds = position * self.progress.maximum()
         self.progress.setToolTip(auxilia.formatTime(seconds))
