@@ -457,12 +457,13 @@ class PlayQueueModel(QAbstractListModel):
 
     def mimeData(self, indexes):
         ''' Encodes the data for the items in indexes in MIME types for drag and drop actions. '''
-        id_list = [(index.row(), int(self._songs[index.row()].id)) for index in indexes]
-        id_list.sort()
-        if len(id_list) == 0:
+        row_list = [index.row() for index in indexes]
+        row_list.sort()
+        if len(row_list) == 0:
             return 0
         data = QMimeData()
-        data.setData('mpd/playqueue_id', pickle.dumps(id_list))
+        data.setData('mpd/playqueue_id', pickle.dumps([(row, int(self._songs[row].id)) for row in row_list]))
+        data.setData('mpd/uri', pickle.dumps([self._songs[row].file.absolute for row in row_list]))
         return data
 
     def dropMimeData(self, data, action, row, column, parent):
