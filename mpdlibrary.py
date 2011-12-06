@@ -23,30 +23,34 @@ locale.setlocale(locale.LC_ALL, "")
 
 class Library:
     '''Supplies a storage model for the mpd database.'''
-    def __init__(self, mainlist=[], ignoreCase=False):
-        self.ignoreCase = ignoreCase
+    def __init__(self, mainlist=[]):
         self.reload(mainlist)
 
     def reload(self, mainlist):
         '''Reloads the current instance with the new list from MPD. Returns the instance for your convenience'''
-        self._songList = []
-        self._artists = listDict(self)
-        self._albums = listDict(self)
-        self._genres = listDict(self)
+        self._songList = [song for song in mainlist if 'file' in song]
+        self._artists = ListDict()
+        self._albums = ListDict()
+        self._genres = ListDict()
         self._filesystem = {}
+        # Force the collection of cyclic references to the old objects.
         start = time.time()
-        print 'Garbage collection %i freed items in %.3f seconds.' % (gc.collect(), time.time() - start)
-        print 'There are %i items which can not be deleted' % len(gc.garbage)
+        print 'info: Garbage collection %i freed items in %.3f seconds.' % (gc.collect(), time.time() - start)
         # parse the list and prepare it for loading in the library browser and the file system view.
-        for song in (x for x in mainlist if 'file' in x):
-            self._songList.append(song)
+        for index, song in enumerate(self._songList):
             album = song.get('album', 'None')
-            self._albums[album] = song
-            artist = _getField(song, ('artist', 'performer', 'composer'), 'Unknown')
-            self._artists[artist] = song
+            self._albums[album] = index
+
+            artist = 'Unknown'
+            for field in ('artist', 'performer', 'composer'):
+                if field in song:
+                    artist = song[field]
+                    break
+            self._artists[artist] = index
+
             genre = song.get('genre', None)
             if genre:
-                    self._genres[genre] = song
+                    self._genres[genre] = index
 
             # Build the file system tree.
             fslist = self._filesystem
@@ -54,7 +58,7 @@ class Library:
             while path:
                 part = path.pop(0)
                 if path == []:
-                    fslist[part] = song
+                    fslist[part] = index
                 else:
                     fslist[part] = fslist.get(part, {})
                     fslist = fslist[part]
@@ -78,7 +82,7 @@ class Library:
 
     def artistSongs(self, artist):
         '''Returns a list containing all songs from the supplied artist.'''
-        return (Song(song, self) for song in self._artists.get(artist, []))
+        return (Song(self._songList[index], self) for index in self._artists.get(artist, []))
 
     def artistAlbums(self, artist):
         '''Returns a list containing all albums the artist is listed on.'''
@@ -99,7 +103,7 @@ class Library:
         The optional artist argument can be used to only get the songs of a particular artist or list of artists.'''
         if type(artists) in (str, unicode):
             artists = [artists]
-        songs = (Song(song, self) for song in self._albums.get(album, []))
+        songs = (Song(self._songList[index], self) for index in self._albums.get(album, []))
         for song in sorted(songs, _sortAlbumSongs):
             if artists == [] or song.artist in artists:
                 yield song
@@ -120,7 +124,7 @@ class Library:
 
     def genreSongs(self, genre):
         '''Returns a list containing all songs in the given genre.'''
-        return (Song(song, self) for song in self._genres.get(genre.lower(), []))
+        return (Song(self._songList[index], self) for index in self._genres.get(genre.lower(), []))
 
     def genreArtists(self, genre):
         '''Returns a list containing all artists in the given genre.'''
@@ -142,77 +146,33 @@ class Library:
             path = path[1:]
         fslist = self._fsNode(path)
         for key, value in sorted(fslist.items()):
-            if 'file' in value:
-                yield File(value['file'], self)
+            if isinstance(value, int):
+                yield File(self._songList[value]['file'], self)
             else:
                 yield Dir(path + '/' + key, self)
 
     def _fsNode(self, path):
         fslist = self._filesystem
         for part in (x for x in path.split('/') if x):
-            fslist = fslist.get(part, {})
+            fslist = fslist.get(part)
         return fslist
 
 def _sortAlbumSongs(x, y):
     # Sorting album songs by disc number, then by track number
     return cmp(int(x.disc), int(y.disc)) or cmp(int(x.track), int(y.track))
 
-def _getField(song, fields, alt):
-    value = alt
-    if ('artist' in fields or 'title' in fields) and song['file'].startswith('http://'):
-        # mpd puts stream metadata in the title attribute as "{artist} - {song}"
-        value = song.get('title', '')
-        if ' - ' in value:
-            artist, title = value.split(' - ', 1)
-            if 'artist' in fields:
-                value = artist
-            if 'title' in fields:
-                value = title
-    else:
-        for field in fields:
-            if field in song:
-                value = song[field]
-                break
-    if getattr(value, '__iter__', False):
-        return value[0].strip()
-    else:
-        return value.strip()
 
-
-class listDict(dict):
-    '''A dictionary for storing the library data.
-
-    It is able to do case insensitive and fuzzy key lookup. It takes a parent
-    argument, this parent must provide the configuration to determine which
-    type of lookup to perform.
-    '''
-    def __init__(self, parent):
-        self._lcase = {}
-        self.parent = parent
-        dict.__init__(self)
-
-    def __setitem__(self, key, value):
-        if type(value) != list:
-            value = [value]
-        if type(key) != list:
-            key = [key]
-        self._setitems(self, key, value)
-        key = [x.lower() for x in key]
-        self._setitems(self._lcase, key, value)
-
-    def _setitems(self, store, keys, values):
+class ListDict(dict):
+    '''A dictionary for storing the library data.'''
+    def __setitem__(self, keys, values):
+        if type(values) is not list:
+            values = [values]
+        if type(keys) is not list:
+            keys = [keys]
         for key in keys:
-            part = store.get(key, [])
-            # filter all that are already in there.
+            part = self.get(key, [])
             values = [x for x in values if x not in part]
-            dict.__setitem__(store, key, part + values)
-
-    def __getitem__(self, key):
-        store = self
-        if self.parent.ignoreCase:
-            store = self._lcase
-            key = key.lower()
-        return dict.__getitem__(store, key)
+            dict.__setitem__(self, key, part + values)
 
 
 class LibraryObject(object):
@@ -455,8 +415,8 @@ class Dir(Path):
         if not hasattr(self, 'node'):
             self.node = sorted(self._library._fsNode(self._value).items())
         key, value = self.node[index]
-        if 'file' in value:
-            return File(value['file'], self._library)
+        if type(value) is not int:
+            return File(self._library._songList[value]['file'], self._library)
         else:
             return Dir(self._value + '/' + key, self._library)
 
