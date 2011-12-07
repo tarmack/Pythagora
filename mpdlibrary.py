@@ -124,7 +124,7 @@ class Library:
 
     def genreSongs(self, genre):
         '''Returns a list containing all songs in the given genre.'''
-        return (Song(self._songList[index], self) for index in self._genres.get(genre.lower(), []))
+        return (Song(self._songList[index], self) for index in self._genres.get(genre, []))
 
     def genreArtists(self, genre):
         '''Returns a list containing all artists in the given genre.'''
@@ -176,23 +176,16 @@ class ListDict(dict):
 
 
 class LibraryObject(object):
+    _attributes = {}
     def __new__(cls, value, library):
-        if not value:
-            value = ''
-        if getattr(value, '__iter__', False):
-            string = value[0]
-        else:
-            string = value
-        return unicode.__new__(cls, string)
+        if type(value) is not cls and getattr(value, '__iter__', False):
+            value = value[0]
+        return super(LibraryObject, cls).__new__(cls, value)
 
     def __init__(self, value, library):
-        self._attributes = {}
         self._library = library
         if not value:
-            if isinstance(self, unicode):
-                value = u''
-            elif isinstance(self, int):
-                value = 0
+            value = self
         self._value = value
 
     def all(self):
@@ -203,77 +196,54 @@ class LibraryObject(object):
 
     def __getattr__(self, attr):
         try:
-            funt = self._attributes[attr]
+            funt = self._attributes[attr].__get__(self._library)
             return funt(self)
         except KeyError:
             raise AttributeError("LibraryObject '%s' has no attribute '%s'"
                     % (self.__class__.__name__, attr))
 
-    def __eq__(self, other):
-        return super(LibraryObject, self).__eq__(other)
-
+    def __call__(self):
+        return self
 
 class Text(LibraryObject, unicode):
-    def __new__(cls, value, library=None):
-        return LibraryObject.__new__(cls, value, library)
-
-    def __init__(self, value, library=None):
-        LibraryObject.__init__(self, value, library)
+    pass
 
 class Artist(LibraryObject, unicode):
-    def __init__(self, value, library):
-        LibraryObject.__init__(self, value, library)
-        if library:
-            self._attributes.update({
-                    'songs':    library.artistSongs,
-                    'albums':   library.artistAlbums,
-                    'genres':   library.artistGenres,
-                    })
+    _attributes = {
+            'songs':    Library.artistSongs,
+            'albums':   Library.artistAlbums,
+            'genres':   Library.artistGenres,
+            }
 
 class Album(LibraryObject, unicode):
-    def __init__(self, value, library):
-        LibraryObject.__init__(self, value, library)
-        if library:
-            self._attributes.update({
-                    'songs':    library.albumSongs,
-                    'artists':  library.albumArtists,
-                    'genres':   library.albumGenres,
-                    })
+    _attributes = {
+            'songs':    Library.albumSongs,
+            'artists':  Library.albumArtists,
+            'genres':   Library.albumGenres,
+            }
 
 class Genre(LibraryObject, unicode):
-    def __new__(cls, value, library):
-        string = LibraryObject.__new__(cls, value, library)
-        return unicode.__new__(cls, string.lower())
+    _attributes = {
+            'songs':    Library.genreSongs,
+            'artists':  Library.genreArtists,
+            'albums':   Library.genreAlbums,
+            }
 
     def __init__(self, value, library):
         LibraryObject.__init__(self, value, library)
         if type(value) != list:
             value = [value]
-        self.value = [x.lower() for x in value if type(value) in (str, unicode)]
-        if library:
-            self._attributes.update({
-                    'songs':    library.genreSongs,
-                    'artists':  library.genreArtists,
-                    'albums':   library.genreAlbums,
-                    })
+        self._value = [x for x in value if type(value) in (str, unicode)]
 
 class Time(LibraryObject, int):
-    def __new__(cls, value, library=None):
-        return int.__new__(cls, value)
+    _attributes = {
+            'hours':    lambda lib, value: value / 3600,
+            'minutes':  lambda lib, value: value / 60,
+            }
 
-    def __init__(self, value, library=None):
-        LibraryObject.__init__(self, value, library)
-        self._value = int(value)
-        self._attributes.update({
-                'hours':    lambda value: value / 3600,
-                'minutes':  lambda value: value / 60,
-                'human':    self._format,
-                })
-
-    def __eq__(self, other):
-        return int(self) == other
-
-    def _format(self, time):
+    @property
+    def human(self):
+        time = self
         thour = time / 3600
         time -= thour * 3600
         tmin = time / 60
@@ -388,16 +358,12 @@ class Song(dict, LibraryObject):
 
 
 class Path(LibraryObject, unicode):
+    _attributes = {
+            'absolute': lambda lib, self: self._value,
+            'parent': lambda lib, self: Dir('/'.join(self._value.split('/')[:-1]), lib)
+            }
     def __new__(cls, value, library=None):
         return unicode.__new__(cls, value.rsplit('/', 1)[-1])
-
-    @property
-    def absolute(self):
-        return self._value
-
-    @property
-    def parent(self):
-        return Dir('/'.join(self._value.split('/')[:-1]), self._library)
 
 class File(Path):
     @property
@@ -415,7 +381,7 @@ class Dir(Path):
         if not hasattr(self, 'node'):
             self.node = sorted(self._library._fsNode(self._value).items())
         key, value = self.node[index]
-        if type(value) is not int:
+        if type(value) is int:
             return File(self._library._songList[value]['file'], self._library)
         else:
             return Dir(self._value + '/' + key, self._library)
