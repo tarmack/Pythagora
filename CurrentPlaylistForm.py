@@ -562,9 +562,9 @@ class PlayQueueModel(QAbstractListModel):
         ''' Returns the text that should be used for the tooltip of the item at `index`. '''
         song = self._songs[index]
         if song.isStream:
-            return "Station:\t %s\nurl:\t %s" % (song.station, song.file)
+            return "Station:\t %s\nurl:\t %s" % (song.station, song.file.absolute)
         else:
-            return "Album:\t %s\nTime:\t %s\nFile:\t %s" % (song.album, song.time.human , song.file)
+            return "Album:\t %s\nTime:\t %s\nFile:\t %s" % (song.album, song.time.human , song.file.absolute)
 
     def id_index(self, id):
         ''' Returns the index in the playqueue for the song with `id`. '''
