@@ -171,6 +171,8 @@ class MPDThread(MPDClientBase, threading.Thread):
                         self._commands['noidle'] = self._fetch_list
                 rtn = self.noidle()
                 self._commands['noidle'] = None
+                if rtn == []:
+                    rtn = ['timeout']
             except socket.timeout:
                 raise ConnectionError("Connection timed out")
         finally:

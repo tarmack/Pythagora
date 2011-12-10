@@ -139,19 +139,16 @@ class Manager():
         if self.view.shuttingDown:
             print 'debug: callback aborted, application is closing down.'
             return
-        if type(changes) == list:
+        if isinstance(changes, Exception):
+            print 'debug: idle callback - got exception: ', changes
+            self.view.emit(SIGNAL('ConnectionError()'))
+        elif changes and type(changes) == list:
             self.mpdclient.send('status', callback=
                     lambda status, changes=changes: self.view.emit(SIGNAL('update'), changes, status))
-            # The slots will be executed asynchronously so we use a timer to
-            # schedule the next idle call after all events have been processed.
-            if self.idleTimer.timerId() < 0:
-                self.idleTimer.start()
-        elif isinstance(changes, Exception):
-            print 'debug: idle callback - got exception: ', changes
-            try:
-                raise changes
-            except:
-                self.view.emit(SIGNAL('ConnectionError()'))
+        # The slots will be executed asynchronously so we use a timer to
+        # schedule the next idle call after all events have been processed.
+        if self.idleTimer.timerId() < 0:
+            self.idleTimer.start()
 
     def KeyPressEvent(self, event):
         if event.modifiers() == Qt.ControlModifier:
@@ -242,7 +239,7 @@ class Manager():
             if len(self.config.server) > 3 and self.config.server[3] != '':
                 self.mpdclient.send('password', (self.config.server[3],))
             self.view.serverLabel.setText('Connected to %s' % self.config.server[0])
-            self.callback(['database', 'playlist', 'stored_playlist', 'player', 'mixer', 'options'])
+            self.callback(['mixer', 'options', 'player', 'playlist', 'database', 'stored_playlist'])
         self.view.setCursor(Qt.ArrowCursor)
         self.firstConnect = False
 
@@ -314,14 +311,11 @@ class Update:
         if not status:
             return
         self.timer.start(1000)
-        if changes:
-            for change in changes:
-                try:
-                    getattr(self, change)(status)
-                except AttributeError:
-                    print "error: Update received change group '{0}' which is not implemented.".format(change)
-        else:
-            self.player(status)
+        for change in changes:
+            try:
+                getattr(self, change)(status)
+            except AttributeError:
+                print "error: Update received change group '{0}' which is not implemented.".format(change)
 
     def progress(self):
         if self.mpdclient.connected():
@@ -337,6 +331,9 @@ class Update:
     def playlist(self, status):
         self.mpdclient.send('plchanges', (self.view.currentList.playQueue.version,), callback=
                 lambda plist: self.view.emit(SIGNAL('playlistChanged'), plist, status))
+
+    def timeout(self, status):
+        self.player(status)
 
     def player(self, status):
         #try:
