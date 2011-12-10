@@ -16,7 +16,7 @@
 # limitations under the License.
 #-------------------------------------------------------------------------------
 from PyQt4.QtCore import SIGNAL, Qt, QAbstractListModel, QAbstractItemModel, QModelIndex, QMimeData
-from PyQt4.QtGui import QHeaderView, QSortFilterProxyModel, QAbstractProxyModel
+from PyQt4.QtGui import QHeaderView, QSortFilterProxyModel, QAbstractProxyModel, QFontMetrics, QFont
 from PyQt4 import uic
 from time import time
 import cPickle as pickle
@@ -68,6 +68,7 @@ class LibraryForm(PluginBase.PluginBase, auxilia.Actions):
         self.trackProxy.setFilterKeyColumn(1)
         self.trackView.setModel(self.trackProxy)
         self.trackView.horizontalHeader().setResizeMode(1, QHeaderView.Stretch)
+        self.trackView.verticalHeader().setDefaultSectionSize(QFontMetrics(QFont()).height())
 
         self.libSplitter_1.setSizes(self.config.libSplit1)
         self.libSplitter_2.setSizes(self.config.libSplit2)
