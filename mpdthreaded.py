@@ -46,12 +46,14 @@ class MPDClient():
     the first argument to the callback function.
     '''
     def __init__(self):
-        self.connection = MPDThread(None, None, None, None)
+        self._connection = None
+        self._blocked_event = threading.Event()
+        self._blocked_value = None
 
     def __getattr__(self, command):
-        if hasattr(self.connection, command):
+        if hasattr(self._connection, command):
             if self.connected():
-                return lambda *args: self.connection.doBlocking(command, args)
+                return lambda *args: self._doBlocking(command, args)
             else:
                 raise ConnectionError('Not connected.')
         else:
@@ -64,21 +66,42 @@ class MPDClient():
         first argument and additional arguments from the tuple given in
         callbackArgs.
         '''
-        self.connection.send(command, args, callback, callbackArgs)
+        self._connection.send(command, args, callback, callbackArgs)
+
+    def _doBlocking(self, command, args):
+        '''Sends the command to the mpd server and blocks until the results are
+        available.
+        '''
+        print 'debug: blocking on', command, ' with arguments ', args
+        if not self.connected():
+            raise ConnectionError('Not connected')
+        self.send(command, args, callback=self._returnBlocking)
+        self._blocked_event.wait()
+        value = self._blocked_value
+        self._blocked_value = None
+        self._blocked_event.clear()
+        return value
+
+    def _returnBlocking(self, value):
+        self._blocked_value = value
+        self._blocked_event.set()
 
     def connect(self, server, port, callback=None, callbackArgs=()):
         '''Spawn a new connection thread connected to server on port.
         When a connection is established or an error occurred the function
         given as callback is called.
         '''
-        self.connection.abort = True
-        self.connection = MPDThread(server, port, callback, callbackArgs)
+        try:
+            self._connection.abort = True
+        except AttributeError:
+            pass
+        self._connection = MPDThread(server, port, callback, callbackArgs)
 
     def connected(self):
         '''Returns True when the connection thread is running and has
         established a connection.
         '''
-        return self.connection.is_alive() and not self.connection.connecting
+        return self._connection and self._connection.is_alive() and not self._connection.connecting
 
     def disconnect(self):
         '''Closes the current connection and exits the thread.
@@ -86,8 +109,8 @@ class MPDClient():
         work for that command is done. It will discard any subsequent commands
         in the queue.
         '''
-        self.connection.abort = True
-        self.connection.send('close', (), None, ())
+        self._connection.abort = True
+        self._connection.send('close', (), None, ())
 
 class MPDThread(MPDClientBase, threading.Thread):
     '''This class represents the interface thread to the mpd server.
@@ -188,18 +211,6 @@ class MPDThread(MPDClientBase, threading.Thread):
                     self.queue.get()
                     self.queue.task_done()
                 sys.exit(1)
-
-    def doBlocking(self, command, args):
-        '''Sends the command to the mpd server and blocks until the results are
-        available.
-        '''
-        print 'debug: blocking on', command, ' with arguments ', args
-        if self.connecting:
-            raise ConnectionError('Not connected yet.')
-        if command != 'noidle' and self._idle:
-            self._write_proxy('noidle', [])
-        self.queue.join()
-        return self.__do(command, args)
 
     def __do(self, command, args):
         try:
