@@ -58,7 +58,7 @@ class MPDClient():
             raise AttributeError("'%s' object has no attribute '%s'" %
                                  (self.__class__.__name__, command))
 
-    def send(self, command, args=(), callback=None, callbackArgs=None):
+    def send(self, command, args=(), callback=None, callbackArgs=()):
         '''Put the command on the command queue.
         If supplied the callback argument is called with the results as its
         first argument and additional arguments from the tuple given in
@@ -66,7 +66,7 @@ class MPDClient():
         '''
         self.connection.send(command, args, callback, callbackArgs)
 
-    def connect(self, server, port, callback=None, callbackArgs=None):
+    def connect(self, server, port, callback=None, callbackArgs=()):
         '''Spawn a new connection thread connected to server on port.
         When a connection is established or an error occurred the function
         given as callback is called.
@@ -87,7 +87,7 @@ class MPDClient():
         in the queue.
         '''
         self.connection.abort = True
-        self.connection.send('close')
+        self.connection.send('close', (), None, ())
 
 class MPDThread(MPDClientBase, threading.Thread):
     '''This class represents the interface thread to the mpd server.
@@ -98,17 +98,19 @@ class MPDThread(MPDClientBase, threading.Thread):
         self.daemon = True
         self.queue = Queue.PriorityQueue(256)
         self._lock = threading.RLock()
-        super(MPDThread, self).__init__()
+        MPDClientBase.__init__(self)
         self.connecting = False
         self.exit = False
         self.abort = False
         self.priority = 0
+        self.callbackQueue = Queue.Queue()
+        self.callbackThread = CallbackThread(self.callbackQueue)
         if server != None:
             self.connecting = True
             self.send('connect', (server, port), callback, callbackArgs)
             self.start()
 
-    def send(self, command, args=(), callback=None, callbackArgs=None):
+    def send(self, command, args, callback, callbackArgs):
         '''Put the command on the command queue.
         If supplied the callback argument is called with the results as its
         first argument and additional arguments from the tuple given in
@@ -172,13 +174,11 @@ class MPDThread(MPDClientBase, threading.Thread):
                 self.connecting = False
             if self.abort:
                 self.exit = True
-            elif callback == None:
-                pass
-            elif callbackArgs == None:
-                callback(value)
-            else:
-                callback(value, *callbackArgs)
+            elif callback is not None:
+                #callback(value, *callbackArgs)
+                self.callbackQueue.put((callback, (value,) + callbackArgs))
             if self.exit:
+                self.callbackQueue.put((sys.exit, (0,)))
                 try:
                     self.__do('close', ())
                     self.__do('disconnect', ())
@@ -257,3 +257,15 @@ class MPDThread(MPDClientBase, threading.Thread):
         def _write_proxy(self, command, args=[]):
             self._write_command(command, args)
 
+
+class CallbackThread(threading.Thread):
+    def __init__(self, queue):
+        threading.Thread.__init__(self)
+        self.daemon = True
+        self._queue = queue
+        self.start()
+
+    def run(self):
+        while True:
+            func, args = self._queue.get()
+            func(*args)
