@@ -411,7 +411,10 @@ class Update:
         if self.config.showNotification and self.state != 'stop':
             if not self.dbusNotification:
                 self._setupNotifications()
-            self.showNotification(icon, label)
+            try:
+                self.showNotification(icon, label)
+            except:
+                self.dbusNotification = None
 
     def showNotification(self, icon, label):
         self.notificationHints.update({'image_path': icon})
