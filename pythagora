@@ -24,7 +24,6 @@ import time
 import thread
 import mutex
 import signal
-import gc
 
 import mpdthreaded as mpd
 import playControls
@@ -176,9 +175,6 @@ class Manager():
         if self.view.shuttingDown:
             return True
         self.view.emit(SIGNAL('clearForms'))
-        start = time.time()
-        print 'Garbage collection %i freed items in %.3f seconds.' % (gc.collect(), time.time() - start)
-        print 'There are %i items which can not be deleted' % len(gc.garbage)
         self.update.setProgress(0, 0)
         self.update.lastSongId = None
         server = self.config.server
