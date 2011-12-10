@@ -40,6 +40,8 @@ import mpdlibrary
 
 #==============================================================================
 
+EMPTY_SONG = mpdlibrary.Song({'pos': -1, 'file': ''}, None)
+
 def main():
     print 'debug:', sys.argv
     if MainWindow.KDE:
@@ -291,7 +293,7 @@ class Update:
     misses = 0
     errorCount = 0
     time = 0
-    lastSong = mpdlibrary.Song({}, None)
+    lastSong = EMPTY_SONG
     dbusNotification = None
     def __init__(self, view, mpdclient, config, library, playControls):
         self.pauseIcon = auxilia.PIcon("media-playback-pause")
@@ -302,7 +304,7 @@ class Update:
         self.library = library
         self.playControls = playControls
         self.view.connect(self.view, SIGNAL('update'), self.update)
-        self.view.connect(self.view, SIGNAL('_currentsong'), self._currentsong)
+        self.view.connect(self.view, SIGNAL('currentSong'), self.setSongLabel)
         # Set the progress timer up.
         self.timer = QTimer()
         self.view.connect(self.timer, SIGNAL("timeout()"), self.progress)
@@ -336,40 +338,28 @@ class Update:
         self.player(status)
 
     def player(self, status):
-        #try:
         if self.state != status['state']:
             self.__setPlayerState(status['state'])
-        # if we're stopped, just call it quits
         if status['state'] == 'stop':
-            self.view.emit(SIGNAL('currentSong'), {'pos':-1})
-            self.lastSong = mpdlibrary.Song({}, self.library)
             self.setProgress(0, 0)
-            self.setSongLabel('Connected to %s.' % self.config.server[0])
             self.view.playerForm.songLabel.setBitrate(None)
-            return
-        if status['songid'] != self.lastSong.get('id') or self.lastSong.isStream:
-            self.mpdclient.send('currentsong', callback=
-                    lambda currentsong: self.view.emit(SIGNAL('_currentsong'), mpdlibrary.Song(currentsong, self.library)))
-        self.view.playerForm.songLabel.setBitrate(status['bitrate'])
-        # format times
-        cs, ss = status['time'].split(':')
-        self.setProgress(cs, ss)
+            currentSong = EMPTY_SONG
+        else:
+            self.setProgress(*status['time'].split(':'))
+            self.view.playerForm.songLabel.setBitrate(status['bitrate'])
+            try:
+                currentSong = self.view.currentList.playQueue[int(status['song'])]
+            except IndexError:
+                currentSong = mpdlibrary.Song(self.mpdclient.currentsong(), self.library)
+                currentSong.iconPath = ''
+        if self.lastSong != currentSong:
+            self.view.emit(SIGNAL('currentSong'), currentSong)
+            self.lastSong = currentSong
+        if hasattr(self.view.trayIcon, 'toolTipIconName'):
+            if self.view.trayIcon.toolTipIconName() != currentSong.iconPath:
+                self.view.trayIcon.setToolTipIconByName(currentSong.iconPath)
         # Check if volume chaged behind our back.
         self.mixer(status)
-
-    def _currentsong(self, currentsong):
-        self.view.emit(SIGNAL('currentSong'), currentsong)
-        if (currentsong.isStream and
-                self.lastSong.title == currentsong.title and
-                self.lastSong.artist == currentsong.artist):
-            return # stream metadata hasn't changed, so don't update
-        self.lastSong = currentsong
-        self.setSongLabel(
-                currentsong.title,
-                currentsong.artist,
-                currentsong.album,
-                currentsong.station
-                )
 
     def mixer(self, status):
         volumeStatus = int(status['volume'])
@@ -393,26 +383,30 @@ class Update:
         start = time.time()
         self.mpdclient.send('listallinfo', callback=update)
 
-    def setSongLabel(self, title='', artist='', album='', station=''):
-        if album == 'None':
-            album = ''
-        self.view.playerForm.songLabel.setText(title, artist, album, station)
-        if station and station != title:
-            station = 'on <i>%s</i>' % station
+    def setSongLabel(self, song):
+        if song == EMPTY_SONG:
+            label = 'Connected to %s.' % self.config.server[0]
+            self.view.playerForm.songLabel.setText(label)
         else:
-            station = ''
-        if title:
-            title = '<b><big>%s</big></b>' % title
-        if artist:
-            artist = 'by <big>%s</big>' % artist
-        if album:
-            album = 'from <i>%s</i>' % album
-        label = '<br>'.join((item for item in (title, artist, album, station) if item))
-        current = self.view.currentList.playingItem()
-        if current:
-            icon = current.iconPath
-        else:
-            icon = self.view.appIcon
+            title = song.title
+            artist = song.artist
+            album = song.album
+            station = song.station
+            if album == 'None':
+                album = ''
+            self.view.playerForm.songLabel.setText(title, artist, album, station)
+            if station and station != title:
+                station = 'on <i>%s</i>' % station
+            else:
+                station = ''
+            if title:
+                title = '<b><big>%s</big></b>' % title
+            if artist:
+                artist = 'by <big>%s</big>' % artist
+            if album:
+                album = 'from <i>%s</i>' % album
+            label = '<br>'.join((item for item in (title, artist, album, station) if item))
+        icon = song.iconPath or self.view.appIcon
         self.view.trayIcon.setToolTip(icon, label)
         if self.config.showNotification and self.state != 'stop':
             if not self.dbusNotification:
