@@ -107,7 +107,6 @@ class PlaylistForm(PluginBase.PluginBase, auxilia.Actions):
             event.accept()
 
     def _newListDropEvent(self, event):
-        print 'dropped new playlist'
         if event.provides('mpd/uri'):
             event.accept()
             parent = self._newList()
@@ -166,11 +165,9 @@ class PlaylistForm(PluginBase.PluginBase, auxilia.Actions):
         self.playlistList.setCurrentIndex(QModelIndex())
 
     def _removeSongs(self):
-        print 'removing song.', len(self.songList.selectedIndexes())
         self.mpdclient.send('command_list_ok_begin')
         try:
             for index in sorted(self.songList.selectionModel().selectedIndexes(), key=lambda i:i.row(), reverse=True):
-                print 'removing song.'
                 if index.column() == 1:
                     song = index.internalPointer()
                     self.mpdclient.send('playlistdelete', (song.playlist, index.row()))
@@ -240,21 +237,17 @@ class PlaylistModel(QAbstractItemModel):
 
     def update(self, playlists):
         '''Reload the lists from the server'''
-        print 'updateing playlists'
         for name, date in ((playlist['playlist'], playlist['last-modified']) for playlist in playlists):
             if name not in self._names:
-                print 'new playlist'
                 self.beginInsertRows(QModelIndex(), len(self._names), len(self._names))
                 self._names.append(name)
                 self.endInsertRows()
             if name in self._playlists and self._modified(name, date):
-                print name, self._playlists.keys()
                 self.mpdclient.send('listplaylistinfo', (name,),
                         callback=lambda pl, name=name: self.emit(SIGNAL('updatePlaylist'), name, pl))
             self._dates[name] = time.mktime(time.strptime(date, "%Y-%m-%dT%H:%M:%SZ"))
         if len(playlists) < len(self._names):
             self._names = [name for name in self._names if name in (pl['playlist'] for pl in playlists)]
-        print 'done updating playlists'
 
     def _modified(self, name, date):
         old_date = self._dates.get(name, 0)
@@ -270,27 +263,21 @@ class PlaylistModel(QAbstractItemModel):
                 # song is in there, check position.
                 index = pos + playlist[pos:].index(song)
                 if index != pos:
-                    #print 'moving row', index, pos
                     self.beginMoveRows(parent, index, index, parent, pos)
                     playlist.insert(pos, playlist.pop(index))
                     self.endMoveRows()
             else:
-                #print 'inserting row', name, pos
                 song = mpdlibrary.Song(song, self.library)
                 song.playlist = name
                 # New song, insert at the right place.
-                #print 'about to add rows to', parent.internalPointer(), parent.row()
                 self.beginInsertRows(parent, pos, pos)
                 playlist.insert(pos, song)
                 self.endInsertRows()
-                print 'done adding row'
         if pos+1 < len(playlist):
-            #print 'removing rows', pos+1, len(playlist)
             # Some songs have been deleted.
             self.beginRemoveRows(parent, pos+1, len(playlist)-1)
             del playlist[pos+1:]
             self.endRemoveRows()
-        print 'finished updating playlist', name
         self.emit(SIGNAL('layoutChanged()'))
 
     def hasChildren(self, index):
@@ -303,7 +290,6 @@ class PlaylistModel(QAbstractItemModel):
     def canFetchMore(self, parent):
         if parent.isValid():
             item = self._names[parent.row()]
-            print 'canFetchMore', item
             if item and not item in self._playlists:
                 return True
         return False
@@ -311,13 +297,11 @@ class PlaylistModel(QAbstractItemModel):
     def fetchMore(self, parent):
         if parent.isValid():
             name = self._names[parent.row()]
-            print 'fetchMore', name
             self._playlists[name] = []
             self.mpdclient.send('listplaylistinfo', (name,),
                     callback=lambda playlist, name=name: self.emit(SIGNAL('loadPlaylist'), name, playlist))
 
     def _loadPlaylist(self, name, playlist):
-        print 'loading playlist', name
         count = len(playlist)
         parent = self.createIndex(self._names.index(name), 0)
         playlist = [mpdlibrary.Song(s, self.library) for s in playlist]
@@ -328,7 +312,6 @@ class PlaylistModel(QAbstractItemModel):
         self._playlists[name] = playlist
         self.endInsertRows()
         self.emit(SIGNAL('layoutChanged()'))
-        print 'done loading playlist'
 
     def clear(self):
         self._playlists = {}
@@ -337,7 +320,6 @@ class PlaylistModel(QAbstractItemModel):
         self.reset()
 
     def setData(self, index, value, role):
-        print 'setData', unicode(value.toString()), role == Qt.EditRole
         if index.isValid() and role == Qt.EditRole and index.column() == 0:
             self.emit(SIGNAL('layoutAboutToBeChanged()'))
             value = unicode(value.toString())
@@ -349,7 +331,6 @@ class PlaylistModel(QAbstractItemModel):
                     self.endRemoveRows()
                     return True
             else:
-                print 'setting new pl name'
                 old_name = self._names[row]
                 if old_name == value:
                     return False
@@ -362,12 +343,10 @@ class PlaylistModel(QAbstractItemModel):
                     self.mpdclient.send('rename', (old_name, value))
                 else:
                     self._playlists[value] = []
-                print 'new name is set.'
                 index = self.createIndex(row, 0)
                 self.emit(SIGNAL('dataChanged(const QModelIndex &, const QModelIndex &)'), index, index)
                 return True
             self.emit(SIGNAL('layoutChanged()'))
-        print 'no valid entry'
         return False
 
     def revert(self):
@@ -485,7 +464,6 @@ class PlaylistModel(QAbstractItemModel):
         return ['mpd/uri']
 
     def dropMimeData(self, data, action, row, column, parent):
-        print 'dropMimeData'
         if data.hasFormat('mpd/uri'):
             # If the drop ends on an item, that item is the parent.
             # No valid parent == no list == no sigar, too bad.
@@ -495,7 +473,6 @@ class PlaylistModel(QAbstractItemModel):
             # whatever, as long as mpd can add it to a playlist.
             uri_list = pickle.loads(str(data.data('mpd/uri')))
             name = self._names[parent.row()]
-            print name, uri_list
             self.mpdclient.send('command_list_ok_begin')
             try:
                 for uri in uri_list:
