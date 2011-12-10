@@ -97,12 +97,12 @@
       <enum>QLayout::SetFixedSize</enum>
      </property>
      <property name="leftMargin">
-      <number>2</number>
+      <number>0</number>
      </property>
      <property name="bottomMargin">
       <number>3</number>
      </property>
-     <item row="0" column="0">
+     <item row="0" column="1">
       <layout class="QVBoxLayout" name="titleLayout">
        <property name="leftMargin">
         <number>4</number>
@@ -112,7 +112,7 @@
        </property>
       </layout>
      </item>
-     <item row="0" column="1" rowspan="2">
+     <item row="0" column="2" rowspan="2">
       <widget class="QSlider" name="volume">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Fixed" vsizetype="MinimumExpanding">
@@ -137,7 +137,7 @@
        </property>
       </widget>
      </item>
-     <item row="1" column="0">
+     <item row="1" column="1">
       <widget class="QProgressBar" name="progress">
        <property name="acceptDrops">
         <bool>true</bool>
@@ -147,6 +147,19 @@
        </property>
        <property name="format">
         <string/>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="0" rowspan="2">
+      <widget class="QLabel" name="songIcon">
+       <property name="lineWidth">
+        <number>0</number>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
        </property>
       </widget>
      </item>

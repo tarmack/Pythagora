@@ -355,6 +355,8 @@ class Update:
         if self.lastSong != currentSong:
             self.view.emit(SIGNAL('currentSong'), currentSong)
             self.lastSong = currentSong
+        if self.view.playerForm.iconPath != currentSong.iconPath:
+            self.view.playerForm.setSongIcon(currentSong.iconPath)
         if hasattr(self.view.trayIcon, 'toolTipIconName'):
             if self.view.trayIcon.toolTipIconName() != currentSong.iconPath:
                 self.view.trayIcon.setToolTipIconByName(currentSong.iconPath)

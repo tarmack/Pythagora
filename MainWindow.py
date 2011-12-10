@@ -17,7 +17,7 @@
 #-------------------------------------------------------------------------------
 from PyQt4.QtCore import SIGNAL, SLOT, QTimer, Qt, QObject, QEvent, QPoint, QPointF
 from PyQt4.QtGui import QMainWindow, QLabel, QMenu, QIcon, QWidget, QAction, QWidgetAction, QToolButton, \
-        QBrush, QFontMetrics, QPainter, QLinearGradient, QPalette, QPen, QApplication
+        QBrush, QFontMetrics, QPainter, QLinearGradient, QPalette, QPen, QApplication, QPixmap
 from PyQt4 import uic
 from time import time
 import sys
@@ -295,6 +295,7 @@ class PlayerForm(QWidget):
         QWidget.__init__(self)
         self.view = view
         self.mpdclient = mpdclient
+        self.iconPath = ''
         if self.view.KDE:
             uic.loadUi(DATA_DIR+'ui/PlayerForm.ui', self)
         else:
@@ -312,6 +313,10 @@ class PlayerForm(QWidget):
         self.progress.mouseMoveEvent = self._mouseMoveEvent
         self.progress.setMouseTracking(True)
         self.connect(self, SIGNAL('songSeek'), self.songSeek)
+
+    def setSongIcon(self, iconPath):
+        self.iconPath = iconPath
+        self.songIcon.setPixmap(QPixmap(iconPath).scaled(1000, 48, Qt.KeepAspectRatio, Qt.SmoothTransformation))
 
     def dragEnterEvent(self, event):
         if event.provides('mpd/uri'):
