@@ -41,11 +41,41 @@ import mpdlibrary
 #==============================================================================
 
 def main():
-    app = QApplication(sys.argv)
     print 'debug:', sys.argv
+    if MainWindow.KDE:
+        from PyKDE4.kdecore import ki18n, KCmdLineArgs, KAboutData, KCmdLineOptions
+        from PyKDE4.kdeui import KApplication
+        appName     = "Pythagora"
+        catalog     = ""
+        programName = ki18n("Pythagora")
+        version     = "0.0"
+        description = ki18n("KDE/Qt client for MPD (Music Player Daemon.")
+        license     = KAboutData.License_Custom
+        copyright   = ki18n("(c) 2010 Bart Kroon <bart@tarmack.eu>")
+        text        = ki18n("none")
+        homePage    = "http://www.tarmack.eu/pythagora"
+        bugEmail    = "bugs.pythagora@tarmack.eu"
+
+        aboutData = KAboutData(appName, catalog, programName, version,
+                description, license, copyright, text, homePage, bugEmail)
+        aboutData.setLicenseText(ki18n('Apache License, Version 2.0'))
+
+        KCmdLineArgs.init(sys.argv, aboutData)
+
+        options = KCmdLineOptions()
+        options.add('h').add('help', ki18n('Show help about options'))
+        options.add('help-qt' , ki18n('Show Qt specific options'))
+        options.add('V').add('verbose' , ki18n('Make some noise'))
+        options.add('d').add('debug' , ki18n('Make a lot of noise'))
+        options.add('q').add('quiet' , ki18n('Don\'t print anything'))
+        options.add('nokde' , ki18n('Don\'t even try to import any KDE module'))
+        KCmdLineArgs.addCmdLineOptions(options)
+
+        app = KApplication()
+    else:
+        app = QApplication(sys.argv)
+        app.setApplicationName("Pythagora")
     app.setOrganizationName("Tarmack SW")
-    #app.setOrganizationName("HardSoft")
-    app.setApplicationName("Pythagora")
     app.setKeyboardInputInterval(1600)
     view = Manager(app)
     signal.signal(signal.SIGINT, view.keyboardInterrupt)
@@ -59,10 +89,10 @@ class Manager():
     '''Creates and links up the management display items.'''
     oldVolume = 0
     misses = 0
-    library = mpdlibrary.Library(ignoreCase=True)
 
     def __init__(self, app):
         self.app = app
+        self.library = mpdlibrary.Library()
         self.firstConnect = True
         self.mutex = mutex.mutex()
         self.mpdclient = mpd.MPDClient()
@@ -80,7 +110,7 @@ class Manager():
         # Set global shortcuts if KDE is available otherwise overload keyPressEvent.
         if MainWindow.KDE:
             from PyKDE4.kdeui import KActionCollection
-            self.KActionCollection = KActionCollection
+            self.actionCollection = KActionCollection(self.view)
             self.setGlobalShortcuts()
         else:
             self.view.keyPressEvent = self.KeyPressEvent
@@ -111,7 +141,7 @@ class Manager():
             return
         if type(changes) == list:
             self.mpdclient.send('status', callback=
-                    lambda status: self.view.emit(SIGNAL('update'), changes, status))
+                    lambda status, changes=changes: self.view.emit(SIGNAL('update'), changes, status))
             # The slots will be executed asynchronously so we use a timer to
             # schedule the next idle call after all events have been processed.
             if self.idleTimer.timerId() < 0:
@@ -161,7 +191,7 @@ class Manager():
 
     def __setGlobalShortcut(self, name, helpText, keys, connectTo):
         print 'debug: Registering global shortcut for %s as %s.' % (name, str(keys))
-        action = self.KActionCollection(self.view).addAction(name)
+        action = self.actionCollection.addAction(name, self.view)
         action.setHelpText(helpText)
         short = action.shortcut()
         short.setPrimary(QKeySequence(keys))

@@ -45,7 +45,7 @@ if sys.argv and sys.argv != ['']:
     if not args:
         sys.stdout = Error()
     for opt in args:
-        if opt in ('-v', '--verbose'):
+        if opt in ('-V', '--verbose'):
             sys.stdout = Verbose()
         elif opt in ('-d', '--debug'):
             sys.stdout = STDOUT

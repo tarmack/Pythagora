@@ -9,7 +9,7 @@ KDE/Qt mpd Client\n\
 Generic options:\n\
   -h,   --help              Show help about options\n\
         --help-qt           Show Qt specific options\n\
-  -v,   --verbose           Make some noise\n\
+  -V,   --verbose           Make some noise\n\
   -d,   --debug             Make a lot of noise\n\
   -q,   --quiet             Don't print anything\n\
         --nokde             Don't even try to import any KDE module\n\
