@@ -407,6 +407,9 @@ class PlayQueueModel(QAbstractListModel):
                     else:
                         destination += 1
                 self.endMoveRows()
+            if not old_song == song:
+                self.emit(SIGNAL('dataChanged(const QModelIndex &, const QModelIndex &)'),
+                        self.createIndex(destination, 0), self.createIndex(destination, 0))
         elif change == 'insert':
             self.beginInsertRows(QModelIndex(), clist[0][0], clist[-1][0])
             for pos, song in clist:
