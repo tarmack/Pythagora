@@ -43,6 +43,7 @@ import mpdlibrary
 #==============================================================================
 
 EMPTY_SONG = mpdlibrary.Song({'pos': -1, 'file': ''}, None)
+EMPTY_SONG.iconPath = ''
 
 def main():
     print 'debug:', sys.argv
@@ -355,9 +356,10 @@ class Update:
         self.timer.start(1000)
         for change in changes:
             try:
-                getattr(self, change)(status)
+                function = getattr(self, change)
             except AttributeError:
                 print "error: Update received change group '{0}' which is not implemented.".format(change)
+            function(status)
 
     def progress(self):
         if self.mpdclient.connected():
