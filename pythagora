@@ -19,11 +19,13 @@
 from PyQt4.QtCore import QTimer, SIGNAL, Qt
 from PyQt4.QtGui import QApplication, QWidget, QKeySequence
 
+import os
 import sys
 import time
 import thread
 import mutex
 import signal
+import cPickle as pickle
 
 import mpdthreaded as mpd
 import playControls
@@ -241,11 +243,34 @@ class Manager():
             if len(self.config.server) > 3 and self.config.server[3] != '':
                 self.mpdclient.send('password', (self.config.server[3],))
             self.view.serverLabel.setText('Connected to %s' % self.config.server[0])
-            self.callback(['mixer', 'options', 'player', 'playlist', 'database', 'stored_playlist'])
+            self.callback(['mixer', 'options', 'player', 'playlist', 'stored_playlist'])
+            self._libraryReload()
         self.view.setCursor(Qt.ArrowCursor)
         self.firstConnect = False
 
-    def __libraryReload(self, mainlist):
+
+    def _libraryReload(self, mainlist=None):
+        def getCachePath():
+            file_name = 'db_cache - ' + self.config.server[0]
+            cache = os.path.expanduser('~/.cache/pythagora')
+            if not os.path.isdir(cache):
+                os.makedirs(cache)
+            return '/'.join((cache, file_name))
+
+        def getLibrary(timestamp):
+            path = getCachePath()
+            if os.path.exists(path):
+                with open(path) as db_cache:
+                    if db_cache.readline().strip('\n') == timestamp:
+                        mainlist = pickle.loads(db_cache.read())
+                        return mainlist
+
+        def cacheLibrary(timestamp, mainlist):
+            path = getCachePath()
+            with open(path, 'w') as db_cache:
+                    db_cache.write(timestamp + '\n')
+                    db_cache.write(pickle.dumps(mainlist))
+
         def reload(mainlist):
             start = time.time()
             server = self.config.server
@@ -254,7 +279,22 @@ class Manager():
             print 'library parsing took {0:.3} seconds'.format(time.time() - start)
             if self.config.server == server:
                 self.view.emit(SIGNAL('reloadLibrary'))
-        thread.start_new_thread(reload, (mainlist,))
+
+        def update(mainlist):
+            print 'Downloading of the library took {0:.3f} seconds'.format(time.time() - start)
+            self.view.emit(SIGNAL('libraryReload'), mainlist)
+
+        timestamp = self.mpdclient.stats()['db_update']
+        if mainlist is None:
+            mainlist = getLibrary(timestamp)
+        else:
+            cacheLibrary(timestamp, mainlist)
+
+        if mainlist is None:
+            start = time.time()
+            self.mpdclient.send('listallinfo', callback=update)
+        else:
+            thread.start_new_thread(reload, (mainlist,))
 
     def _error(self):
         print 'error: Lost connection to mpd server.'
@@ -278,7 +318,7 @@ class Manager():
         self.view.connect(self.view, SIGNAL('reconnect()'), self.__connectMPD)
         self.view.connect(self.view, SIGNAL('ConnectionError()'), self._error)
         self.view.connect(self.view, SIGNAL('connectionTry'), self.__connectionTry)
-        self.view.connect(self.view, SIGNAL('libraryReload'), self.__libraryReload)
+        self.view.connect(self.view, SIGNAL('libraryReload'), self._libraryReload)
 
     def keyboardInterrupt(self, signum, frame):
         print 'debug: KeyboardInterrupt'
@@ -378,12 +418,7 @@ class Update:
                 lambda playlists: self.view.emit(SIGNAL('reloadPlaylists'), playlists))
 
     def database(self, status):
-        def update(mainlist):
-            print 'Downloading of the library took {0:.3f} seconds'.format(time.time() - start)
-            self.view.emit(SIGNAL('libraryReload'), mainlist)
-
-        start = time.time()
-        self.mpdclient.send('listallinfo', callback=update)
+        self.view.emit(SIGNAL('libraryReload'))
 
     def setSongLabel(self, song):
         if song == EMPTY_SONG:
