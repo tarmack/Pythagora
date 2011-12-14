@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>400</width>
-    <height>393</height>
+    <width>570</width>
+    <height>512</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -44,18 +44,12 @@
           </property>
          </widget>
         </item>
-        <item row="0" column="1">
+        <item row="0" column="1" colspan="2">
          <widget class="QLineEdit" name="artistSearchField">
-          <property name="trapEnterKeyEvent" stdset="0">
-           <bool>true</bool>
-          </property>
-          <property name="showClearButton" stdset="0">
-           <bool>true</bool>
-          </property>
          </widget>
         </item>
-        <item row="2" column="0" colspan="2">
-         <widget class="QListWidget" name="artistView">
+        <item row="1" column="0" rowspan="2" colspan="3">
+         <widget class="QListView" name="artistView">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
             <horstretch>2</horstretch>
@@ -65,6 +59,9 @@
           <property name="contextMenuPolicy">
            <enum>Qt::ActionsContextMenu</enum>
           </property>
+          <property name="editTriggers">
+           <set>QAbstractItemView::NoEditTriggers</set>
+          </property>
           <property name="dragEnabled">
            <bool>true</bool>
           </property>
@@ -73,6 +70,12 @@
           </property>
           <property name="selectionMode">
            <enum>QAbstractItemView::ExtendedSelection</enum>
+          </property>
+          <property name="verticalScrollMode">
+           <enum>QAbstractItemView::ScrollPerPixel</enum>
+          </property>
+          <property name="horizontalScrollMode">
+           <enum>QAbstractItemView::ScrollPerPixel</enum>
           </property>
          </widget>
         </item>
@@ -83,36 +86,8 @@
         <property name="margin">
          <number>0</number>
         </property>
-        <item row="1" column="0" colspan="2">
-         <widget class="QListWidget" name="albumView">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-            <horstretch>3</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="contextMenuPolicy">
-           <enum>Qt::ActionsContextMenu</enum>
-          </property>
-          <property name="dragEnabled">
-           <bool>true</bool>
-          </property>
-          <property name="dragDropMode">
-           <enum>QAbstractItemView::DragOnly</enum>
-          </property>
-          <property name="selectionMode">
-           <enum>QAbstractItemView::ExtendedSelection</enum>
-          </property>
-         </widget>
-        </item>
         <item row="0" column="1">
          <widget class="QLineEdit" name="albumSearchField">
-          <property name="trapEnterKeyEvent" stdset="0">
-           <bool>true</bool>
-          </property>
-          <property name="showClearButton" stdset="0">
-           <bool>true</bool>
-          </property>
          </widget>
         </item>
         <item row="0" column="0">
@@ -128,6 +103,53 @@
           </property>
           <property name="buddy">
            <cstring>albumSearchField</cstring>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="0" colspan="3">
+         <widget class="QListView" name="albumView">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+            <horstretch>3</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="contextMenuPolicy">
+           <enum>Qt::ActionsContextMenu</enum>
+          </property>
+          <property name="editTriggers">
+           <set>QAbstractItemView::NoEditTriggers</set>
+          </property>
+          <property name="dragEnabled">
+           <bool>true</bool>
+          </property>
+          <property name="dragDropMode">
+           <enum>QAbstractItemView::DragOnly</enum>
+          </property>
+          <property name="selectionMode">
+           <enum>QAbstractItemView::ExtendedSelection</enum>
+          </property>
+          <property name="verticalScrollMode">
+           <enum>QAbstractItemView::ScrollPerPixel</enum>
+          </property>
+          <property name="horizontalScrollMode">
+           <enum>QAbstractItemView::ScrollPerPixel</enum>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="2">
+         <widget class="QPushButton" name="showAllAlbums">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="toolTip">
+           <string>Resets the album list to show all your albums again.</string>
+          </property>
+          <property name="text">
+           <string>Show All</string>
           </property>
          </widget>
         </item>
@@ -163,16 +185,10 @@
            <verstretch>0</verstretch>
           </sizepolicy>
          </property>
-         <property name="trapEnterKeyEvent" stdset="0">
-          <bool>true</bool>
-         </property>
-         <property name="showClearButton" stdset="0">
-          <bool>true</bool>
-         </property>
         </widget>
        </item>
-       <item row="1" column="0" colspan="2">
-        <widget class="QTreeWidget" name="trackView">
+       <item row="1" column="0" colspan="3">
+        <widget class="QTableView" name="trackView">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
            <horstretch>0</horstretch>
@@ -200,50 +216,58 @@
          <property name="selectionMode">
           <enum>QAbstractItemView::ExtendedSelection</enum>
          </property>
-         <property name="rootIsDecorated">
+         <property name="selectionBehavior">
+          <enum>QAbstractItemView::SelectRows</enum>
+         </property>
+         <property name="verticalScrollMode">
+          <enum>QAbstractItemView::ScrollPerPixel</enum>
+         </property>
+         <property name="horizontalScrollMode">
+          <enum>QAbstractItemView::ScrollPerPixel</enum>
+         </property>
+         <property name="showGrid">
           <bool>false</bool>
          </property>
-         <property name="itemsExpandable">
+         <property name="cornerButtonEnabled">
           <bool>false</bool>
          </property>
-         <property name="expandsOnDoubleClick">
+         <attribute name="horizontalHeaderDefaultSectionSize">
+          <number>50</number>
+         </attribute>
+         <attribute name="horizontalHeaderHighlightSections">
           <bool>false</bool>
+         </attribute>
+         <attribute name="horizontalHeaderMinimumSectionSize">
+          <number>32</number>
+         </attribute>
+         <attribute name="horizontalHeaderStretchLastSection">
+          <bool>false</bool>
+         </attribute>
+         <attribute name="verticalHeaderVisible">
+          <bool>false</bool>
+         </attribute>
+         <attribute name="verticalHeaderDefaultSectionSize">
+          <number>16</number>
+         </attribute>
+         <attribute name="verticalHeaderMinimumSectionSize">
+          <number>16</number>
+         </attribute>
+        </widget>
+       </item>
+       <item row="0" column="2">
+        <widget class="QPushButton" name="showAllTracks">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
          </property>
-         <attribute name="headerVisible">
-          <bool>false</bool>
-         </attribute>
-         <attribute name="headerDefaultSectionSize">
-          <number>60</number>
-         </attribute>
-         <attribute name="headerStretchLastSection">
-          <bool>false</bool>
-         </attribute>
-         <column>
-          <property name="text">
-           <string>Track</string>
-          </property>
-          <property name="textAlignment">
-           <set>AlignHCenter|AlignVCenter|AlignCenter</set>
-          </property>
-         </column>
-         <column>
-          <property name="text">
-           <string>Title</string>
-          </property>
-         </column>
-         <column>
-          <property name="text">
-           <string>Length</string>
-          </property>
-          <property name="font">
-           <font>
-            <family>DejaVu Sans Mono</family>
-           </font>
-          </property>
-          <property name="textAlignment">
-           <set>AlignHCenter|AlignVCenter|AlignCenter</set>
-          </property>
-         </column>
+         <property name="toolTip">
+          <string>Resets the track list to show all your songs again.</string>
+         </property>
+         <property name="text">
+          <string>Show All</string>
+         </property>
         </widget>
        </item>
       </layout>
@@ -252,4 +276,16 @@
    </item>
   </layout>
  </widget>
+ <tabstops>
+  <tabstop>artistSearchField</tabstop>
+  <tabstop>artistView</tabstop>
+  <tabstop>albumSearchField</tabstop>
+  <tabstop>showAllAlbums</tabstop>
+  <tabstop>albumView</tabstop>
+  <tabstop>trackSearchField</tabstop>
+  <tabstop>showAllTracks</tabstop>
+  <tabstop>trackView</tabstop>
+ </tabstops>
+ <resources/>
+ <connections/>
 </ui>
