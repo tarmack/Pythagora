@@ -423,7 +423,11 @@ class Update:
         self.view.emit(SIGNAL('libraryReload'))
 
     def setSongLabel(self, song):
-        if song == EMPTY_SONG:
+        if isinstance(song, basestring):
+            label = song
+            self.view.playerForm.songLabel.setText(label)
+            return
+        elif song == EMPTY_SONG:
             label = 'Connected to %s.' % self.config.server[0]
             self.view.playerForm.songLabel.setText(label)
         else:
