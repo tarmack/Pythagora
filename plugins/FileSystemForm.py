@@ -57,11 +57,10 @@ class FileSystemForm(PluginBase.PluginBase, auxilia.Actions):
 
 
 class FileSystemModel(QAbstractItemModel):
-    file_icon = QIcon(auxilia.PIcon('audio-x-generic'))
-    dir_icon = QIcon(auxilia.PIcon('folder-sound'))
-
     def __init__(self, library):
         QAbstractItemModel.__init__(self)
+        self.file_icon = QIcon(auxilia.PIcon('audio-x-generic'))
+        self.dir_icon = QIcon(auxilia.PIcon('folder-sound'))
         self.cache = {}
         self.library = library
         self.root = mpdlibrary.Dir('', self.library)
