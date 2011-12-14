@@ -98,7 +98,6 @@ class Manager():
     def __init__(self, app):
         self.app = app
         self.library = mpdlibrary.Library()
-        self.firstConnect = True
         self.mutex = mutex.mutex()
         self.mpdclient = mpd.MPDClient()
         self.idleTimer = QTimer()
@@ -216,7 +215,7 @@ class Manager():
             self.update.currentsong = {}
             if self.mpdclient.connected():
                 self.mpdclient.disconnect()
-            if self.firstConnect:
+            if self.config.firstTime:
                 self.config.showConfiguration(self.view, True)
         else:
             self.view.setCursor(Qt.WaitCursor)
@@ -234,8 +233,8 @@ class Manager():
             self.misses += 1
             self.misses = min(30, self.misses)
             self.idleTimer.start(3000*self.misses)
-            if self.firstConnect:
-                self.firstConnect = False
+            if self.config.firstTime:
+                self.config.firstTime = False
                 self.config.showConfiguration(self.view, True)
         else:
             self.misses = 0
@@ -247,7 +246,7 @@ class Manager():
             self.callback(['mixer', 'options', 'player', 'playlist', 'stored_playlist'])
             self._libraryReload()
         self.view.setCursor(Qt.ArrowCursor)
-        self.firstConnect = False
+        self.config.firstTime = False
 
 
     def _libraryReload(self, mainlist=None):

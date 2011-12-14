@@ -32,6 +32,7 @@ class Configuration(object):
                 QSize: QVariant.toSize,
                 }
     defaults = {
+                'firstTime':            True,
                 'knownHosts':           {'Local': ['localhost','6600','']},
                 'server':               ['Local','localhost','6600',''],
                 'coverPath':            '~/Music/covers',
