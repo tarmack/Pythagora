@@ -136,15 +136,11 @@ class CurrentPlaylistForm(QWidget, auxilia.Actions):
             self._ensurePlayingVisable()
         self.playQueue.setPlaying(playing)
 
-    def playingItem(self):
-        return self.playQueue.playingSong()
-
     def reload(self, plist, status):
         '''Causes the current play list to be reloaded from the server'''
         if not self.config.server:
             return
         self.playQueue.update((mpdlibrary.Song(song, self.library) for song in plist), status)
-        # TODO: Keep selection correct over updates.
 
         self.view.numSongsLabel.setText(status['playlistlength']+' Songs')
         self._setPlayTime(self.playQueue.totalTime())
@@ -349,12 +345,6 @@ class PlayQueueModel(QAbstractListModel):
         for song in self._songs:
             total += song.time
         return total
-
-    def playingSong(self):
-        ''' Returns the Song object of the currently playing song. '''
-        # TODO: Must move out of here.
-        if self.playing >= 0 and self.playing < len(self._songs):
-            return self._songs[self.playing]
 
     def update(self, plist, status):
         ''' Updates the playqueue model with the changes in `plist`. '''

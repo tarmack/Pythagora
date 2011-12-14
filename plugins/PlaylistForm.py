@@ -28,8 +28,6 @@ import mpdlibrary
 
 DATA_DIR = ''
 
-# TODO: Double click actions. playlistlist add to current.
-
 def getWidget(view, mpdclient, config, library):
     return PlaylistForm(view, mpdclient, config, library)
 

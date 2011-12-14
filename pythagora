@@ -34,14 +34,6 @@ import MainWindow
 import auxilia
 import mpdlibrary
 
-#============== Long term TODO's ==============================================
-# TODO: notification on song change (http://mpd.wikia.com/wiki/Mpd_osd.py_(using_dbus)
-
-# TODO: Refactor stuff:
-#       * Method out stuff from __init_() in allot of classes.
-
-#==============================================================================
-
 EMPTY_SONG = mpdlibrary.Song({'pos': -1, 'file': ''}, None)
 EMPTY_SONG.iconPath = ''
 
