@@ -19,7 +19,6 @@ from PyQt4.QtCore import SIGNAL, Qt, QSize, QAbstractListModel, QModelIndex, QMi
 from PyQt4.QtGui import QWidget, QInputDialog, QKeySequence, QListView, QIcon, QFont, QSortFilterProxyModel, QStyledItemDelegate
 from PyQt4 import uic
 from time import time
-import httplib
 import cPickle as pickle
 
 import auxilia
@@ -270,41 +269,17 @@ class CurrentPlaylistForm(QWidget, auxilia.Actions):
                 , 'Add Stream')
         url = str(url)
         if ok == True and url:
-            adrlist = self._getStream(url)
+            try:
+                adrlist = streamTools.getStreamList(url)
+            except streamTools.ParseError:
+                print 'error: Could not parse stream address.'
+                return
             self.mpdclient.send('command_list_ok_begin')
             try:
                 for address in adrlist:
                     self.mpdclient.send('add', (address,))
             finally:
                 self.mpdclient.send('command_list_end')
-
-    def _getStream(self, url):
-        data = self._retreiveURL(url)
-        if data:
-            try:
-                if url.endswith('.pls'):
-                    adrlist = streamTools._parsePLS(data)
-                elif url.endswith('.m3u'):
-                    adrlist = streamTools._parseM3U(data)
-                elif url.endswith('.xspf'):
-                    adrlist = streamTools._parseXSPF(data)
-                else:
-                    adrlist = [url]
-            except streamTools.ParseError:
-                return
-            return adrlist
-
-    def _retreiveURL(self, url):
-        if url.startswith('http://'):
-            url = url[7:]
-        server, path = url.split('/', 1)
-        conn = httplib.HTTPConnection(server)
-        conn.request("GET", '/'+path)
-        resp = conn.getresponse()
-        if resp.status == 200:
-            return resp.read()
-        else:
-            raise httplib.HTTPException('Got bad status code.')
 
     def _setEditing(self):
         self.playQueue.lastEdit = time()

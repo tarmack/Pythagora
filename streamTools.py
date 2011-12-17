@@ -21,11 +21,29 @@ try:
 except ImportError:
     import xml.etree.ElementTree as etree
 import StringIO
+import httplib
 
 class ParseError(Exception):
     pass
 
-def _parsePLS(data):
+def getStreamList(url):
+    if url.endswith('.pls'):
+        data = _retreiveURL(url)
+        if data:
+            adrlist = parsePLS(data)
+    elif url.endswith('.m3u'):
+        data = _retreiveURL(url)
+        if data:
+            adrlist = parseM3U(data)
+    elif url.endswith('.xspf'):
+        data = _retreiveURL(url)
+        if data:
+            adrlist = parseXSPF(data)
+    else:
+        adrlist = [url]
+    return adrlist
+
+def parsePLS(data):
     ''' Parse a PLS playlist. Returns a list with stream addresses.'''
     adrlist = []
     state = ''
@@ -43,7 +61,7 @@ def _parsePLS(data):
             raise ParseError('Encountered error during parsing of the playlist.')
     return adrlist
 
-def _parseXSPF(data):
+def parseXSPF(data):
     ''' Parse a XSPF playlist. Returns a list with stream addresses.
         XSPF spec: http://www.xspf.org/xspf-v1.html
         Currently we only want the location URLs, so that
@@ -59,7 +77,7 @@ def _parseXSPF(data):
                                      'parsing of the playlist.')
     return adrlist
 
-def _parseM3U(data):
+def parseM3U(data):
     ''' Parse a M3U playlist. Returns a list with stream addresses.'''
     adrlist = []
     data = data.split('\n')
@@ -70,4 +88,16 @@ def _parseM3U(data):
     if not adrlist:
          raise ParseError('Encountered error during parsing of the playlist.')
     return adrlist
+
+def _retreiveURL(self, url):
+    if url.startswith('http://'):
+        url = url[7:]
+    server, path = url.split('/', 1)
+    conn = httplib.HTTPConnection(server)
+    conn.request("GET", '/'+path)
+    resp = conn.getresponse()
+    if resp.status == 200:
+        return resp.read()
+    else:
+        raise httplib.HTTPException('Got bad status code.')
 
