@@ -162,6 +162,9 @@ class Manager():
                 self.playControls.volumeDown()
             elif event.key() == Qt.Key_VolumeMute:
                 self.playControls.toggleMute()
+            else:
+                print 'keyEvent main ignored'
+                QWidget.keyPressEvent(self.view, event)
         else: QWidget.keyPressEvent(self.view, event)
 
     def setGlobalShortcuts(self):
