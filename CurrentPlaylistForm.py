@@ -171,9 +171,9 @@ class CurrentPlaylistForm(QWidget, auxilia.Actions):
         playing = self.playQueueProxy.mapFromSource(self.playQueue.createIndex(self.playQueue.playing, 0))
         if self.currentList.isIndexHidden(playing):
             return
-        bottom = self.currentList.rectForIndex(playing).bottom()
+        top = self.currentList.rectForIndex(playing).top()
         height = self.currentList.viewport().height()
-        new_pos = bottom - (height / 8)
+        new_pos = top - (height / 8)
         scrollBar = self.currentList.verticalScrollBar()
         scrollBar.setValue(new_pos)
 
