@@ -15,7 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #-------------------------------------------------------------------------------
-from PyQt4.QtCore import SIGNAL, SLOT, QTimer, Qt, QObject, QEvent, QPoint, QPointF
+from PyQt4.QtCore import SIGNAL, SLOT, QTimer, Qt, QObject, QEvent, QPoint, QPointF, QSize
 from PyQt4.QtGui import QMainWindow, QLabel, QMenu, QIcon, QWidget, QAction, QWidgetAction, QToolButton, \
         QBrush, QFontMetrics, QPainter, QLinearGradient, QPalette, QPen, QApplication, QPixmap
 from PyQt4 import uic
@@ -60,22 +60,41 @@ class View(QMainWindow, auxilia.Actions):
         self.KDE = KDE
         self.setWindowTitle('Pythagora')
         self.setWindowIcon(QIcon(self.appIcon))
+        # Create standard views.
+        self.playerForm = PlayerForm(self, self.app, self.mpdclient, self.config)
+        self.toolBarLayout = self.playerForm.toolBarLayout
+        self.currentList = CurrentPlaylistForm.CurrentPlaylistForm(self, self.app, self.mpdclient, self.library, self.config)
+        # Standard toolbar buttons.
+        self.exitAction = self.actionExit(self, self.app.quit)
+        self.exitButton = QToolButton()
+        self.exitButton.setAutoRaise(True)
+        self.exitButton.setIconSize(QSize(22, 22))
+        self.exitButton.setDefaultAction(self.exitAction)
+        self.settingsAction = self.actionSettings(self, self.showConfig)
+        self.settingsButton = QToolButton()
+        self.settingsButton.setAutoRaise(True)
+        self.settingsButton.setIconSize(QSize(22, 22))
+        self.settingsButton.setDefaultAction(self.settingsAction)
         # Create 'Connect to' menu.
         self.menuConnect = QMenu('Connect To')
         self.menuConnect.menuAction().setIcon(auxilia.PIcon('network-disconnect'))
         self.connectButton = QToolButton()
+        self.connectButton.setAutoRaise(True)
+        self.connectButton.setIconSize(QSize(22, 22))
         self.connectButton.setPopupMode(QToolButton.InstantPopup)
         self.connectButton.setIcon(auxilia.PIcon('network-disconnect'))
+        self.connectButton.setText('Connect To')
         self.connectButton.setMenu(self.menuConnect)
-        # Create standard views.
-        self.playerForm = PlayerForm(self, self.app, self.mpdclient, self.config)
-        self.currentList = CurrentPlaylistForm.CurrentPlaylistForm(self, self.app, self.mpdclient, self.library, self.config)
         # Create 'MDP' menu.
         self.menuMPD = QMenu('MPD')
         self.menuMPD.menuAction().setIcon(auxilia.PIcon('network-workgroup'))
+        self.connect(self.menuConnect, SIGNAL('aboutToShow()'), self.__buildConnectTo)
         self.mpdButton = QToolButton()
+        self.mpdButton.setAutoRaise(True)
+        self.mpdButton.setIconSize(QSize(22, 22))
         self.mpdButton.setPopupMode(QToolButton.InstantPopup)
         self.mpdButton.setIcon(auxilia.PIcon('network-workgroup'))
+        self.mpdButton.setText('MPD')
         self.mpdButton.setMenu(self.menuMPD)
         self.reloadLibrary = self.actionLibReload(self.menuMPD, self._libReload)
         self.updateLibrary = self.actionLibUpdate(self.menuMPD, lambda: self.mpdclient.send('update'))
@@ -83,14 +102,21 @@ class View(QMainWindow, auxilia.Actions):
         # Create 'Outputs' menu.
         self.menuOutputs = QMenu('Outputs')
         self.menuOutputs.menuAction().setIcon(auxilia.PIcon('audio-card'))
+        self.connect(self.menuOutputs, SIGNAL('aboutToShow()'), self.__buildOutputs)
         self.outputsButton = QToolButton()
+        self.outputsButton.setAutoRaise(True)
+        self.outputsButton.setIconSize(QSize(22, 22))
         self.outputsButton.setPopupMode(QToolButton.InstantPopup)
         self.outputsButton.setIcon(auxilia.PIcon('audio-card'))
+        self.outputsButton.setText('Outputs')
         self.outputsButton.setMenu(self.menuOutputs)
         # Fill Toolbar.
-        self.toolBar.addWidget(self.connectButton)
-        self.toolBar.addWidget(self.outputsButton)
-        self.toolBar.addWidget(self.mpdButton)
+        self.toolBarLayout.addWidget(self.exitButton)
+        self.toolBarLayout.addWidget(self.settingsButton)
+        self.toolBarLayout.addWidget(self.connectButton)
+        self.toolBarLayout.addWidget(self.outputsButton)
+        self.toolBarLayout.addWidget(self.mpdButton)
+        self.toolBarLayout.addStretch(1)
         # Fill Statusbar.
         self.serverLabel = QLabel('Not connected')
         self.numSongsLabel = QLabel('Songs')
@@ -98,12 +124,6 @@ class View(QMainWindow, auxilia.Actions):
         self.statusbar.addWidget(self.serverLabel)
         self.statusbar.addPermanentWidget(self.numSongsLabel)
         self.statusbar.addPermanentWidget(self.playTimeLabel)
-
-        self.connect(self.menuConnect, SIGNAL('aboutToShow()'), self.__buildConnectTo)
-        self.connect(self.menuOutputs, SIGNAL('aboutToShow()'), self.__buildOutputs)
-        self.connect(self.actionExit,SIGNAL('triggered()'),self.app.quit)
-        self.connect(self.actionSettings,SIGNAL('triggered()'),self.showConfig)
-
 
         # Set up trayicon and menu.
         if KDE:
@@ -114,7 +134,7 @@ class View(QMainWindow, auxilia.Actions):
         connectMenuAction = self.menuConnect.menuAction()
         self.trayIcon.addMenuItem(outputsMenuAction)
         self.trayIcon.addMenuItem(connectMenuAction)
-        self.trayIcon.addMenuItem(self.actionSettings)
+        self.trayIcon.addMenuItem(self.settingsAction)
         self.connect(self.trayIcon, SIGNAL('activate()'), self.toggleHideRestore)
         self.connect(self.trayIcon, SIGNAL('secondaryActivateRequested(QPoint)'), self.__playPause)
 
@@ -316,7 +336,8 @@ class PlayerForm(QWidget):
 
     def setSongIcon(self, iconPath):
         self.iconPath = iconPath
-        self.songIcon.setPixmap(QPixmap(iconPath).scaled(1000, 48, Qt.KeepAspectRatio, Qt.SmoothTransformation))
+        height = self.songIcon.geometry().height()
+        self.songIcon.setPixmap(QPixmap(iconPath).scaled(1000, height, Qt.KeepAspectRatio, Qt.SmoothTransformation))
 
     def dragEnterEvent(self, event):
         if event.provides('mpd/uri'):
@@ -359,7 +380,7 @@ class SongLabel(QLabel):
     album = 'album'
     station = 'station'
     bitrate = ''
-    parts = ('title', 'artist', 'album', 'station')
+    parts = ('artist', 'album', 'station')
     prepends = {
             'artist': 'by',
             'album': 'from',
@@ -369,8 +390,7 @@ class SongLabel(QLabel):
         QLabel.__init__(self)
         self.setAlignment(Qt.AlignBottom)
         self.titleFont = self.font()
-        self.titleFont.setPointSize(self.font().pointSize()+2)
-        self.titleFont.setBold(True)
+        self.titleFont.setPointSize(self.font().pointSize()+6)
         self.artistFont = self.font()
         self.artistFont.setPointSize(self.font().pointSize()+2)
         self.albumFont = self.font()
@@ -412,6 +432,7 @@ class SongLabel(QLabel):
         return '<br>'.join((item for item in (title, artist, album, station, bitrate) if item))
 
     def paintEvent(self, event):
+        self.songInToolTip = False
         gradient = self.__gradient()
         self.spaceLeft = self.contentsRect()
         for part in self.parts:
@@ -420,7 +441,13 @@ class SongLabel(QLabel):
             if text:
                 self.__write(self.prepends.get(part, ''), self.font(), gradient)
                 self.__write(text, font, gradient)
-        self.songInToolTip = True if self.spaceLeft.width() <= 0 else False
+        if self.spaceLeft.width() <= 3:
+            self.songInToolTip = True
+        self.spaceLeft = self.contentsRect()
+        self.spaceLeft.setBottom(self.spaceLeft.bottom() - QFontMetrics(self.artistFont).height())
+        self.__write(self.title, self.titleFont, gradient)
+        if self.spaceLeft.width() <= 3:
+            self.songInToolTip = True
         self.setToolTip(self.getToolTip())
 
     def __write(self, text, font, pen):
@@ -535,7 +562,7 @@ else:
                 self.menu.addAction(action)
             self.menu.addSeparator()
             self.menu.addAction(self.hideResoreAction)
-            self.menu.addAction(self.parent.actionExit)
+            self.menu.addAction(self.parent.exitAction)
 
 
         def event(self, event):

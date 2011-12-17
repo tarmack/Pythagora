@@ -130,6 +130,18 @@ class Actions:
         , 'Reload'\
         , 'Reload the genre list.')
 
+    def actionExit(self, parent, slot):
+        return self.action(parent, slot\
+        , 'application-exit'\
+        , 'Exit'\
+        , 'Exit')
+
+    def actionSettings(self, parent, slot):
+        return self.action(parent, slot\
+        , 'configure'\
+        , 'Settings'\
+        , 'Settings')
+
     #def action(self, parent, slot):
     #    return self.action(parent, slot\
     #    , ''\

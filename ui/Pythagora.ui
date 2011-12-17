@@ -19,8 +19,11 @@
   <property name="windowTitle">
    <string>MainWindow</string>
   </property>
+  <property name="toolButtonStyle">
+   <enum>Qt::ToolButtonFollowStyle</enum>
+  </property>
   <widget class="QWidget" name="centralwidget">
-   <layout class="QVBoxLayout" name="verticalLayout">
+   <layout class="QVBoxLayout" name="verticalLayout" stretch="0,1">
     <property name="spacing">
      <number>0</number>
     </property>
@@ -31,105 +34,42 @@
      <number>0</number>
     </property>
     <item>
-     <layout class="QHBoxLayout" name="topLayout">
-      <property name="spacing">
-       <number>0</number>
-      </property>
-     </layout>
+     <layout class="QHBoxLayout" name="topLayout"/>
     </item>
     <item>
-     <widget class="QStackedWidget" name="stackedWidget">
-      <property name="minimumSize">
-       <size>
-        <width>20</width>
-        <height>20</height>
-       </size>
+     <layout class="QHBoxLayout" name="MainLayout" stretch="0">
+      <property name="sizeConstraint">
+       <enum>QLayout::SetNoConstraint</enum>
       </property>
-      <property name="lineWidth">
-       <number>0</number>
-      </property>
-      <property name="currentIndex">
-       <number>0</number>
-      </property>
-      <widget class="QWidget" name="playlistPage">
-       <layout class="QHBoxLayout" name="horizontalLayout_2">
-        <property name="leftMargin">
-         <number>0</number>
+      <item>
+       <widget class="QSplitter" name="splitter">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
         </property>
-        <property name="topMargin">
-         <number>2</number>
-        </property>
-        <property name="rightMargin">
-         <number>0</number>
-        </property>
-        <property name="bottomMargin">
-         <number>0</number>
-        </property>
-        <item>
-         <widget class="QSplitter" name="splitter">
-          <property name="orientation">
-           <enum>Qt::Horizontal</enum>
-          </property>
-          <widget class="QTabWidget" name="tabs">
-           <property name="acceptDrops">
-            <bool>true</bool>
-           </property>
-           <property name="tabPosition">
-            <enum>QTabWidget::West</enum>
-           </property>
-           <property name="currentIndex">
-            <number>-1</number>
-           </property>
-           <property name="movable">
-            <bool>true</bool>
-           </property>
-          </widget>
-          <widget class="QWidget" name="verticalLayoutWidget">
-           <layout class="QVBoxLayout" name="currentListLayout"/>
-          </widget>
-         </widget>
-        </item>
-       </layout>
-      </widget>
-     </widget>
+        <widget class="QTabWidget" name="tabs">
+         <property name="acceptDrops">
+          <bool>true</bool>
+         </property>
+         <property name="tabPosition">
+          <enum>QTabWidget::West</enum>
+         </property>
+         <property name="currentIndex">
+          <number>-1</number>
+         </property>
+         <property name="movable">
+          <bool>true</bool>
+         </property>
+        </widget>
+        <widget class="QWidget" name="verticalLayoutWidget">
+         <layout class="QVBoxLayout" name="currentListLayout"/>
+        </widget>
+       </widget>
+      </item>
+     </layout>
     </item>
    </layout>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
-  <widget class="QToolBar" name="toolBar">
-   <property name="windowTitle">
-    <string>toolBar</string>
-   </property>
-   <attribute name="toolBarArea">
-    <enum>TopToolBarArea</enum>
-   </attribute>
-   <attribute name="toolBarBreak">
-    <bool>false</bool>
-   </attribute>
-   <addaction name="actionExit"/>
-   <addaction name="actionSettings"/>
-  </widget>
-  <action name="actionExit">
-   <property name="icon">
-    <iconset>
-     <normaloff>../icons/application-exit.png</normaloff>../icons/application-exit.png</iconset>
-   </property>
-   <property name="text">
-    <string>Quit</string>
-   </property>
-   <property name="shortcut">
-    <string>Ctrl+Q</string>
-   </property>
-  </action>
-  <action name="actionSettings">
-   <property name="icon">
-    <iconset>
-     <normaloff>../icons/configure.png</normaloff>../icons/configure.png</iconset>
-   </property>
-   <property name="text">
-    <string>Settings</string>
-   </property>
-  </action>
  </widget>
  <resources/>
  <connections/>
