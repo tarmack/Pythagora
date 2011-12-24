@@ -316,10 +316,7 @@ class PlayerForm(QWidget):
         self.view = view
         self.mpdclient = mpdclient
         self.iconPath = ''
-        if self.view.KDE:
-            uic.loadUi(DATA_DIR+'ui/PlayerForm.ui', self)
-        else:
-            uic.loadUi(DATA_DIR+'ui/PlayerForm.ui.Qt', self)
+        uic.loadUi(DATA_DIR+'ui/PlayerForm.ui', self)
         self.playerForm = self
         self.view.topLayout.addWidget(self)
         # Set attributes not set trough xml file.
