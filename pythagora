@@ -147,6 +147,7 @@ class Manager():
             self.idleTimer.start()
 
     def KeyPressEvent(self, event):
+        print 'keyEvent main'
         if event.modifiers() == Qt.ControlModifier:
             if event.key() == Qt.Key_MediaPlay:
                 self.playControls.playPause()

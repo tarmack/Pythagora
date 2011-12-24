@@ -21,23 +21,26 @@ import gc
 locale.setlocale(locale.LC_ALL, "")
 
 
-class Library:
+class Library(object):
     '''Supplies a storage model for the mpd database.'''
-    def __init__(self, mainlist=[]):
+    def __init__(self, mainlist=[], options={}):
+        self.options = options
         self.reload(mainlist)
 
     def reload(self, mainlist):
         '''Reloads the current instance with the new list from MPD. Returns the instance for your convenience'''
-        self._songList = [song for song in mainlist if 'file' in song]
-        self._artists = ListDict()
-        self._albums = ListDict()
-        self._genres = ListDict()
-        self._filesystem = {}
+        reload_start = time.time()
+        self._song_list = [song for song in mainlist if 'file' in song]
+        self._artists = LibraryIndex()
+        self._albums = LibraryIndex()
+        self._genres = LibraryIndex()
+        if self.options.get('filesystem', True):
+            self._filesystem = {}
         # Force the collection of cyclic references to the old objects.
         start = time.time()
-        print 'info: Garbage collection %i freed items in %.3f seconds.' % (gc.collect(), time.time() - start)
+        print('info: Garbage collection %i freed items in %.3f seconds.' % (gc.collect(), time.time() - start))
         # parse the list and prepare it for loading in the library browser and the file system view.
-        for index, song in enumerate(self._songList):
+        for index, song in enumerate(self._song_list):
             album = song.get('album', 'None')
             self._albums[album] = index
 
@@ -52,16 +55,18 @@ class Library:
             if genre:
                     self._genres[genre] = index
 
-            # Build the file system tree.
-            fslist = self._filesystem
-            path = song['file'].split('/')
-            while path:
-                part = path.pop(0)
-                if path == []:
-                    fslist[part] = index
-                else:
-                    fslist[part] = fslist.get(part, {})
-                    fslist = fslist[part]
+            if self.options.get('filesystem', True):
+                # Build the file system tree.
+                fslist = self._filesystem
+                path = song['file'].split('/')
+                while path:
+                    part = path.pop(0)
+                    if path == []:
+                        fslist[part] = index
+                    else:
+                        fslist[part] = fslist.get(part, {})
+                        fslist = fslist[part]
+        print('info: Building of the library took %.3f seconds.' % (time.time() - reload_start))
         return self
 
     def artists(self):
@@ -74,69 +79,69 @@ class Library:
 
     def songs(self):
         '''Returns a list containing all songs in the library.'''
-        return (Song(song, self) for song in self._songList)
+        return (Song(song, self) for song in self._song_list)
 
     def genres(self):
         '''Returns a list containing all genres in the library.'''
         return (Genre(genre, self) for genre in self._genres.keys())
 
-    def artistSongs(self, artist):
+    def artist_songs(self, artist):
         '''Returns a list containing all songs from the supplied artist.'''
-        return (Song(self._songList[index], self) for index in self._artists.get(artist, []))
+        return (Song(self._song_list[index], self) for index in self._artists.get(artist, []))
 
-    def artistAlbums(self, artist):
+    def artist_albums(self, artist):
         '''Returns a list containing all albums the artist is listed on.'''
         albums = set()
-        for song in self.artistSongs(artist):
+        for song in self.artist_songs(artist):
             albums.update(song.album.all())
         return (Album(album, self) for album in albums)
 
-    def artistGenres(self, artist):
+    def artist_genres(self, artist):
         '''Returns a list containing all genres listed in songs by the given artist.'''
         genres = set()
-        for song in self.artistSongs(artist):
+        for song in self.artist_songs(artist):
             genres.update(song.genre.all())
         return (Genre(genre, self) for genre in genres)
 
-    def albumSongs(self, album, artists=[]):
+    def album_songs(self, album, artists=[]):
         '''Returns a list containing all songs on the supplied album title.
         The optional artist argument can be used to only get the songs of a particular artist or list of artists.'''
         if type(artists) in (str, unicode):
             artists = [artists]
-        songs = (Song(self._songList[index], self) for index in self._albums.get(album, []))
-        for song in sorted(songs, _sortAlbumSongs):
+        songs = (Song(self._song_list[index], self) for index in self._albums.get(album, []))
+        for song in sorted(songs, _sort_album_songs):
             if artists == [] or song.artist in artists:
                 yield song
 
-    def albumArtists(self, album):
+    def album_artists(self, album):
         '''Returns a list containing all artists listed on the album.'''
         artists = set()
-        for song in self.albumSongs(album):
+        for song in self.album_songs(album):
             artists.update(song.artist.all())
         return (Artist(artist, self) for artist in artists)
 
-    def albumGenres(self, album):
+    def album_genres(self, album):
         '''Returns a list containing all genres listed in songs on the given album.'''
         genres = set()
-        for song in self.albumSongs(album):
+        for song in self.album_songs(album):
             genres.update(song.genre.all())
         return (Genre(genre, self) for genre in genres)
 
-    def genreSongs(self, genre):
+    def genre_songs(self, genre):
         '''Returns a list containing all songs in the given genre.'''
-        return (Song(self._songList[index], self) for index in self._genres.get(genre, []))
+        return (Song(self._song_list[index], self) for index in self._genres.get(genre, []))
 
-    def genreArtists(self, genre):
+    def genre_artists(self, genre):
         '''Returns a list containing all artists in the given genre.'''
         artists = set()
-        for song in self.genreSongs(genre):
+        for song in self.genre_songs(genre):
             artists.update(song.artist.all())
         return (Artist(artist, self) for artist in artists)
 
-    def genreAlbums(self, genre):
+    def genre_albums(self, genre):
         '''Returns a list containing all albums in the given genre.'''
         albums = set()
-        for song in self.genreSongs(genre):
+        for song in self.genre_songs(genre):
             albums.update(song.album.all())
         return (Album(album, self) for album in albums)
 
@@ -147,7 +152,7 @@ class Library:
         fslist = self._fsNode(path)
         for key, value in sorted(fslist.items()):
             if isinstance(value, int):
-                yield File(self._songList[value]['file'], self)
+                yield File(self._song_list[value]['file'], self)
             else:
                 yield Dir(path + '/' + key, self)
 
@@ -157,28 +162,28 @@ class Library:
             fslist = fslist.get(part)
         return fslist
 
-def _sortAlbumSongs(x, y):
+def _sort_album_songs(x, y):
     # Sorting album songs by disc number, then by track number
     return cmp(int(x.disc), int(y.disc)) or cmp(int(x.track), int(y.track))
 
 
-class ListDict(dict):
+class LibraryIndex(dict):
     '''A dictionary for storing the library data.'''
-    def __setitem__(self, keys, values):
-        if type(values) is not list:
-            values = [values]
+    def __setitem__(self, keys, value):
         if type(keys) is not list:
             keys = [keys]
         for key in keys:
-            part = self.get(key, [])
-            values = [x for x in values if x not in part]
-            dict.__setitem__(self, key, part + values)
+            if key in self:
+                part = self[key]
+                if not value in part:
+                    part.append(value)
+            else:
+                dict.__setitem__(self, key, [value])
 
 
 class LibraryObject(object):
-    _attributes = {}
     def __new__(cls, value, library):
-        if type(value) is not cls and getattr(value, '__iter__', False):
+        if not isinstance(value, cls) and isinstance(value, (list, tuple)):
             value = value[0]
         return super(LibraryObject, cls).__new__(cls, value)
 
@@ -190,17 +195,9 @@ class LibraryObject(object):
 
     def all(self):
         if type(self._value) in (str, unicode):
-            return [self._value]
+            return [self.__class__(self._value, self._library)]
         else:
-            return self._value
-
-    def __getattr__(self, attr):
-        try:
-            funt = self._attributes[attr].__get__(self._library)
-            return funt(self)
-        except KeyError:
-            raise AttributeError("LibraryObject '%s' has no attribute '%s'"
-                    % (self.__class__.__name__, attr))
+            return [self.__class__(value, self._library) for value in self._value]
 
     def __call__(self):
         return self
@@ -209,37 +206,58 @@ class Text(LibraryObject, unicode):
     pass
 
 class Artist(LibraryObject, unicode):
-    _attributes = {
-            'songs':    Library.artistSongs,
-            'albums':   Library.artistAlbums,
-            'genres':   Library.artistGenres,
-            }
+    @property
+    def songs(self):
+        return self._library.artist_songs(self)
+
+    @property
+    def albums(self):
+        return self._library.artist_albums(self)
+
+    @property
+    def genres(self):
+        return self._library.artist_genres(self)
 
 class Album(LibraryObject, unicode):
-    _attributes = {
-            'songs':    Library.albumSongs,
-            'artists':  Library.albumArtists,
-            'genres':   Library.albumGenres,
-            }
+    @property
+    def songs(self):
+        return self._library.album_songs(self)
+
+    @property
+    def artists(self):
+        return self._library.album_artists(self)
+
+    @property
+    def genres(self):
+        return self._library.album_genres(self)
 
 class Genre(LibraryObject, unicode):
-    _attributes = {
-            'songs':    Library.genreSongs,
-            'artists':  Library.genreArtists,
-            'albums':   Library.genreAlbums,
-            }
-
     def __init__(self, value, library):
-        LibraryObject.__init__(self, value, library)
         if type(value) != list:
             value = [value]
-        self._value = [x for x in value if type(value) in (str, unicode)]
+        value = [x for x in value if type(x) in (str, unicode)]
+        LibraryObject.__init__(self, value, library)
+
+    @property
+    def songs(self):
+        return self._library.genre_songs(self)
+
+    @property
+    def artists(self):
+        return self._library.genre_artists(self)
+
+    @property
+    def albums(self):
+        return self._library.genre_albums(self)
 
 class Time(LibraryObject, int):
-    _attributes = {
-            'hours':    lambda lib, value: value / 3600,
-            'minutes':  lambda lib, value: value / 60,
-            }
+    @property
+    def hours(self):
+        return self / 3600
+
+    @property
+    def minutes(self):
+        return self / 60
 
     @property
     def human(self):
@@ -273,16 +291,21 @@ class DiscNumber(Text):
         return int(disc_number)
 
 
-class Song(dict, LibraryObject):
+class Song(LibraryObject):
     def __init__(self, value, library):
-        dict.__init__(self, value)
-        LibraryObject.__init__(self, self, library)
+        LibraryObject.__init__(self, value, library)
 
     def __getattr__(self, attr):
         try:
             return self.__getitem__(attr)
         except KeyError:
-            return LibraryObject.__getattr__(self, attr)
+            return LibraryObject.__getattribute__(self, attr)
+
+    def get(self, key, default=None):
+        try:
+            return self.__getitem__(key)
+        except KeyError:
+            return default
 
     def __contains__(self, key):
         try:
@@ -325,7 +348,7 @@ class Song(dict, LibraryObject):
             else:
                 return Text('', self._library)
         elif item == 'isStream':
-            return dict.get(self, 'file', '').startswith('http://')
+            return self._value.get('file', '').startswith('http://')
         else:
             value = self._getAttr(item)
             if value is None:
@@ -337,7 +360,7 @@ class Song(dict, LibraryObject):
         value = None
         if ('artist' in attrs or 'title' in attrs) and self.isStream:
             # mpd puts stream metadata in the title attribute as "{artist} - {song}"
-            value = dict.get(self, 'title', None)
+            value = self._value.get('title', None)
             if value is not None:
                 if ' - ' in value:
                     artist, title = value.split(' - ', 1)
@@ -351,17 +374,27 @@ class Song(dict, LibraryObject):
                 value = self.station
         else:
             for attr in attrs:
-                if dict.__contains__(self, attr):
-                    value = dict.__getitem__(self, attr)
+                if attr in self._value:
+                    value = self._value[attr]
                     break
         return value.strip() if type(value) in (str, unicode) else value
 
+    def __eq__(self, other):
+        if isinstance(other, Song):
+            return self._value.get('file', True) == other._value.get('file', False)
+        else:
+            return self._value.get('file', True) == other.get('file', False)
+
 
 class Path(LibraryObject, unicode):
-    _attributes = {
-            'absolute': lambda lib, self: self._value,
-            'parent': lambda lib, self: Dir('/'.join(self._value.split('/')[:-1]), lib)
-            }
+    @property
+    def absolute(self):
+        return self._value
+
+    @property
+    def parent(self):
+        return Dir('/'.join(self._value.split('/')[:-1]), self._library)
+
     def __new__(cls, value, library=None):
         return unicode.__new__(cls, value.rsplit('/', 1)[-1])
 
@@ -382,7 +415,7 @@ class Dir(Path):
             self.node = sorted(self._library._fsNode(self._value).items())
         key, value = self.node[index]
         if type(value) is int:
-            return File(self._library._songList[value]['file'], self._library)
+            return File(self._library._song_list[value]['file'], self._library)
         else:
             return Dir(self._value + '/' + key, self._library)
 
