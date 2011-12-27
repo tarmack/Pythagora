@@ -16,7 +16,6 @@
 #-------------------------------------------------------------------------------
 import locale
 import time
-import gc
 
 locale.setlocale(locale.LC_ALL, "")
 
@@ -30,15 +29,13 @@ class Library(object):
     def reload(self, mainlist):
         '''Reloads the current instance with the new list from MPD. Returns the instance for your convenience'''
         reload_start = time.time()
+        self._song_list = None
         self._song_list = [song for song in mainlist if 'file' in song]
         self._artists = LibraryIndex()
         self._albums = LibraryIndex()
         self._genres = LibraryIndex()
         if self.options.get('filesystem', True):
             self._filesystem = {}
-        # Force the collection of cyclic references to the old objects.
-        start = time.time()
-        print('info: Garbage collection %i freed items in %.3f seconds.' % (gc.collect(), time.time() - start))
         # parse the list and prepare it for loading in the library browser and the file system view.
         for index, song in enumerate(self._song_list):
             album = song.get('album', 'None')
@@ -106,7 +103,7 @@ class Library(object):
     def album_songs(self, album, artists=[]):
         '''Returns a list containing all songs on the supplied album title.
         The optional artist argument can be used to only get the songs of a particular artist or list of artists.'''
-        if type(artists) in (str, unicode):
+        if isinstance(artists, basestring):
             artists = [artists]
         songs = (Song(self._song_list[index], self) for index in self._albums.get(album, []))
         for song in sorted(songs, _sort_album_songs):
@@ -169,10 +166,11 @@ def _sort_album_songs(x, y):
 
 class LibraryIndex(dict):
     '''A dictionary for storing the library data.'''
-    def __setitem__(self, keys, value):
-        if type(keys) is not list:
-            keys = [keys]
-        for key in keys:
+    def __setitem__(self, key, value):
+        if isinstance(key, list):
+            for k in key:
+                self.__setitem__(k, value)
+        else:
             if key in self:
                 part = self[key]
                 if not value in part:
@@ -189,18 +187,18 @@ class LibraryObject(object):
 
     def __init__(self, value, library):
         self._library = library
+        if not isinstance(value, self.__class__.__base__) and isinstance(value, (list, tuple)):
+            value = tuple(x for x in value if isinstance(x, basestring))
         if not value:
             value = self
         self._value = value
 
     def all(self):
-        if type(self._value) in (str, unicode):
+        if isinstance(self._value, basestring):
             return [self.__class__(self._value, self._library)]
         else:
             return [self.__class__(value, self._library) for value in self._value]
 
-    def __call__(self):
-        return self
 
 class Text(LibraryObject, unicode):
     pass
@@ -232,12 +230,6 @@ class Album(LibraryObject, unicode):
         return self._library.album_genres(self)
 
 class Genre(LibraryObject, unicode):
-    def __init__(self, value, library):
-        if type(value) != list:
-            value = [value]
-        value = [x for x in value if type(x) in (str, unicode)]
-        LibraryObject.__init__(self, value, library)
-
     @property
     def songs(self):
         return self._library.genre_songs(self)
@@ -292,9 +284,6 @@ class DiscNumber(Text):
 
 
 class Song(LibraryObject):
-    def __init__(self, value, library):
-        LibraryObject.__init__(self, value, library)
-
     def __getattr__(self, attr):
         try:
             return self.__getitem__(attr)
@@ -377,7 +366,7 @@ class Song(LibraryObject):
                 if attr in self._value:
                     value = self._value[attr]
                     break
-        return value.strip() if type(value) in (str, unicode) else value
+        return value.strip() if isinstance(value, basestring) else value
 
     def __eq__(self, other):
         if isinstance(other, Song):
@@ -414,7 +403,7 @@ class Dir(Path):
         if not hasattr(self, 'node'):
             self.node = sorted(self._library._fsNode(self._value).items())
         key, value = self.node[index]
-        if type(value) is int:
+        if isinstance(value, int):
             return File(self._library._song_list[value]['file'], self._library)
         else:
             return Dir(self._value + '/' + key, self._library)
@@ -426,5 +415,4 @@ class Dir(Path):
         for index, (path, subNode) in enumerate(self.node):
             if path == item:
                 return index
-
 
