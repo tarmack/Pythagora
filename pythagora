@@ -202,6 +202,7 @@ class Manager():
         if self.view.shuttingDown:
             return True
         self.view.emit(SIGNAL('clearForms'))
+        self.library.reload([])
         self.update.setProgress(0, 0)
         self.update.lastSongId = None
         server = self.config.server
