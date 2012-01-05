@@ -96,7 +96,7 @@ class View(QMainWindow, auxilia.Actions):
         self.mpdButton.setIcon(auxilia.PIcon('network-workgroup'))
         self.mpdButton.setText('MPD')
         self.mpdButton.setMenu(self.menuMPD)
-        self.reloadLibrary = self.actionLibReload(self.menuMPD, self._libReload)
+        self.reloadLibrary = self.actionLibReload(self.menuMPD, lambda: self.emit(SIGNAL('libraryReload'), True))
         self.updateLibrary = self.actionLibUpdate(self.menuMPD, lambda: self.mpdclient.send('update'))
         self.rescanLibrary = self.actionLibRescan(self.menuMPD, lambda: self.mpdclient.send('rescan'))
         # Create 'Outputs' menu.
@@ -189,9 +189,6 @@ class View(QMainWindow, auxilia.Actions):
         self.tabs.setCurrentIndex(index)
         self.tabTimer.stop()
 
-    def _libReload(self):
-        self.mpdclient.send('listallinfo', callback=
-                lambda mainlist: self.emit(SIGNAL('libraryReload'), mainlist))
 
 #==============================================================================
 

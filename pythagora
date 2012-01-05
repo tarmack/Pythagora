@@ -284,10 +284,15 @@ class Manager():
         timestamp = self.mpdclient.stats()['db_update']
         if mainlist is None:
             mainlist = getLibrary(timestamp)
+        elif mainlist == True:
+            # Don't use cache.
+            mainlist = None
         else:
             cacheLibrary(timestamp, mainlist)
 
         if mainlist is None:
+            self.library.reload([])
+            self.view.emit(SIGNAL('clearForms'))
             start = time.time()
             self.mpdclient.send('listallinfo', callback=update)
         else:
@@ -416,7 +421,7 @@ class Update:
                 lambda playlists: self.view.emit(SIGNAL('reloadPlaylists'), playlists))
 
     def database(self, status):
-        self.view.emit(SIGNAL('libraryReload'))
+        self.view.emit(SIGNAL('libraryReload'), True)
 
     def setSongLabel(self, song):
         if isinstance(song, basestring):
