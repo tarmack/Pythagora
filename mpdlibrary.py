@@ -29,8 +29,11 @@ class Library(object):
     def reload(self, mainlist):
         '''Reloads the current instance with the new list from MPD. Returns the instance for your convenience'''
         reload_start = time.time()
-        self._song_list = None
-        self._song_list = [song for song in mainlist if 'file' in song]
+        self._song_list = []
+        while mainlist:
+            song = mainlist.pop()
+            if 'file' in song:
+                self._song_list.append(song)
         self._artists = LibraryIndex()
         self._albums = LibraryIndex()
         self._genres = LibraryIndex()
