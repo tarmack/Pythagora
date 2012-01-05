@@ -292,7 +292,7 @@ class Manager():
 
         if mainlist is None:
             self.library.reload([])
-            self.view.emit(SIGNAL('clearForms'))
+            self.view.emit(SIGNAL('reloadLibrary'))
             start = time.time()
             self.mpdclient.send('listallinfo', callback=update)
         else:
