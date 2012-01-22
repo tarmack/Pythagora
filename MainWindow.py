@@ -149,7 +149,6 @@ class View(QMainWindow, auxilia.Actions):
 
         self.closeEvent = self.closeEvent
         self.connect(self.app,SIGNAL('aboutToQuit()'),self.shutdown)
-        self.show()
 
 #==============================================================================
 # Code for switching tabs on drag & drop. (__init__() continues)
@@ -382,6 +381,7 @@ class SongLabel(QLabel):
             }
     def __init__(self):
         QLabel.__init__(self)
+        self.songInToolTip = False
         self.setAlignment(Qt.AlignBottom)
         self.titleFont = self.font()
         self.titleFont.setPointSize(self.font().pointSize()+6)

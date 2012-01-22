@@ -9,6 +9,7 @@ KDE/Qt mpd Client\n\
 Generic options:\n\
   -h,   --help              Show help about options\n\
         --help-qt           Show Qt specific options\n\
+  -i,   --iconified         Don't show the main window when started\n\
   -V,   --verbose           Make some noise\n\
   -d,   --debug             Make a lot of noise\n\
   -q,   --quiet             Don't print anything\n\

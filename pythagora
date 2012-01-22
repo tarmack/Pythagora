@@ -62,6 +62,7 @@ def main():
         options = KCmdLineOptions()
         options.add('h').add('help', ki18n('Show help about options'))
         options.add('help-qt' , ki18n('Show Qt specific options'))
+        options.add('i').add('iconified' , ki18n('Don\'t show the main window when started'))
         options.add('V').add('verbose' , ki18n('Make some noise'))
         options.add('d').add('debug' , ki18n('Make a lot of noise'))
         options.add('q').add('quiet' , ki18n('Don\'t print anything'))
@@ -110,6 +111,8 @@ class Manager():
             self.setGlobalShortcuts()
         else:
             self.view.keyPressEvent = self.KeyPressEvent
+        if not ('-i' in sys.argv or '--iconified' in sys.argv):
+            self.view.show()
 
     def connectTo(self, action):
         name = unicode(action.text())
