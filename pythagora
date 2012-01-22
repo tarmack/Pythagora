@@ -358,12 +358,9 @@ class Update:
         if not status:
             return
         self.timer.start(1000)
-        for change in changes:
-            try:
-                function = getattr(self, change)
-            except AttributeError:
-                print "error: Update received change group '{0}' which is not implemented.".format(change)
-            function(status)
+        for change in ('database', 'playlist', 'stored_playlist', 'mixer', 'options', 'player'):
+            if change in changes:
+                getattr(self, change)(status)
 
     def progress(self):
         if self.mpdclient.connected():
@@ -379,9 +376,6 @@ class Update:
     def playlist(self, status):
         self.mpdclient.send('plchanges', (self.view.currentList.playQueue.version,), callback=
                 lambda plist: self.view.emit(SIGNAL('playlistChanged'), plist, status))
-
-    def timeout(self, status):
-        self.player(status)
 
     def player(self, status):
         if self.state != status['state']:

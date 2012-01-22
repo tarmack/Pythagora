@@ -380,13 +380,11 @@ class PlayQueueModel(QAbstractListModel):
 
     def _updateSong(self, old_song, new_song):
         ''' Updates the song info if they do not match. Preserves fetched icons. '''
-        if not old_song == new_song:
-            new_song.iconPath = old_song.iconPath
-            new_song.icon = old_song.icon
-            if not new_song.iconPath:
-                self.retriever.fetchIcon(new_song)
-            return new_song
-        return old_song
+        new_song.iconPath = old_song.iconPath
+        new_song.icon = old_song.icon
+        if not new_song.iconPath:
+            self.retriever.fetchIcon(new_song)
+        return new_song
 
     def _popSong(self, pos):
         ''' Pops a song from the list keeping the id_list correct. '''
