@@ -372,6 +372,8 @@ class Update:
                         self.setProgress(self.time + 1, 0)
             except Exception, e:
                 print 'error: updateProgress error', e
+            if self._waitingForIcon:
+                self.setSongLabel()
 
     def playlist(self, status):
         self.mpdclient.send('plchanges', (self.view.currentList.playQueue.version,), callback=
@@ -389,17 +391,17 @@ class Update:
             self.view.playerForm.songLabel.setBitrate(status['bitrate'])
             try:
                 currentSong = self.view.currentList.playQueue[int(status['song'])]
+                if status['songid'] != currentSong.id:
+                    # This is the wrong song.
+                    currentSong = None
             except IndexError:
+                currentSong = None
+            if currentSong is None:
                 currentSong = mpdlibrary.Song(self.mpdclient.currentsong(), self.library)
                 currentSong.iconPath = ''
         if self.lastSong != currentSong:
-            self.view.emit(SIGNAL('currentSong'), currentSong)
             self.lastSong = currentSong
-        if self.view.playerForm.iconPath != currentSong.iconPath:
-            self.view.playerForm.setSongIcon(currentSong.iconPath)
-        if hasattr(self.view.trayIcon, 'toolTipIconName'):
-            if self.view.trayIcon.toolTipIconName() != currentSong.iconPath:
-                self.view.trayIcon.setToolTipIconByName(currentSong.iconPath)
+            self.view.emit(SIGNAL('currentSong'), currentSong)
         # Check if volume chaged behind our back.
         self.mixer(status)
 
@@ -420,7 +422,13 @@ class Update:
     def database(self, status):
         self.view.emit(SIGNAL('libraryReload'), True)
 
-    def setSongLabel(self, song):
+    def setSongLabel(self, song=None):
+        if song is None:
+            playing = self.view.currentList.playQueue.playing
+            try:
+                song = self.view.currentList.playQueue[playing]
+            except IndexError:
+                pass
         if isinstance(song, basestring):
             label = song
             self.view.playerForm.songLabel.setText(label)
@@ -447,15 +455,20 @@ class Update:
             if album:
                 album = 'from <i>%s</i>' % album
             label = '<br>'.join((item for item in (title, artist, album, station) if item))
-        icon = song.iconPath or self.view.appIcon
-        self.view.trayIcon.setToolTip(icon, label)
-        if self.config.showNotification and self.state != 'stop':
-            if not self.dbusNotification:
-                self._setupNotifications()
-            try:
-                self.showNotification(icon, label)
-            except:
-                self.dbusNotification = None
+        self.view.trayIcon.setToolTip(song.iconPath, label)
+        if self.view.playerForm.iconPath != song.iconPath:
+            self.view.playerForm.setSongIcon(song.iconPath)
+        if song.iconPath:
+            self._waitingForIcon = False
+            if self.config.showNotification and self.state != 'stop':
+                if not self.dbusNotification:
+                    self._setupNotifications()
+                try:
+                    self.showNotification(song.iconPath, label)
+                except:
+                    self.dbusNotification = None
+        else:
+            self._waitingForIcon = True
 
     def showNotification(self, icon, label):
         self.notificationHints.update({'image_path': icon})
