@@ -30,6 +30,7 @@ class Library(object):
         '''Reloads the current instance with the new list from MPD. Returns the instance for your convenience'''
         reload_start = time.time()
         self._song_list = []
+        mainlist.reverse()
         while mainlist:
             song = mainlist.pop()
             if 'file' in song:
