@@ -111,8 +111,14 @@ class Manager():
             self.setGlobalShortcuts()
         else:
             self.view.keyPressEvent = self.KeyPressEvent
-        if not ('-i' in sys.argv or '--iconified' in sys.argv):
-            self.view.show()
+
+        # Show the main window to make sure all geometries are calculated.
+        self.view.show()
+        if ('-i' in sys.argv or '--iconified' in sys.argv):
+            # When asked to start iconified hide the window again. It will
+            # never show because the main loop doesn't run before it is hidden
+            # again.
+            self.view.hide()
 
     def connectTo(self, action):
         name = unicode(action.text())
