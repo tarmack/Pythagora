@@ -434,7 +434,7 @@ class Update:
             try:
                 song = self.view.currentList.playQueue[playing]
             except IndexError:
-                pass
+                song = EMPTY_SONG
         if isinstance(song, basestring):
             label = song
             self.view.playerForm.songLabel.setText(label)
