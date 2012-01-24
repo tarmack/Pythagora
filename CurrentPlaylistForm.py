@@ -286,6 +286,9 @@ class PlayQueueModel(QAbstractListModel):
     def __init__(self, mpdclient, config):
         QAbstractListModel.__init__(self)
         self.lastEdit = time()
+        self._boldFont = QFont()
+        self._boldFont.setBold(True)
+        self._stdFont = QFont()
         self.version = 0
         self.playing = -1
         self._oneLine = config.oneLinePlaylist
@@ -503,10 +506,10 @@ class PlayQueueModel(QAbstractListModel):
             else:
                 return None
         if role == Qt.FontRole:
-            font = QFont()
             if row == self.playing:
-                font.setBold(True)
-            return font
+                return self._boldFont
+            else:
+                return self._stdFont
         if role == Qt.AccessibleTextRole:
             song = self._songs[row]
             if row != self.playing and song.isStream:
