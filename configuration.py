@@ -41,6 +41,7 @@ class Configuration(object):
                 'oneLinePlaylist':      False,
                 'tabsIndex':            0,
                 'keepPlayingVisible':   False,
+                'showNumbers':          False,
                 'playlistControls':     False,
                 'mgrSize':              QSize(800, 400),
                 'mgrSplit':             [400,200],

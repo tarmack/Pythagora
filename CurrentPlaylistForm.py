@@ -85,6 +85,8 @@ class CurrentPlaylistForm(QWidget, auxilia.Actions):
         self.connect(self.currentList.verticalScrollBar(), SIGNAL('valueChanged(int)'), self._setEditing)
         self.connect(self.keepPlayingVisible,SIGNAL('toggled(bool)'),self._toggleKeepPlayingVisible)
         self.connect(self.oneLinePlaylist,SIGNAL('toggled(bool)'),self._setOneLinePlaylist)
+        self.connect(self.showNumbers,SIGNAL('toggled(bool)'),self._setNumbers)
+        self.showNumbers.setChecked(self.config.showNumbers)
 
         # Menu for current playlist.
         # Create actions.
@@ -227,6 +229,10 @@ class CurrentPlaylistForm(QWidget, auxilia.Actions):
 
     def _setPlayTime(self, playTime=0):
         self.view.playTimeLabel.setText('Total play time: %s' % auxilia.formatTime(playTime))
+
+    def _setNumbers(self, value):
+        self.config.showNumbers = value
+        self.currentList.verticalHeader().setVisible(value)
 
     def _toggleKeepPlayingVisible(self, value):
         self.config.keepPlayingVisible = value
