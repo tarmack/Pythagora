@@ -346,6 +346,7 @@ class Update:
     time = 0
     lastSong = EMPTY_SONG
     dbusNotification = None
+    _waitingForIcon = False
     def __init__(self, view, mpdclient, config, library, playControls):
         self.pauseIcon = auxilia.PIcon("media-playback-pause")
         self.startIcon = auxilia.PIcon("media-playback-start")
