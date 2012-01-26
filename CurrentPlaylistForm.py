@@ -135,6 +135,7 @@ class CurrentPlaylistForm(QWidget, auxilia.Actions):
         '''Causes the current play list to be reloaded from the server'''
         if not self.config.server:
             return
+        oldLength = len(self.playQueue)
         self.playQueue.update((PlayQueueSong(song, self.library, self.playQueue) for song in plist), status)
 
         self.view.numSongsLabel.setText(status['playlistlength']+' Songs')
@@ -142,6 +143,11 @@ class CurrentPlaylistForm(QWidget, auxilia.Actions):
 
         self.setPlaying({'pos': status.get('song', -1)})
         self._resize()
+        if oldLength == 0:
+            self.app.processEvents()
+            self.playQueue.lastEdit = 0
+            self._ensurePlayingVisable()
+
 
     def keyPressEvent(self, event):
         if event.matches(QKeySequence.Delete):
