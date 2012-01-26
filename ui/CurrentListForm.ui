@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>414</width>
+    <width>442</width>
     <height>300</height>
    </rect>
   </property>
@@ -33,7 +33,7 @@
        <number>0</number>
       </property>
       <item>
-       <widget class="QListView" name="currentList">
+       <widget class="QTableView" name="currentList">
         <property name="contextMenuPolicy">
          <enum>Qt::ActionsContextMenu</enum>
         </property>
@@ -55,12 +55,6 @@
         <property name="selectionMode">
          <enum>QAbstractItemView::ExtendedSelection</enum>
         </property>
-        <property name="iconSize">
-         <size>
-          <width>32</width>
-          <height>32</height>
-         </size>
-        </property>
         <property name="textElideMode">
          <enum>Qt::ElideNone</enum>
         </property>
@@ -70,9 +64,27 @@
         <property name="horizontalScrollMode">
          <enum>QAbstractItemView::ScrollPerPixel</enum>
         </property>
-        <property name="movement">
-         <enum>QListView::Snap</enum>
+        <property name="showGrid">
+         <bool>false</bool>
         </property>
+        <property name="wordWrap">
+         <bool>false</bool>
+        </property>
+        <attribute name="horizontalHeaderVisible">
+         <bool>false</bool>
+        </attribute>
+        <attribute name="horizontalHeaderMinimumSectionSize">
+         <number>2</number>
+        </attribute>
+        <attribute name="verticalHeaderVisible">
+         <bool>false</bool>
+        </attribute>
+        <attribute name="verticalHeaderDefaultSectionSize">
+         <number>2</number>
+        </attribute>
+        <attribute name="verticalHeaderMinimumSectionSize">
+         <number>2</number>
+        </attribute>
        </widget>
       </item>
       <item>

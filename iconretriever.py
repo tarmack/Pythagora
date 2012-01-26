@@ -205,7 +205,7 @@ class RetrieverThread(threading.Thread, Retriever):
                 # if we are the only one holding on to the item, get rid of it.
                 if getrefcount(song) > 2:
                     icon = self.songIcon(song)
-                    song.iconPath = icon
+                    song.setIcon(icon)
             except:
                 print 'debug: error while fetching icon'
                 raise

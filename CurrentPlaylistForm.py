@@ -16,7 +16,8 @@
 # limitations under the License.
 #-------------------------------------------------------------------------------
 from PyQt4.QtCore import SIGNAL, Qt, QSize, QAbstractListModel, QModelIndex, QMimeData
-from PyQt4.QtGui import QWidget, QInputDialog, QKeySequence, QListView, QIcon, QFont, QSortFilterProxyModel, QStyledItemDelegate
+from PyQt4.QtGui import QWidget, QInputDialog, QKeySequence, QListView, QIcon, QFont, \
+        QSortFilterProxyModel, QItemDelegate, QStyle, QFontMetrics
 from PyQt4 import uic
 from time import time
 import cPickle as pickle
@@ -51,6 +52,7 @@ class CurrentPlaylistForm(QWidget, auxilia.Actions):
         else:
             uic.loadUi(DATA_DIR+'ui/CurrentListForm.ui.Qt', self)
         self.view.currentListLayout.addWidget(self)
+
         self.playQueueProxy = QSortFilterProxyModel()
         self.playQueueProxy.setSourceModel(self.playQueue)
         self.playQueueProxy.setFilterCaseSensitivity(Qt.CaseInsensitive)
@@ -58,12 +60,10 @@ class CurrentPlaylistForm(QWidget, auxilia.Actions):
         self.playQueueProxy.setFilterRole(Qt.AccessibleTextRole)
         self.currentList.setModel(self.playQueueProxy)
         self.currentList.setItemDelegateForColumn(0, self.playQueueDelegate)
+        self.currentList.horizontalHeader().setResizeMode(1)
 
         if config.oneLinePlaylist:
             self.oneLinePlaylist.setChecked(True)
-            self.currentList.setIconSize(QSize(16, 16))
-        else:
-            self.currentList.setIconSize(QSize(32, 32))
         self.keepPlayingVisible.setChecked(self.config.keepPlayingVisible)
         self._togglePlaylistTools(self.config.playlistControls)
         self.view.connect(self.view, SIGNAL('playlistChanged'), self.reload)
@@ -133,12 +133,13 @@ class CurrentPlaylistForm(QWidget, auxilia.Actions):
         '''Causes the current play list to be reloaded from the server'''
         if not self.config.server:
             return
-        self.playQueue.update((mpdlibrary.Song(song, self.library) for song in plist), status)
+        self.playQueue.update((PlayQueueSong(song, self.library, self.playQueue) for song in plist), status)
 
         self.view.numSongsLabel.setText(status['playlistlength']+' Songs')
         self._setPlayTime(self.playQueue.totalTime())
 
         self.setPlaying({'pos': status.get('song', -1)})
+        self._resize()
 
     def keyPressEvent(self, event):
         if event.matches(QKeySequence.Delete):
@@ -234,11 +235,23 @@ class CurrentPlaylistForm(QWidget, auxilia.Actions):
 
     def _setOneLinePlaylist(self, value):
         self.config.oneLinePlaylist = value
-        self.playQueueDelegate.oneLine = value
-        if value:
-            self.currentList.setIconSize(QSize(16, 16))
-        else:
-            self.currentList.setIconSize(QSize(32, 32))
+        self.playQueueDelegate.setOneLine(value)
+        self._resize()
+
+    def _resize(self):
+        metrics = QFontMetrics(QFont())
+        length = 0
+        for song in self.playQueue:
+            artist = metrics.width(song.artist)
+            title = metrics.width(song.title)
+            if self.config.oneLinePlaylist:
+                length = max(artist + title, length)
+            else:
+                length = max(artist, title, length)
+        width = length + self.playQueueDelegate.height + 4
+        header = self.currentList.horizontalHeader()
+        header.setMinimumSectionSize(width)
+        self.currentList.verticalHeader().setDefaultSectionSize(self.playQueueDelegate.height)
 
     def _togglePlaylistTools(self, value=None):
         text = ('Show Playlist Tools', 'Hide Playlist Tools')
@@ -289,12 +302,9 @@ class PlayQueueModel(QAbstractListModel):
         self._boldFont = QFont()
         self._boldFont.setBold(True)
         self._stdFont = QFont()
-        self.version = 0
         self.playing = -1
+        self.clear()
         self._oneLine = config.oneLinePlaylist
-        self._songs = []
-        self._id_list = []
-        self._changes = []
         self.mpdclient = mpdclient
         self.config = config
         self.retriever = iconretriever.ThreadedRetriever(config.coverPath)
@@ -404,6 +414,7 @@ class PlayQueueModel(QAbstractListModel):
         self.version = 0
         self._songs = []
         self._id_list = []
+        self._iconChanges = 0
         self.reset()
 
     def supportedDropActions(self):
@@ -498,6 +509,7 @@ class PlayQueueModel(QAbstractListModel):
         if role == Qt.ToolTipRole:
             return self._getTooltip(row)
         if role == Qt.DecorationRole:
+            #print "DecorationRole for row:", row
             song = self._songs[row]
             if song.iconPath:
                 if not song.icon:
@@ -552,21 +564,61 @@ class PlayQueueModel(QAbstractListModel):
         return self._songs.__getitem__(index)
 
 
-class PlayQueueDelegate(QStyledItemDelegate):
+class PlayQueueDelegate(QItemDelegate):
     ''' Delegate for the playqueue view. This delegate is used to switch between different display styles. '''
     def __init__(self, config):
-        QStyledItemDelegate.__init__(self)
-        self.config = config
-        self.oneLine = config.oneLinePlaylist
+        QItemDelegate.__init__(self)
+        self.setOneLine(config.oneLinePlaylist)
 
-    def displayText(self, value, locale):
-        ''' Returns the text as it should be displayed for the item. '''
-        value = value.toStringList()
-        artist = unicode(value[0])
-        title = unicode(value[1])
+    def setOneLine(self, value):
+        self.oneLine = value
+        self.height = QFontMetrics(QFont()).height()
+        if not value:
+            self.height *= 2
+
+    def sizeHint(self, option, index):
+        #size = QStyledItemDelegate.sizeHint(self, option, index)
+        #print "sizeHint for index:", index.row()
+        artist, title = [unicode(val) for val in index.data(Qt.DisplayRole).toStringList()]
         if self.oneLine:
-            text = ' - '.join((artist, title))
+            width = self.height + option.fontMetrics.width(' - '.join((artist, title)))
         else:
-            text = '\n'.join((title, artist))
-        return QStyledItemDelegate.displayText(self, text, locale)
+            width = self.height + max(option.fontMetrics.width(artist),
+                    option.fontMetrics.width(title))
+        return QSize(width + 4, self.height)
+
+    def paint(self, painter, option, index):
+        #print "painting row:", index.row()
+        #QStyledItemDelegate.paint(self, painter, option, index)
+        style = option.widget.style()
+        style.drawControl(QStyle.CE_ItemViewItem, option, painter)
+        artist, title = [unicode(val) for val in index.data(Qt.DisplayRole).toStringList()]
+        font = QFont(index.data(Qt.FontRole))
+        icon = QIcon(index.data(Qt.DecorationRole))
+        painter.setFont(font)
+        rect = option.rect
+        rect.adjust(1, 0, -2, 0)
+        iconSize = self.height - 2
+        painter.drawPixmap(rect.left(), rect.top()+1, icon.pixmap(iconSize, iconSize))
+        rect.setLeft(rect.left() + iconSize + 2)
+        if self.oneLine:
+            painter.drawText(rect, Qt.AlignBottom, ' - '.join((artist, title)))
+        else:
+            painter.drawText(rect, Qt.AlignTop, title)
+            painter.drawText(rect, Qt.AlignBottom, artist)
+
+class PlayQueueSong(mpdlibrary.Song):
+    def __new__(cls, song, library, parent):
+        return mpdlibrary.Song.__new__(cls, song, library)
+
+    def __init__(self, song, library, parent):
+        mpdlibrary.Song.__init__(self, song, library)
+        self.parent = parent
+
+    def setIcon(self, iconPath):
+        self.iconPath = iconPath
+        #self.parent.newIcon()
+        index = int(self.pos)
+        self.parent.emit(SIGNAL('dataChanged(const QModelIndex &, const QModelIndex &)'),
+                self.parent.createIndex(index, 0), self.parent.createIndex(index, 0))
 
