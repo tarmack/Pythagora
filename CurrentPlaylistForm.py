@@ -605,7 +605,10 @@ class PlayQueueDelegate(QItemDelegate):
         rect = option.rect
         rect.adjust(1, 0, -2, 0)
         iconSize = self.height - 2
-        painter.drawPixmap(rect.left(), rect.top()+1, icon.pixmap(iconSize, iconSize))
+        pixmap = icon.pixmap(iconSize, iconSize)
+        left = rect.left() + ((iconSize - pixmap.width()) / 2)
+        top = rect.top()+1 + ((iconSize - pixmap.height()) / 2)
+        painter.drawPixmap(left, top, pixmap)
         rect.setLeft(rect.left() + iconSize + 2)
         if self.oneLine:
             painter.drawText(rect, Qt.AlignBottom, ' - '.join((artist, title)))
