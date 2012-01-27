@@ -177,7 +177,8 @@ class CurrentPlaylistForm(QWidget, auxilia.Actions):
         self.currentList.scrollTo(playing, 1) # PositionAtTop
         height = self.currentList.viewport().height()
         scrollBar = self.currentList.verticalScrollBar()
-        new_pos = scrollBar.value() - (height / 8)
+        correction = (height / 8) - self.currentList.rowViewportPosition(self.playQueue.playing)
+        new_pos = scrollBar.value() - correction
         scrollBar.setValue(new_pos)
 
     def _saveCurrent(self):
