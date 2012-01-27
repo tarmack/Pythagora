@@ -273,7 +273,6 @@ class CurrentPlaylistForm(QWidget, auxilia.Actions):
         scrollBar = self.currentList.verticalScrollBar()
         scrollValue = scrollBar.value()
         scrollMax = scrollBar.maximum()
-        print scrollValue, scrollMax
         self.playlistTools.setVisible(value)
         self.currentBottom.setArrowType(int(value)+1)
         self.currentBottom.setText(text[value])
