@@ -269,16 +269,17 @@ class CurrentPlaylistForm(QWidget, auxilia.Actions):
     def _togglePlaylistTools(self, value=None):
         text = ('Show Playlist Tools', 'Hide Playlist Tools')
         if value == None:
-            if self.playlistTools.isVisible():
-                self.playlistTools.setVisible(False)
-            else:
-                self.playlistTools.setVisible(True)
-            value = self.playlistTools.isVisible()
-        else:
-            self.playlistTools.setVisible(value)
+            value = not self.playlistTools.isVisible()
+        scrollBar = self.currentList.verticalScrollBar()
+        scrollValue = scrollBar.value()
+        scrollMax = scrollBar.maximum()
+        print scrollValue, scrollMax
+        self.playlistTools.setVisible(value)
         self.currentBottom.setArrowType(int(value)+1)
         self.currentBottom.setText(text[value])
         self.config.playlistControls = bool(self.playlistTools.isVisible())
+        if scrollValue == scrollMax:
+            scrollBar.setValue(scrollBar.maximum())
 
     def _addStream(self):
         '''Ask the user for the url of the stream to add.'''
