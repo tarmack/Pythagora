@@ -322,8 +322,8 @@ class PlayerForm(QWidget):
         self.songLabel = SongLabel()
         self.setAcceptDrops(True)
         self.titleLayout.addWidget(self.songLabel)
-        self.progress.mouseReleaseEvent = self._mouseReleaseEvent
-        self.progress.mouseMoveEvent = self._mouseMoveEvent
+        self.progress.mouseReleaseEvent = self._progressSeekEvent
+        self.progress.mouseMoveEvent = self._progressShowTimeEvent
         self.progress.setMouseTracking(True)
         self.connect(self, SIGNAL('songSeek'), self.songSeek)
 
@@ -351,13 +351,13 @@ class PlayerForm(QWidget):
             finally:
                 return self.mpdclient.send('command_list_end')
 
-    def _mouseReleaseEvent(self, event):
+    def _progressSeekEvent(self, event):
         if event.button() == Qt.LeftButton:
             position = float(event.x()) / int(self.progress.geometry().width())
             self.mpdclient.send('currentsong', callback=
                     lambda currentsong: self.emit(SIGNAL('songSeek'), currentsong, position))
 
-    def _mouseMoveEvent(self, event):
+    def _progressShowTimeEvent(self, event):
         position = float(event.x()) / int(self.progress.geometry().width())
         seconds = position * self.progress.maximum()
         self.progress.setToolTip(auxilia.formatTime(seconds))
