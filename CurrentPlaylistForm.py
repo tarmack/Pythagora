@@ -136,17 +136,26 @@ class CurrentPlaylistForm(QWidget, auxilia.Actions):
         if not self.config.server:
             return
         oldLength = len(self.playQueue)
-        self.playQueue.update((PlayQueueSong(song, self.library, self.playQueue) for song in plist), status)
+        scrollBar = self.currentList.verticalScrollBar()
+        oldScroll = scrollBar.value()
+        setBottom = oldScroll == scrollBar.maximum()
+        if not self.playQueue.update(
+                (PlayQueueSong(song, self.library, self.playQueue) for song in plist), status):
+            setBottom = False
 
         self.view.numSongsLabel.setText(status['playlistlength']+' Songs')
         self._setPlayTime(self.playQueue.totalTime())
 
         self.setPlaying({'pos': status.get('song', -1)})
         self._resize()
+        self.app.processEvents()
         if oldLength == 0:
-            self.app.processEvents()
             self.playQueue.lastEdit = 0
             self._ensurePlayingVisable()
+        elif setBottom:
+            scrollBar.setValue(scrollBar.maximum())
+        else:
+            scrollBar.setValue(oldScroll)
 
 
     def keyPressEvent(self, event):
@@ -342,7 +351,8 @@ class PlayQueueModel(QAbstractListModel):
         return total
 
     def update(self, plist, status):
-        ''' Updates the playqueue model with the changes in `plist`. '''
+        ''' Updates the playqueue model with the changes in `plist`.
+            Returns True if the last thing done is adding to the end.'''
         version = int(status['playlist'])
         if version <= self.version:
             return
@@ -370,6 +380,7 @@ class PlayQueueModel(QAbstractListModel):
         length = int(status['playlistlength'])
         if length < len(self._songs):
             del self[length:]
+        return change == 'insert'
 
     def _runCList(self, change, clist):
         ''' Applies the changes from `clist` according to `change`. '''
