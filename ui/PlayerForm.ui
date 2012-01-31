@@ -152,6 +152,9 @@
      </item>
      <item row="0" column="0" rowspan="2">
       <widget class="QLabel" name="songIcon">
+       <property name="toolTip">
+        <string>Click to enlarge</string>
+       </property>
        <property name="lineWidth">
         <number>0</number>
        </property>

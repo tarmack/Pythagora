@@ -17,7 +17,7 @@
 #-------------------------------------------------------------------------------
 from PyQt4.QtCore import SIGNAL, SLOT, QTimer, Qt, QObject, QEvent, QPoint, QPointF, QSize
 from PyQt4.QtGui import QMainWindow, QLabel, QMenu, QIcon, QWidget, QAction, QWidgetAction, QToolButton, \
-        QBrush, QFontMetrics, QPainter, QLinearGradient, QPalette, QPen, QApplication, QPixmap
+        QBrush, QFontMetrics, QPainter, QLinearGradient, QPalette, QPen, QApplication, QPixmap, QVBoxLayout
 from PyQt4 import uic
 from time import time
 import sys
@@ -326,6 +326,7 @@ class PlayerForm(QWidget):
         self.progress.mouseMoveEvent = self._progressShowTimeEvent
         self.progress.setMouseTracking(True)
         self.connect(self, SIGNAL('songSeek'), self.songSeek)
+        self.songIcon.mousePressEvent = self._iconOverlayEvent
 
     def setSongIcon(self, iconPath):
         self.iconPath = iconPath
@@ -366,6 +367,24 @@ class PlayerForm(QWidget):
         time = int(currentsong.get('time', None))
         if time is not None:
             self.mpdclient.send('seekid', (currentsong['id'], int(time * position)))
+
+    def _iconOverlayEvent(self, event):
+        popup = QMenu(self.view)
+        layout = QVBoxLayout()
+        layout.setContentsMargins(4, 4, 4, 4)
+        popup.setLayout(layout)
+        iconLabel = QLabel(popup)
+        layout.addWidget(iconLabel)
+
+        closeEvent = lambda event: popup.setParent(None)
+
+        geometry = self.songIcon.geometry()
+        songIcon = QPixmap(self.iconPath)
+        iconLabel.setGeometry(geometry)
+        iconLabel.setPixmap(songIcon)
+        iconLabel.mousePressEvent = closeEvent
+        popup.popup(geometry.topLeft())
+
 
 class SongLabel(QLabel):
     title = 'title'
