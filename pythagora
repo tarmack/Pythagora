@@ -439,10 +439,12 @@ class Update:
         if isinstance(song, basestring):
             label = song
             self.view.playerForm.songLabel.setText(label)
+            self.view.playerForm.setSongIcon(None)
             return
         elif song == EMPTY_SONG:
             label = 'Connected to %s.' % self.config.server[0]
             self.view.playerForm.songLabel.setText(label)
+            self.view.playerForm.setSongIcon(None)
         else:
             title = song.title
             artist = song.artist

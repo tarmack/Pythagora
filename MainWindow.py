@@ -330,8 +330,11 @@ class PlayerForm(QWidget):
 
     def setSongIcon(self, iconPath):
         self.iconPath = iconPath
-        height = self.songIcon.geometry().height()
-        self.songIcon.setPixmap(QPixmap(iconPath).scaled(1000, height, Qt.KeepAspectRatio, Qt.SmoothTransformation))
+        if iconPath is not None:
+            height = self.songIcon.geometry().height()
+            self.songIcon.setPixmap(QPixmap(iconPath).scaled(1000, height, Qt.KeepAspectRatio, Qt.SmoothTransformation))
+        else:
+            self.songIcon.clear()
 
     def dragEnterEvent(self, event):
         if event.provides('mpd/uri'):
