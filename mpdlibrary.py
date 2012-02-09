@@ -51,6 +51,8 @@ class Library(object):
                     artist = song[field]
                     break
             self._artists[artist] = index
+            if 'albumartist' in song:
+                self._artists[song['albumartist']] = index
 
             genre = song.get('genre', None)
             if genre:
