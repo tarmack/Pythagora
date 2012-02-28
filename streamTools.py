@@ -89,7 +89,7 @@ def parseM3U(data):
          raise ParseError('Encountered error during parsing of the playlist.')
     return adrlist
 
-def _retreiveURL(self, url):
+def _retreiveURL(url):
     if url.startswith('http://'):
         url = url[7:]
     server, path = url.split('/', 1)
