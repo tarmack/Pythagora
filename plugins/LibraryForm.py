@@ -15,15 +15,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #-------------------------------------------------------------------------------
-from PyQt4.QtCore import SIGNAL, Qt, QAbstractListModel, QAbstractItemModel, QModelIndex, QMimeData
+from PyQt4.QtCore import SIGNAL, Qt, QModelIndex
 from PyQt4.QtGui import QHeaderView, QSortFilterProxyModel, QAbstractProxyModel, QFontMetrics, QFont
 from PyQt4 import uic
 from time import time
-import cPickle as pickle
 import bisect
 
 import auxilia
 import PluginBase
+from models import ArtistsModel, AlbumsModel, TracksModel
 
 DATA_DIR = ''
 
@@ -39,9 +39,9 @@ class LibraryForm(PluginBase.PluginBase, auxilia.Actions):
     moduleIcon = 'server-database'
 
     def load(self):
-        self.artistModel = ArtistModel(self.library)
-        self.albumModel = AlbumModel(self.library)
-        self.trackModel = TrackModel(self.library)
+        self.artistModel = ArtistsModel(self.library)
+        self.albumModel = AlbumsModel(self.library)
+        self.trackModel = TracksModel(self.library)
         # Load and place the Library form.
         if self.view.KDE:
             uic.loadUi(DATA_DIR+'ui/LibraryForm.ui', self)
@@ -312,168 +312,5 @@ class HidingProxyModel(QAbstractProxyModel):
         return self._sourceModel.mimeData(indexes)
 
 
-class ArtistModel(QAbstractListModel):
-    def __init__(self, library):
-        QAbstractListModel.__init__(self)
-        self.library = library
-        self._artists = []
 
-    def reload(self, artists):
-        self._artists = list(artists)
-        self.reset()
-
-    def data(self, index, role):
-        if not index.isValid:
-            return
-        artist = index.internalPointer()
-        if role == Qt.DisplayRole:
-            return unicode(artist)
-
-    def clear(self):
-        self._artists = []
-        self.reset()
-
-    def rowCount(self, parent):
-        return len(self._artists)
-
-    def index(self, row, column, parent):
-        return self.createIndex(row, column, self._artists[row])
-
-    def flags(self, index):
-        defaultFlags = QAbstractListModel.flags(self, index)
-        if index.isValid():
-            return Qt.ItemIsDragEnabled | defaultFlags
-        else:
-            return defaultFlags
-
-    def mimeData(self, indexes):
-        artists = (index.internalPointer() for index in indexes if index.isValid())
-        uri_list = []
-        for artist in artists:
-            uri_list.extend(song.file.absolute for song in artist.songs)
-        uri_list.sort()
-        data = QMimeData()
-        data.setData('mpd/uri', pickle.dumps(uri_list))
-        return data
-
-
-class AlbumModel(QAbstractListModel):
-    def __init__(self, library):
-        QAbstractListModel.__init__(self)
-        self.library = library
-        self._albums = []
-
-    def findRow(self, album):
-        return self._albums.index(album)
-
-    def reload(self, albums):
-        self._albums = list(albums)
-        self.reset()
-
-    def data(self, index, role):
-        if not index.isValid:
-            return
-        album = index.internalPointer()
-        if role == Qt.ToolTipRole:
-            return '\n'.join(album.artists)
-        if role == Qt.DisplayRole:
-            return unicode(album)
-
-    def clear(self):
-        self._albums = []
-        self.reset()
-
-    def rowCount(self, parent):
-        return len(self._albums)
-
-    def columnCount(self, parent):
-        return 1
-
-    def index(self, row, column, parent):
-        return self.createIndex(row, column, self._albums[row])
-
-    def flags(self, index):
-        defaultFlags = QAbstractListModel.flags(self, index)
-        if index.isValid():
-            return Qt.ItemIsDragEnabled | defaultFlags
-        else:
-            return defaultFlags
-
-    def mimeData(self, indexes):
-        albums = (index.internalPointer() for index in indexes if index.isValid())
-        uri_list = []
-        for album in albums:
-            uri_list.extend(song.file.absolute for song in album.songs)
-        uri_list.sort()
-        data = QMimeData()
-        data.setData('mpd/uri', pickle.dumps(uri_list))
-        return data
-
-
-class TrackModel(QAbstractItemModel):
-    def __init__(self, library):
-        QAbstractItemModel.__init__(self)
-        self.library = library
-        self._songs = []
-
-    def findRow(self, song):
-        return self._songs.index(song)
-
-    def reload(self, songs):
-        self._songs = list(songs)
-        self.reset()
-
-    def data(self, index, role):
-        if not index.isValid:
-            return
-        song = index.internalPointer()
-        if role == Qt.DisplayRole:
-            column = index.column()
-            if column == 0:
-                return unicode(song.track)
-            if column == 1:
-                return unicode(song.title)
-            if column == 2:
-                return song.time.human
-        if role == Qt.ToolTipRole:
-            return "Artist:\t %s\nAlbum:\t %s\nFile:\t %s" % (song.artist, song.album, song.file)
-
-    def clear(self):
-        self._songs = []
-        self.reset()
-
-    def rowCount(self, parent):
-        return len(self._songs)
-
-    def columnCount(self, parent):
-        return 3
-
-    def index(self, row, column, parent):
-        if self._songs:
-            return self.createIndex(row, column, self._songs[row])
-        else:
-            return QModelIndex()
-
-    def headerData(self, section, orientation, role):
-        if orientation == Qt.Horizontal and role == Qt.DisplayRole:
-            if section == 0:
-                return 'Track'
-            if section == 1:
-                return 'Title'
-            if section == 2:
-                return 'Time'
-
-    def flags(self, index):
-        defaultFlags = QAbstractListModel.flags(self, index)
-        if index.isValid():
-            return Qt.ItemIsDragEnabled | defaultFlags
-        else:
-            return defaultFlags
-
-    def mimeData(self, indexes):
-        uri_list = [index.internalPointer().file.absolute for index in indexes if index.column() == 0]
-        uri_list.sort()
-        data = QMimeData()
-        data.setData('mpd/uri', pickle.dumps(uri_list))
-        return data
 
