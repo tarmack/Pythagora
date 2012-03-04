@@ -178,7 +178,7 @@ class PlaylistForm(PluginBase.PluginBase, auxilia.Actions):
 
     def _loadList(self):
         '''Load the currently selected playlist onto the server.
-           Note: this operation clears the current playlist by default.
+           Note: this operation clears the current playlist.
         '''
         self.mpdclient.send('clear')
         self._addList()
@@ -205,7 +205,7 @@ class PlaylistForm(PluginBase.PluginBase, auxilia.Actions):
             self.mpdclient.send('command_list_end')
 
     def _addPlaySongs(self):
-        last = int(self.mpdclient.status()['playlistlength'])
+        last = len(self.modelManager.playQueue)
         self._addSongs()
         self.mpdclient.send('play', (last,))
 

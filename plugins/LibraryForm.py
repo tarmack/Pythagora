@@ -18,7 +18,6 @@
 from PyQt4.QtCore import SIGNAL, Qt, QModelIndex
 from PyQt4.QtGui import QHeaderView, QSortFilterProxyModel, QAbstractProxyModel, QFontMetrics, QFont
 from PyQt4 import uic
-from time import time
 import bisect
 
 import auxilia
@@ -73,8 +72,6 @@ class LibraryForm(PluginBase.PluginBase, auxilia.Actions):
         self.libSplitter_2.setSizes(self.config.libSplit2)
         self.connect(self.libSplitter_1, SIGNAL('splitterMoved(int, int)'), self._storeSplitter)
         self.connect(self.libSplitter_2, SIGNAL('splitterMoved(int, int)'), self._storeSplitter)
-        self.view.connect(self.view, SIGNAL('reloadLibrary'), self.reload)
-        self.view.connect(self.view, SIGNAL('clearForms'), self.clear)
 
         # search and filter functions
         self.connect(self.artistView.selectionModel(),
@@ -113,31 +110,6 @@ class LibraryForm(PluginBase.PluginBase, auxilia.Actions):
         self.trackAdd = self.actionAddSongs(self.trackView, self.addTrack)
 
         #=======================================================================
-
-    def reload(self):
-        if not self.config.server:
-            return
-        try:
-            self.view.setCursor(Qt.WaitCursor)
-            p = time()
-            t = time()
-
-            self.artistModel.reload(self.library.artists())
-            print 'load Artist took %.3f seconds' % (time() - t); t = time()
-            self.albumModel.reload(self.library.albums())
-            print 'load Album took %.3f seconds' % (time() - t); t = time()
-            self.trackModel.reload(self.library.songs())
-            print 'load Tracks took %.3f seconds' % (time() - t); t = time()
-            print 'library load took %.3f seconds' % (time() - p)
-        finally:
-            self.view.setCursor(Qt.ArrowCursor)
-
-    def clear(self):
-        self.artistModel.clear()
-        self.albumModel.clear()
-        self.trackModel.clear()
-        self.albumHideProxy.reset()
-        self.trackHideProxy.reset()
 
     def _selectedArtists(self):
         selection = self.artistView.selectedIndexes()

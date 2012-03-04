@@ -15,11 +15,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #-------------------------------------------------------------------------------
-from PyQt4.QtCore import SIGNAL, Qt
 from PyQt4 import uic
-from time import time
 
-import auxilia
 import PluginBase
 
 DATA_DIR = ''
@@ -27,7 +24,7 @@ DATA_DIR = ''
 def getWidget(modelManager, view, mpdclient, config, library):
     return FileSystemForm(modelManager, view, mpdclient, config, library)
 
-class FileSystemForm(PluginBase.PluginBase, auxilia.Actions):
+class FileSystemForm(PluginBase.PluginBase):
     moduleName = 'F&ileSystem'
     moduleIcon = 'folder-sound'
 
@@ -36,16 +33,4 @@ class FileSystemForm(PluginBase.PluginBase, auxilia.Actions):
         # Load and place the FileSystem form.
         uic.loadUi(DATA_DIR+'ui/FileSystemForm.ui', self)
         self.filesystemTree.setModel(self.fileSystemModel)
-
-        self.view.connect(self.view,SIGNAL('reloadLibrary'),self.reload)
-        self.view.connect(self.view,SIGNAL('clearForms'),self.fileSystemModel.clear)
-
-    def reload(self):
-        try:
-            self.view.setCursor(Qt.WaitCursor)
-            t = time()
-            self.fileSystemModel.reload()
-            print 'load FS took %.3f seconds' % (time() - t)
-        finally:
-            self.view.setCursor(Qt.ArrowCursor)
 
