@@ -28,7 +28,7 @@ class PlayQueueModel(QAbstractListModel):
     '''
     A model of the mpd playqueue for use in the Qt model/view framework.
     '''
-    def __init__(self, mpdclient, config):
+    def __init__(self, mpdclient, library, config):
         QAbstractListModel.__init__(self)
         self.lastEdit = time()
         self._boldFont = QFont()
@@ -38,6 +38,7 @@ class PlayQueueModel(QAbstractListModel):
         self.clear()
         self._oneLine = config.oneLinePlaylist
         self.mpdclient = mpdclient
+        self.library = library
         self.config = config
         self.retriever = iconretriever.ThreadedRetriever(config.coverPath)
 
@@ -50,8 +51,10 @@ class PlayQueueModel(QAbstractListModel):
             self.emit(SIGNAL('dataChanged(const QModelIndex &, const QModelIndex &)'),
                     self.createIndex(self.playing, 0), self.createIndex(self.playing, 0))
             self.playing = row
-            self.emit(SIGNAL('dataChanged(const QModelIndex &, const QModelIndex &)'),
-                    self.createIndex(self.playing, 0), self.createIndex(self.playing, 0))
+            if self.playing >= 0:
+                self.emit(SIGNAL('dataChanged(const QModelIndex &, const QModelIndex &)'),
+                        self.createIndex(self.playing, 0), self.createIndex(self.playing, 0))
+            self.emit(SIGNAL('currentChanged'))
 
     def totalTime(self):
         ''' Returns the total play time of all songs in the queue. '''
@@ -69,7 +72,9 @@ class PlayQueueModel(QAbstractListModel):
         self.version = version
         clist = []
         change = None
+        self.emit(SIGNAL('aboutToUpdate'))
         for song in plist:
+            song = PlayQueueSong(song, self.library, self)
             pos = int(song.pos)
             song_id = int(song.id)
             index = self.id_index(song_id)
@@ -90,6 +95,7 @@ class PlayQueueModel(QAbstractListModel):
         length = int(status['playlistlength'])
         if length < len(self._songs):
             del self[length:]
+        self.emit(SIGNAL('updated'))
         return change == 'insert'
 
     def _runCList(self, change, clist):
@@ -252,7 +258,7 @@ class PlayQueueModel(QAbstractListModel):
             else:
                 return None
         if role == Qt.FontRole:
-            if row == self.playing:
+            if row == self.playing and self.playing >= 0:
                 return self._boldFont
             else:
                 return self._stdFont

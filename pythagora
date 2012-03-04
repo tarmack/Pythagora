@@ -33,6 +33,7 @@ import configuration
 import MainWindow
 import auxilia
 import mpdlibrary
+from models import ModelManager
 
 EMPTY_SONG = mpdlibrary.Song({'pos': -1, 'file': ''}, None)
 EMPTY_SONG.iconPath = ''
@@ -96,9 +97,10 @@ class Manager():
         self.idleTimer = QTimer()
         self.idleTimer.setSingleShot(True)
         self.config = configuration.Configuration()
-        self.view = MainWindow.View(self.config, self.mpdclient, self.library, app)
+        self.modelManager = ModelManager(self.mpdclient, self.library, self.config)
+        self.view = MainWindow.View(self.modelManager, self.config, self.mpdclient, self.library, app)
         self.playControls = playControls.PlayControls(self.mpdclient)
-        self.update = Update(self.view, self.mpdclient, self.config, self.library, self.playControls)
+        self.update = Update(self.modelManager, self.view, self.mpdclient, self.config, self.library, self.playControls)
         self.__connectSignals()
         self.__connectMPD()
         # Load the plugin forms.
@@ -211,6 +213,7 @@ class Manager():
         if self.view.shuttingDown:
             return True
         self.view.emit(SIGNAL('clearForms'))
+        self.modelManager.clearForms()
         self.library.reload([])
         self.update.setProgress(0, 0)
         self.update.lastSongId = None
@@ -347,9 +350,11 @@ class Update:
     lastSong = EMPTY_SONG
     dbusNotification = None
     _waitingForIcon = False
-    def __init__(self, view, mpdclient, config, library, playControls):
+
+    def __init__(self, modelManager, view, mpdclient, config, library, playControls):
         self.pauseIcon = auxilia.PIcon("media-playback-pause")
         self.startIcon = auxilia.PIcon("media-playback-start")
+        self.modelManager = modelManager
         self.view = view
         self.mpdclient = mpdclient
         self.config = config
@@ -384,7 +389,7 @@ class Update:
 
     def playlist(self, status):
         self.mpdclient.send('plchanges', (self.view.currentList.playQueue.version,), callback=
-                lambda plist: self.view.emit(SIGNAL('playlistChanged'), plist, status))
+                lambda plist: self.modelManager.updatePlayQueue(plist, status))
 
     def player(self, status):
         if self.state != status['state']:
@@ -409,6 +414,7 @@ class Update:
         if self.lastSong != currentSong:
             self.lastSong = currentSong
             self.view.emit(SIGNAL('currentSong'), currentSong)
+            self.modelManager.setCurrentSong(currentSong)
         # Check if volume chaged behind our back.
         self.mixer(status)
 
@@ -423,8 +429,7 @@ class Update:
         self.view.currentList.crossFade.setValue(int(status['xfade']))
 
     def stored_playlist(self, status):
-        self.mpdclient.send('listplaylists', callback=
-                lambda playlists: self.view.emit(SIGNAL('reloadPlaylists'), playlists))
+        self.mpdclient.send('listplaylists', callback=self.modelManager.reloadPlaylists)
 
     def database(self, status):
         self.view.emit(SIGNAL('libraryReload'), True)

@@ -46,8 +46,9 @@ class View(QMainWindow, auxilia.Actions):
     partyMode = False
     hide_window = True
 
-    def __init__(self, configuration, mpdclient, library, app):
+    def __init__(self, modelManager, configuration, mpdclient, library, app):
         QMainWindow.__init__(self)
+        self.modelManager = modelManager
         self.app = app
         self.app.commitData = self.commitData
         self.focus = time()
@@ -63,7 +64,7 @@ class View(QMainWindow, auxilia.Actions):
         # Create standard views.
         self.playerForm = PlayerForm(self, self.app, self.mpdclient, self.config)
         self.toolBarLayout = self.playerForm.toolBarLayout
-        self.currentList = CurrentPlaylistForm.CurrentPlaylistForm(self, self.app, self.mpdclient, self.library, self.config)
+        self.currentList = CurrentPlaylistForm.CurrentPlaylistForm(self.modelManager, self, self.app, self.mpdclient, self.config)
         # Standard toolbar buttons.
         self.exitAction = self.actionExit(self, self.app.quit)
         self.exitButton = QToolButton()
@@ -201,7 +202,7 @@ class View(QMainWindow, auxilia.Actions):
         '''Set all plugin tabs up.'''
         loadedPlugins = {}
         for plugin in plugins.allPlugins:
-            plugin = plugin.getWidget(self, self.mpdclient, self.config, self.library)
+            plugin = plugin.getWidget(self.modelManager, self, self.mpdclient, self.config, self.library)
             if plugin:
                 loadedPlugins[plugin.moduleName] = plugin
         for name in self.config.tabOrder:

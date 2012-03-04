@@ -22,9 +22,7 @@ from PyQt4 import uic
 from time import time
 
 import auxilia
-import mpdlibrary
 import streamTools
-from models import PlayQueueModel
 
 DATA_DIR = ''
 
@@ -37,14 +35,14 @@ DATA_DIR = ''
 class CurrentPlaylistForm(QWidget, auxilia.Actions):
     '''List and controls for the currently loaded playlist'''
     editing = 0
-    def __init__(self, view, app, mpdclient, library, config):
+    def __init__(self, modelManager, view, app, mpdclient, config):
         QWidget.__init__(self)
         self.app = app
         self.view = view
         self.mpdclient = mpdclient
         self.config = config
-        self.library = library
-        self.playQueue = PlayQueueModel(mpdclient, config)
+        self._temp = {}
+        self.playQueue = modelManager.playQueue
         self.playQueueDelegate = PlayQueueDelegate(self.config)
         if self.view.KDE:
             uic.loadUi(DATA_DIR+'ui/CurrentListForm.ui', self)
@@ -65,9 +63,10 @@ class CurrentPlaylistForm(QWidget, auxilia.Actions):
             self.oneLinePlaylist.setChecked(True)
         self.keepPlayingVisible.setChecked(self.config.keepPlayingVisible)
         self._togglePlaylistTools(self.config.playlistControls)
-        self.view.connect(self.view, SIGNAL('playlistChanged'), self.reload)
-        self.view.connect(self.view, SIGNAL('clearForms'), self.playQueue.clear)
-        self.view.connect(self.view, SIGNAL('currentSong'), self.setPlaying)
+        self.connect(self.playQueue, SIGNAL('aboutToUpdate'), self.prepareForUpdate)
+        self.connect(self.playQueue, SIGNAL('updated'), self.updated)
+        self.connect(self.playQueue, SIGNAL('currentChanged'), self._ensurePlayingVisable)
+
 
         # Connect to the view for double click action.
         self.connect(self.currentList, SIGNAL('doubleClicked(const QModelIndex &)'), self._playSong)
@@ -122,40 +121,33 @@ class CurrentPlaylistForm(QWidget, auxilia.Actions):
                 QIcon.Off)
         self.repeatButton.setIcon(icon)
 
-
-    def setPlaying(self, currentsong):
-        playing = int(currentsong['pos'])
-        print 'debug: setPlaying to ', playing
-        if playing != self.playQueue.playing:
-            self._ensurePlayingVisable()
-        self.playQueue.setPlaying(playing)
-
-    def reload(self, plist, status):
+    def prepareForUpdate(self):
         '''Causes the current play list to be reloaded from the server'''
-        if not self.config.server:
-            return
-        oldLength = len(self.playQueue)
+        self._temp['oldLength'] = len(self.playQueue)
         scrollBar = self.currentList.verticalScrollBar()
         oldScroll = scrollBar.value()
-        setBottom = oldScroll == scrollBar.maximum()
-        if not self.playQueue.update(
-                (PlayQueueSong(song, self.library, self.playQueue) for song in plist), status):
-            setBottom = False
+        self._temp['setBottom'] = oldScroll == scrollBar.maximum()
+        self._temp['oldScroll'] = oldScroll
 
-        self.view.numSongsLabel.setText(status['playlistlength']+' Songs')
+    def updated(self):
+        self._setEditing()
+        self.view.numSongsLabel.setText(str(len(self.playQueue))+' Songs')
         self._setPlayTime(self.playQueue.totalTime())
-
-        self.setPlaying({'pos': status.get('song', -1)})
         self._resize()
         self.app.processEvents()
-        if oldLength == 0:
-            self.playQueue.lastEdit = 0
-            self._ensurePlayingVisable()
-        elif setBottom:
+        scrollBar = self.currentList.verticalScrollBar()
+        if self._temp.get('oldLength') == 0:
+            self._ensurePlayingVisable(force=True)
+        elif self._temp.get('setBottom'):
             scrollBar.setValue(scrollBar.maximum())
         else:
-            scrollBar.setValue(oldScroll)
-
+            scrollBar.setValue(self._temp.get('oldScroll', 0))
+        try:
+            del self._temp['oldLength']
+            del self._temp['setBottom']
+            del self._temp['oldScroll']
+        except KeyError:
+            pass
 
     def keyPressEvent(self, event):
         if event.matches(QKeySequence.Delete):
@@ -171,13 +163,8 @@ class CurrentPlaylistForm(QWidget, auxilia.Actions):
     def _getSelectedIDs(self):
         return (self.playQueue[row].id for row in self._getSelectedRows())
 
-    def _resetCurrentList(self):
-        self.playQueue.clear()
-        self.view.numSongsLabel.setText('- Songs')
-        self._setPlayTime()
-
-    def _ensurePlayingVisable(self):
-        if time() - self.playQueue.lastEdit <= 5:
+    def _ensurePlayingVisable(self, force=False):
+        if time() - self.playQueue.lastEdit <= 5 and not force:
             return
         if self.currentList.isRowHidden(self.playQueue.playing):
             return
@@ -211,6 +198,7 @@ class CurrentPlaylistForm(QWidget, auxilia.Actions):
     def _removeSelected(self):
         '''Remove the selected item(s) from the current playlist'''
         self._removeSongs(self._getSelectedIDs())
+        self.currentList.reset()
 
     def _cropCurrent(self):
         selection = set(self._getSelectedRows())
@@ -252,7 +240,7 @@ class CurrentPlaylistForm(QWidget, auxilia.Actions):
     def _toggleKeepPlayingVisible(self, value):
         self.config.keepPlayingVisible = value
         if value:
-            self._ensurePlayingVisable()
+            self._ensurePlayingVisable(force=True)
 
     def _setOneLinePlaylist(self, value):
         self.config.oneLinePlaylist = value
@@ -311,8 +299,6 @@ class CurrentPlaylistForm(QWidget, auxilia.Actions):
 
     def _setEditing(self):
         self.playQueue.lastEdit = time()
-
-
 
 
 class PlayQueueDelegate(QItemDelegate):

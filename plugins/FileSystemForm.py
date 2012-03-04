@@ -21,19 +21,18 @@ from time import time
 
 import auxilia
 import PluginBase
-from models import FileSystemModel
 
 DATA_DIR = ''
 
-def getWidget(view, mpdclient, config, library):
-    return FileSystemForm(view, mpdclient, config, library)
+def getWidget(modelManager, view, mpdclient, config, library):
+    return FileSystemForm(modelManager, view, mpdclient, config, library)
 
 class FileSystemForm(PluginBase.PluginBase, auxilia.Actions):
     moduleName = 'F&ileSystem'
     moduleIcon = 'folder-sound'
 
     def load(self):
-        self.fileSystemModel = FileSystemModel(self.library)
+        self.fileSystemModel = self.modelManager.fileSystem
         # Load and place the FileSystem form.
         uic.loadUi(DATA_DIR+'ui/FileSystemForm.ui', self)
         self.filesystemTree.setModel(self.fileSystemModel)

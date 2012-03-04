@@ -23,12 +23,11 @@ import bisect
 
 import auxilia
 import PluginBase
-from models import ArtistsModel, AlbumsModel, TracksModel
 
 DATA_DIR = ''
 
-def getWidget(view, mpdclient, config, library):
-    return LibraryForm(view, mpdclient, config, library)
+def getWidget(modelManager, view, mpdclient, config, library):
+    return LibraryForm(modelManager, view, mpdclient, config, library)
 
 class LibraryForm(PluginBase.PluginBase, auxilia.Actions):
     '''List and controls for the full "library" of music known to the server.
@@ -39,9 +38,9 @@ class LibraryForm(PluginBase.PluginBase, auxilia.Actions):
     moduleIcon = 'server-database'
 
     def load(self):
-        self.artistModel = ArtistsModel(self.library)
-        self.albumModel = AlbumsModel(self.library)
-        self.trackModel = TracksModel(self.library)
+        self.artistModel = self.modelManager.artists
+        self.albumModel = self.modelManager.albums
+        self.trackModel = self.modelManager.tracks
         # Load and place the Library form.
         if self.view.KDE:
             uic.loadUi(DATA_DIR+'ui/LibraryForm.ui', self)

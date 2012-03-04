@@ -22,12 +22,11 @@ from PyQt4 import uic
 import mpd
 import auxilia
 import PluginBase
-from models import PlaylistsModel
 
 DATA_DIR = ''
 
-def getWidget(view, mpdclient, config, library):
-    return PlaylistForm(view, mpdclient, config, library)
+def getWidget(modelManager, view, mpdclient, config, library):
+    return PlaylistForm(modelManager, view, mpdclient, config, library)
 
 class PlaylistForm(PluginBase.PluginBase, auxilia.Actions):
     '''Display and manage the currently known playlists.'''
@@ -35,9 +34,7 @@ class PlaylistForm(PluginBase.PluginBase, auxilia.Actions):
     moduleIcon = 'document-multiple'
 
     def load(self):
-        self.playlistModel = PlaylistsModel(self.mpdclient, self.library)
-        self.view.connect(self.view,SIGNAL('reloadPlaylists'),self.playlistModel.update)
-        self.view.connect(self.view,SIGNAL('clearForms'),self.playlistModel.clear)
+        self.playlistModel = self.modelManager.playlists
         # Load and place the stored playlists form.
         if self.view.KDE:
             uic.loadUi(DATA_DIR+'ui/PlaylistsForm.ui', self)
