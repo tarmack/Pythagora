@@ -25,8 +25,8 @@ import PluginBase
 
 DATA_DIR = ''
 
-def getWidget(modelManager, view, mpdclient, config, library):
-    return PlaylistForm(modelManager, view, mpdclient, config, library)
+def getWidget(modelManager, mpdclient, config, library):
+    return PlaylistForm(modelManager, mpdclient, config, library)
 
 class PlaylistForm(PluginBase.PluginBase, auxilia.Actions):
     '''Display and manage the currently known playlists.'''
@@ -36,7 +36,7 @@ class PlaylistForm(PluginBase.PluginBase, auxilia.Actions):
     def load(self):
         self.playlistModel = self.modelManager.playlists
         # Load and place the stored playlists form.
-        if self.view.KDE:
+        if self.config.KDE:
             uic.loadUi(DATA_DIR+'ui/PlaylistsForm.ui', self)
         else:
             uic.loadUi(DATA_DIR+'ui/PlaylistsForm.ui.Qt', self)

@@ -25,8 +25,8 @@ import PluginBase
 
 DATA_DIR = ''
 
-def getWidget(modelManager, view, mpdclient, config, library):
-    return LibraryForm(modelManager, view, mpdclient, config, library)
+def getWidget(modelManager, mpdclient, config, library):
+    return LibraryForm(modelManager, mpdclient, config, library)
 
 class LibraryForm(PluginBase.PluginBase, auxilia.Actions):
     '''List and controls for the full "library" of music known to the server.
@@ -41,7 +41,7 @@ class LibraryForm(PluginBase.PluginBase, auxilia.Actions):
         self.albumModel = self.modelManager.albums
         self.trackModel = self.modelManager.tracks
         # Load and place the Library form.
-        if self.view.KDE:
+        if self.config.KDE:
             uic.loadUi(DATA_DIR+'ui/LibraryForm.ui', self)
         else:
             uic.loadUi(DATA_DIR+'ui/LibraryForm.ui.Qt', self)

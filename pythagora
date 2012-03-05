@@ -90,7 +90,7 @@ class Manager():
         self.mpdclient = mpd.MPDClient()
         self.idleTimer = QTimer()
         self.idleTimer.setSingleShot(True)
-        self.config = configuration.Configuration()
+        self.config = configuration.Configuration(sys.argv)
         self.modelManager = ModelManager(self.mpdclient, self.library, self.config)
         self.view = MainWindow.View(self.modelManager, self.config, self.mpdclient, self.library, app)
         self.playControls = playControls.PlayControls(self.mpdclient)
@@ -101,7 +101,7 @@ class Manager():
         self.view.createPluginViews()
 
         # Set global shortcuts if KDE is available otherwise overload keyPressEvent.
-        if MainWindow.KDE:
+        if self.config.KDE:
             from PyKDE4.kdeui import KActionCollection
             self.actionCollection = KActionCollection(self.view)
             self.setGlobalShortcuts()

@@ -21,8 +21,8 @@ import PluginBase
 
 DATA_DIR = ''
 
-def getWidget(modelManager, view, mpdclient, config, library):
-    return FileSystemForm(modelManager, view, mpdclient, config, library)
+def getWidget(modelManager, mpdclient, config, library):
+    return FileSystemForm(modelManager, mpdclient, config, library)
 
 class FileSystemForm(PluginBase.PluginBase):
     moduleName = 'F&ileSystem'

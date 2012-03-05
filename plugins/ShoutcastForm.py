@@ -97,5 +97,5 @@ class ShoutCastForm(PluginBase.PluginBase):
             raise httplib.HTTPException('Got bad status code.')
 
 
-def getWidget(modelManager, view, mpdclient, config, library):
-    return ShoutCastForm(modelManager, view, mpdclient, config, library)
+def getWidget(modelManager, mpdclient, config, library):
+    return ShoutCastForm(modelManager, mpdclient, config, library)

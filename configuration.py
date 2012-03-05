@@ -24,6 +24,7 @@ import auxilia
 DATA_DIR = ''
 
 class Configuration(object):
+    KDE = True
     types = {
                 int: QVariant.toInt,
                 bool: QVariant.toBool,
@@ -51,6 +52,15 @@ class Configuration(object):
                 'playlistSplit':        [5,20],
                 'tabOrder':             ['&Library', 'F&ileSystem', '&PlayLists', '&Shoutcast'],
                 }
+
+    def __init__(self, argv):
+        try:
+            if '--nokde' in argv:
+                raise ImportError
+            else:
+                __import__('PyKDE4')
+        except ImportError:
+            self.KDE = False
 
     def __getattr__(self, attr):
         try:
@@ -123,9 +133,9 @@ class Configuration(object):
         self.setup.setWindowIcon(QIcon('Pythagora.png'))
         self.setup.setAttribute(Qt.WA_QuitOnClose, False)
 
-        # Hide dbus options if module not present
+        # Hide dbus options if the module is not present.
         try:
-            import dbus
+            __import__('dbus')
         except ImportError:
             self.setup.showNotificationWidget.setVisible(False)
         self.setup.showNotification.setChecked(self.showNotification)

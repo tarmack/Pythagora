@@ -202,7 +202,7 @@ class View(QMainWindow, auxilia.Actions):
         '''Set all plugin tabs up.'''
         loadedPlugins = {}
         for plugin in plugins.allPlugins:
-            plugin = plugin.getWidget(self.modelManager, self, self.mpdclient, self.config, self.library)
+            plugin = plugin.getWidget(self.modelManager, self.mpdclient, self.config, self.library)
             if plugin:
                 loadedPlugins[plugin.moduleName] = plugin
         for name in self.config.tabOrder:
