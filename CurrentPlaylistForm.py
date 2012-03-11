@@ -22,6 +22,7 @@ from PyQt4 import uic
 from time import time
 
 import auxilia
+import mpdlibrary
 import streamTools
 
 DATA_DIR = ''
@@ -234,7 +235,7 @@ class CurrentPlaylistForm(QWidget, auxilia.Actions):
         self.mpdclient.send('playid', (id,))
 
     def _setPlayTime(self, playTime=0):
-        self.view.playTimeLabel.setText('Total play time: %s' % auxilia.formatTime(playTime))
+        self.view.playTimeLabel.setText('Total play time: %s' % mpdlibrary.Time(playTime).human)
 
     def _setNumbers(self, value):
         self.config.showNumbers = value

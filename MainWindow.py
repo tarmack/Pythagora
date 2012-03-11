@@ -422,7 +422,7 @@ class PlayerForm(QWidget):
     def _progressShowTimeEvent(self, event):
         position = float(event.x()) / int(self.progress.geometry().width())
         seconds = position * self.progress.maximum()
-        self.progress.setToolTip(auxilia.formatTime(seconds))
+        self.progress.setToolTip(mpdlibrary.Time(seconds).human)
 
     def songSeek(self, currentsong, position):
         time = int(currentsong.get('time', None))
