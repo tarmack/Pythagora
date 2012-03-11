@@ -69,7 +69,7 @@ class CurrentPlaylistForm(QWidget, auxilia.Actions):
         self._togglePlaylistTools(self.config.playlistControls)
         self.connect(self.playQueue, SIGNAL('aboutToUpdate'), self.prepareForUpdate)
         self.connect(self.playQueue, SIGNAL('updated'), self.updated)
-        self.connect(self.playQueue, SIGNAL('currentChanged'), self._ensurePlayingVisable)
+        self.connect(self.playQueue, SIGNAL('currentSongChanged'), self._ensurePlayingVisable)
 
 
         # Connect to the view for double click action.
@@ -168,15 +168,18 @@ class CurrentPlaylistForm(QWidget, auxilia.Actions):
         return (self.playQueue[row].id for row in self._getSelectedRows())
 
     def _ensurePlayingVisable(self, force=False):
-        if time() - self.playQueue.lastEdit <= 5 and not force:
+        if time() - self.playQueue.lastEdit <= 5 and not force == False:
             return
-        if self.currentList.isRowHidden(self.playQueue.playing):
+        if self.playQueue.playing is None:
             return
-        playing = self.playQueueProxy.mapFromSource(self.playQueue.createIndex(self.playQueue.playing, 0))
+        playing = self.playQueue.id_index(self.playQueue.playing)
+        if self.currentList.isRowHidden(playing):
+            return
+        playing = self.playQueueProxy.mapFromSource(self.playQueue.createIndex(playing, 0))
         self.currentList.scrollTo(playing, 1) # PositionAtTop
         height = self.currentList.viewport().height()
         scrollBar = self.currentList.verticalScrollBar()
-        correction = (height / 8) - self.currentList.rowViewportPosition(self.playQueue.playing)
+        correction = (height / 8) - self.currentList.rowViewportPosition(playing)
         new_pos = scrollBar.value() - correction
         scrollBar.setValue(new_pos)
 
