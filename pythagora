@@ -26,12 +26,8 @@ import mpdthreaded as mpd
 import playControls
 import configuration
 import MainWindow
-import auxilia
 import mpdlibrary
 from models import ModelManager
-
-EMPTY_SONG = mpdlibrary.Song({'pos': -1, 'file': ''}, None)
-EMPTY_SONG.iconPath = ''
 
 def main():
     print 'debug:', sys.argv
@@ -94,7 +90,6 @@ class Manager():
         self.modelManager = ModelManager(self.mpdclient, self.library, self.config)
         self.view = MainWindow.View(self.modelManager, self.config, self.mpdclient, self.library, app)
         self.playControls = playControls.PlayControls(self.mpdclient)
-        self.update = Update(self.modelManager, self.view, self.mpdclient, self.config, self.library, self.playControls)
         self.__connectSignals()
         self.__connectMPD()
         # Load the plugin forms.
@@ -143,9 +138,8 @@ class Manager():
         if isinstance(changes, Exception):
             print 'debug: idle callback - got exception: ', changes
             self.view.emit(SIGNAL('ConnectionError()'))
-        elif changes and type(changes) == list:
-            self.mpdclient.send('status', callback=
-                    lambda status, changes=changes: self.view.emit(SIGNAL('update'), changes, status))
+        else:
+            self.modelManager.processChanges(changes)
         # The slots will be executed asynchronously so we use a timer to
         # schedule the next idle call after all events have been processed.
         if self.idleTimer.timerId() < 0:
@@ -206,16 +200,11 @@ class Manager():
     def __connectMPD(self, error=False):
         if self.view.shuttingDown:
             return True
-        self.view.emit(SIGNAL('clearForms'))
         self.modelManager.clearForms()
         self.library.reload([])
-        self.update.setProgress(0, 0)
-        self.update.lastSongId = None
         server = self.config.server
         if not server:
-            self.update.setSongLabel('Not connected')
             self.view.serverLabel.setText('Not connected')
-            self.update.currentsong = {}
             if self.mpdclient.connected():
                 self.mpdclient.disconnect()
             if self.config.firstTime:
@@ -281,212 +270,6 @@ class Manager():
             self.app.quit()
         except:
             sys.exit(1)
-
-
-class Update:
-    state = None
-    misses = 0
-    errorCount = 0
-    time = 0
-    lastSong = EMPTY_SONG
-    dbusNotification = None
-    _waitingForIcon = False
-
-    def __init__(self, modelManager, view, mpdclient, config, library, playControls):
-        self.pauseIcon = auxilia.PIcon("media-playback-pause")
-        self.startIcon = auxilia.PIcon("media-playback-start")
-        self.modelManager = modelManager
-        self.view = view
-        self.mpdclient = mpdclient
-        self.config = config
-        self.library = library
-        self.playControls = playControls
-        self.view.connect(self.view, SIGNAL('update'), self.update)
-        self.view.connect(self.view, SIGNAL('currentSong'), self.setSongLabel)
-        # Set the progress timer up.
-        self.timer = QTimer()
-        self.view.connect(self.timer, SIGNAL("timeout()"), self.progress)
-
-    def update(self, changes, status):
-        if not status:
-            return
-        self.timer.start(1000)
-        for change in ('database', 'playlist', 'stored_playlist', 'mixer', 'options', 'player'):
-            if change in changes:
-                getattr(self, change)(status)
-
-    def progress(self):
-        if self.mpdclient.connected():
-            try:
-                if self.state == 'play':
-                    if not self.lastSong.isStream:
-                        self.setProgress(self.time + 1)
-                    else:
-                        self.setProgress(self.time + 1, 0)
-            except Exception, e:
-                print 'error: updateProgress error', e
-            if self._waitingForIcon:
-                self.setSongLabel()
-
-    def playlist(self, status):
-        self.mpdclient.send('plchanges', (self.view.currentList.playQueue.version,), callback=
-                lambda plist: self.modelManager.updatePlayQueue(plist, status))
-
-    def player(self, status):
-        if self.state != status['state']:
-            self.__setPlayerState(status['state'])
-        if status['state'] == 'stop':
-            self.setProgress(0, 0)
-            self.view.playerForm.songLabel.setBitrate(None)
-            currentSong = EMPTY_SONG
-        else:
-            self.setProgress(*status['time'].split(':'))
-            self.view.playerForm.songLabel.setBitrate(status['bitrate'])
-            try:
-                currentSong = self.view.currentList.playQueue[int(status['song'])]
-                if status['songid'] != currentSong.id:
-                    # This is the wrong song.
-                    currentSong = None
-            except IndexError:
-                currentSong = None
-            if currentSong is None:
-                currentSong = mpdlibrary.Song(self.mpdclient.currentsong(), self.library)
-                currentSong.iconPath = ''
-        if self.lastSong != currentSong:
-            self.lastSong = currentSong
-            self.view.emit(SIGNAL('currentSong'), currentSong)
-            self.modelManager.setCurrentSong(currentSong)
-        # Check if volume chaged behind our back.
-        self.mixer(status)
-
-    def mixer(self, status):
-        volumeStatus = int(status['volume'])
-        self.playControls.currentVolume = volumeStatus
-        self.view.playerForm.volume.setValue(volumeStatus)
-
-    def options(self, status):
-        self.view.currentList.repeatButton.setChecked(bool(int(status['repeat'])))
-        self.view.currentList.randomButton.setChecked(bool(int(status['random'])))
-        self.view.currentList.crossFade.setValue(int(status['xfade']))
-
-    def stored_playlist(self, status):
-        self.mpdclient.send('listplaylists', callback=self.modelManager.reloadPlaylists)
-
-    def database(self, status):
-        self.modelManager.reloadLibrary(force=True)
-
-    def setSongLabel(self, song=None):
-        if song is None:
-            playing = self.view.currentList.playQueue.playing
-            try:
-                song = self.view.currentList.playQueue[playing]
-            except IndexError:
-                song = EMPTY_SONG
-        if isinstance(song, basestring):
-            label = song
-            self.view.playerForm.songLabel.setText(label)
-            self.view.playerForm.setSongIcon(None)
-            return
-        elif song == EMPTY_SONG:
-            label = 'Connected to %s.' % self.config.server[0]
-            self.view.playerForm.songLabel.setText(label)
-            self.view.playerForm.setSongIcon(None)
-        else:
-            title = song.title
-            artist = song.artist
-            album = song.album
-            station = song.station
-            if album == 'None':
-                album = ''
-            self.view.playerForm.songLabel.setText(title, artist, album, station)
-            if station and station != title:
-                station = 'on <i>%s</i>' % station
-            else:
-                station = ''
-            if title:
-                title = '<b><big>%s</big></b>' % title
-            if artist:
-                artist = 'by <big>%s</big>' % artist
-            if album:
-                album = 'from <i>%s</i>' % album
-            label = '<br>'.join((item for item in (title, artist, album, station) if item))
-        self.view.trayIcon.setToolTip(song.iconPath, label)
-        if self.view.playerForm.iconPath != song.iconPath:
-            self.view.playerForm.setSongIcon(song.iconPath)
-        if song.iconPath:
-            self._waitingForIcon = False
-            if self.config.showNotification and self.state != 'stop':
-                if not self.dbusNotification:
-                    self._setupNotifications()
-                try:
-                    self.showNotification(song.iconPath, label)
-                except:
-                    self.dbusNotification = None
-        else:
-            self._waitingForIcon = True
-
-    def showNotification(self, icon, label):
-        self.notificationHints.update({'image_path': icon})
-        # Show notification
-        self.notificationId = self.dbusNotification.Notify(
-            self.appName,                           #app_name
-            self.notificationId,                    #replaces_id
-            self.view.appIcon,                      #app_icon
-            self.notificationSummary,               #summary
-            label,                                  #body
-            [''],                                   #actions
-            self.notificationHints,                 #hints
-            self.config.notificationTimeout * 1000) #timeout
-
-    def setProgress(self, cs, ss=None):
-        ''' Moves the progress indicator to the correct position,
-            calculate the timestamps and puts them in place.
-        '''
-        if ss is None:
-            ss = self.view.playerForm.progress.maximum()
-        curTime = int(cs)
-        songTime = int(ss)
-        if songTime <= 0:
-            self.view.playerForm.progress.setValue(0)
-            self.view.playerForm.progress.setFormat(auxilia.formatTime(curTime))
-        else:
-            self.view.playerForm.progress.setMaximum(songTime)
-            self.view.playerForm.progress.setValue(curTime)
-            self.view.playerForm.progress.setFormat('/'.join((auxilia.formatTime(curTime), auxilia.formatTime(songTime))))
-        self.time = curTime
-
-    def _setupNotifications(self):
-        try:
-            import dbus
-        except ImportError, e:
-            self.config.showNotification = False
-            return
-        self.notificationId = dbus.UInt32(0)
-        self.appName = unicode(QApplication.applicationName().toUtf8())
-        # app_icon url is correct, doesn't display in Plasma though
-        self.notificationSummary = '%s, now playing:' % self.appName
-        self.notificationHints = dbus.Dictionary(
-            {'suppress-sound':  True,
-             'desktop-entry':   'pythagora',
-             'image_path':      ''},
-            'sv')
-        try:
-            self.dbusNotification = dbus.SessionBus().get_object(
-                'org.freedesktop.Notifications',
-                '/org/freedesktop/Notifications',
-                'org.freedesktop.Notifications')
-        except dbus.DBusException, e:
-            self.config.showNotification = False
-            print 'debug: error using dbus - %s' % e
-
-    def __setPlayerState(self,state):
-        if state == 'play':
-            self.view.playerForm.play.setIcon(self.pauseIcon)
-        else:
-            self.view.playerForm.play.setIcon(self.startIcon)
-        self.view.trayIcon.setState(state)
-        self.state = state
-        self.playControls.state = self.state
 
 
 if __name__ == "__main__":

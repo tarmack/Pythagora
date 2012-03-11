@@ -23,7 +23,13 @@ from time import time
 import sys
 import os
 import cPickle as pickle
+try:
+    import dbus
+    dbus # Use it once to silence PyFlakes
+except ImportError:
+    dbus = None
 
+import mpdlibrary
 import CurrentPlaylistForm
 import plugins
 import auxilia
@@ -62,9 +68,19 @@ class View(QMainWindow, auxilia.Actions):
         self.setWindowTitle('Pythagora')
         self.setWindowIcon(QIcon(self.appIcon))
         # Create standard views.
-        self.playerForm = PlayerForm(self, self.app, self.mpdclient, self.config)
+        self.playerForm = PlayerForm(self.mpdclient, self.config)
+        self.topLayout.addWidget(self.playerForm)
+        self.connect(self.modelManager.playerState, SIGNAL('currentSongChanged'), self.playerForm.updateSong)
+        self.connect(self.modelManager.playerState, SIGNAL('volumeChanged'), self.playerForm.setVolume)
+        self.connect(self.modelManager.playerState, SIGNAL('progressChanged'), self.playerForm.setProgress)
+        self.connect(self.modelManager.playerState, SIGNAL('playStateChanged'), self.playerForm.setPlayState)
+        self.dbusNotifications = DBusNotifications(self.config)
+        self.connect(self.modelManager.playerState, SIGNAL('currentSongChanged'), self.dbusNotifications.showNotification)
         self.toolBarLayout = self.playerForm.toolBarLayout
-        self.currentList = CurrentPlaylistForm.CurrentPlaylistForm(self.modelManager, self, self.app, self.mpdclient, self.config)
+        self.currentList = CurrentPlaylistForm.CurrentPlaylistForm(
+                self.modelManager, self, self.app, self.mpdclient, self.config)
+        self.currentListLayout.addWidget(self.currentList)
+
         # Standard toolbar buttons.
         self.exitAction = self.actionExit(self, self.app.quit)
         self.exitButton = QToolButton()
@@ -97,7 +113,7 @@ class View(QMainWindow, auxilia.Actions):
         self.mpdButton.setIcon(auxilia.PIcon('network-workgroup'))
         self.mpdButton.setText('MPD')
         self.mpdButton.setMenu(self.menuMPD)
-        self.reloadLibrary = self.actionLibReload(self.menuMPD, lambda: self.emit(SIGNAL('libraryReload'), True))
+        self.reloadLibrary = self.actionLibReload(self.menuMPD, lambda: self.modelManager.reloadLibrary(True))
         self.updateLibrary = self.actionLibUpdate(self.menuMPD, lambda: self.mpdclient.send('update'))
         self.rescanLibrary = self.actionLibRescan(self.menuMPD, lambda: self.mpdclient.send('rescan'))
         # Create 'Outputs' menu.
@@ -308,26 +324,40 @@ class View(QMainWindow, auxilia.Actions):
 
 
 class PlayerForm(QWidget):
-    def __init__(self, view, app, mpdclient, config):
+    def __init__(self, mpdclient, config):
         QWidget.__init__(self)
-        self.view = view
         self.mpdclient = mpdclient
         self.iconPath = ''
+        self._currentSong = None
         uic.loadUi(DATA_DIR+'ui/PlayerForm.ui', self)
-        self.playerForm = self
-        self.view.topLayout.addWidget(self)
         # Set attributes not set trough xml file.
         self.back.setIcon(auxilia.PIcon("media-skip-backward"))
         self.stop.setIcon(auxilia.PIcon("media-playback-stop"))
         self.forward.setIcon(auxilia.PIcon("media-skip-forward"))
-        self.songLabel = SongLabel()
-        self.setAcceptDrops(True)
+        self.pauseIcon = auxilia.PIcon("media-playback-pause")
+        self.startIcon = auxilia.PIcon("media-playback-start")
+        self.songLabel = SongLabel(config)
         self.titleLayout.addWidget(self.songLabel)
+        self.setAcceptDrops(True)
         self.progress.mouseReleaseEvent = self._progressSeekEvent
         self.progress.mouseMoveEvent = self._progressShowTimeEvent
         self.progress.setMouseTracking(True)
         self.connect(self, SIGNAL('songSeek'), self.songSeek)
         self.songIcon.mousePressEvent = self._iconOverlayEvent
+
+    def updateSong(self, song):
+        self.songLabel.updateSong(song)
+        self.progress.setMaximum(song.time or 1)
+        if song.iconPath:
+            self.setSongIcon(song.iconPath)
+        else:
+            if not self._currentSong is None:
+                self.disconnect(self._currentSong, SIGNAL('iconChanged'), self._iconChanged)
+            self._currentSong = song
+            self.connect(song, SIGNAL('iconChanged'), self._iconChanged)
+
+    def _iconChanged(self, songID, iconPath):
+        self.setSongIcon(iconPath)
 
     def setSongIcon(self, iconPath):
         self.iconPath = iconPath
@@ -336,6 +366,33 @@ class PlayerForm(QWidget):
             self.songIcon.setPixmap(QPixmap(iconPath).scaled(1000, height, Qt.KeepAspectRatio, Qt.SmoothTransformation))
         else:
             self.songIcon.clear()
+
+    def setProgress(self, progress):
+        '''
+        Moves the progress indicator to the correct position, calculates the
+        timestamps and puts them in place.
+        '''
+        songTime = mpdlibrary.Time(self.progress.maximum())
+        if songTime <= 1:
+            self.progress.setValue(0)
+            self.progress.setFormat(progress.human)
+        else:
+            self.progress.setValue(progress)
+            self.progress.setFormat('/'.join((progress.human, songTime.human)))
+
+    def setVolume(self, volume):
+        self.volume.setValue(volume)
+
+    def setPlayState(self, state):
+        if state == 'play':
+            self.play.setIcon(self.pauseIcon)
+        else:
+            self.play.setIcon(self.startIcon)
+        # Put in trayicon class.
+        #self.view.trayIcon.setState(state)
+        self.state = state
+        # Put in main class.
+        #self.playControls.state = self.state
 
     def dragEnterEvent(self, event):
         if event.provides('mpd/uri'):
@@ -402,8 +459,9 @@ class SongLabel(QLabel):
             'album': 'from',
             'station': 'on',
             }
-    def __init__(self):
+    def __init__(self, config):
         QLabel.__init__(self)
+        self.config = config
         self.songInToolTip = False
         self.setAlignment(Qt.AlignBottom)
         self.titleFont = self.font()
@@ -414,6 +472,24 @@ class SongLabel(QLabel):
         self.albumFont.setItalic(True)
         self.stationFont = self.font()
         self.stationFont.setItalic(True)
+
+    def updateSong(self, song):
+        if song is None:
+            if self.config.server is None:
+                label = 'Disconnected'
+            else:
+                label = 'Connected to %s.' % self.config.server[0]
+            self.setText(label)
+            self.setSongIcon(None)
+        else:
+            title = song.title
+            artist = song.artist
+            album = song.album
+            station = song.station
+            if album == 'None':
+                album = ''
+            self.setText(title, artist, album, station)
+
 
     def setText(self, title='', artist='', album='', station=''):
         self.title = title
@@ -486,8 +562,77 @@ class SongLabel(QLabel):
         return pen
 
 
+class DBusNotifications(QObject):
+    def __init__(self, config):
+        QObject.__init__(self)
+        self.config = config
+        self._currentSong = None
+        if dbus is None:
+            self.config.showNotification = False
+            return
+        self.notificationId = dbus.UInt32(0)
+        self.appName = unicode(QApplication.applicationName().toUtf8())
+        self.appIcon = os.path.abspath(DATA_DIR+'icons/Pythagora.png')
+        self.notificationSummary = '%s, now playing:' % self.appName
+        self.notificationHints = dbus.Dictionary(
+            {'suppress-sound':  True,
+             'desktop-entry':   'pythagora',
+             'image_path':      ''},
+            'sv')
+        self._connect()
+
+    def _connect(self):
+        try:
+            self.dbusNotification = dbus.SessionBus().get_object(
+                'org.freedesktop.Notifications',
+                '/org/freedesktop/Notifications',
+                'org.freedesktop.Notifications')
+        except dbus.DBusException, e:
+            self.config.showNotification = False
+            print 'debug: error using dbus - %s' % e
+
+    def showNotification(self, song):
+        if self.config.showNotification:
+            if song.iconPath:
+                self._showNotification(song)
+            else:
+                if not self._currentSong is None:
+                    self.disconnect(self._currentSong, SIGNAL('iconChanged'), self._iconChanged)
+                self._currentSong = song
+                self.connect(song, SIGNAL('iconChanged'), self._iconChanged)
+
+    def _iconChanged(self, songID, iconPath):
+        self._showNotification(self._currentSong)
+
+    def _showNotification(self, song):
+        label = richTextLabel(song)
+        self.notificationHints.update({'image_path': song.iconPath})
+        # Show notification
+        try:
+            self.notificationId = self.dbusNotification.Notify(
+                self.appName,                           #app_name
+                self.notificationId,                    #replaces_id
+                self.appIcon,                           #app_icon
+                self.notificationSummary,               #summary
+                label,                                  #body
+                [''],                                   #actions
+                self.notificationHints,                 #hints
+                self.config.notificationTimeout * 1000) #timeout
+        except dbus.DBusException:
+            print 'debug: Error while showing notification. Will try again for the next song.'
+
+
+class TrayIconCommon(object):
+    def updateSong(self, song):
+        label = richTextLabel(song)
+        self.setToolTip(song.iconPath, label)
+
+    def addMenuItem(self, action):
+        self.actionList.append(action)
+
+
 if KDE:
-    class KTrayIcon(KStatusNotifierItem):
+    class KTrayIcon(KStatusNotifierItem, TrayIconCommon):
         actionList = []
         def __init__(self, icon, parent):
             KStatusNotifierItem.__init__(self, parent)
@@ -501,9 +646,6 @@ if KDE:
             self.setIconByName(icon)
             self.setCategory(1)
             self.setStatus(2)
-
-        def addMenuItem(self, action):
-            self.actionList.append(action)
 
         def setState(self, state):
             if state == 'play':
@@ -533,7 +675,7 @@ if KDE:
             self.contextMenu().addAction(self.actionQuit)
 
 else:
-    class QTrayIcon(QSystemTrayIcon, auxilia.Actions):
+    class QTrayIcon(QSystemTrayIcon, TrayIconCommon, auxilia.Actions):
         def __init__(self, icon, parent):
             QSystemTrayIcon.__init__(self, QIcon(icon), parent)
             self.parent = parent
@@ -549,9 +691,6 @@ else:
             self.connect(self, SIGNAL('activated(QSystemTrayIcon::ActivationReason)'), self.__activated)
             self.connect(self.menu, SIGNAL('aboutToShow()'), self.__buildMenu)
             self.show()
-
-        def addMenuItem(self, action):
-            self.actionList.append(action)
 
         def setState(self, state):
             if state == 'play':
@@ -592,28 +731,49 @@ else:
                 return False
 
 
-class EventEater(QObject):
-    def eventFilter(self, reciever, event):
-        if event.type() == QEvent.MouseButtonPress or event.type() == QEvent.MouseButtonRelease:
-            return True
-        return False
+    class EventEater(QObject):
+        def eventFilter(self, reciever, event):
+            if event.type() == QEvent.MouseButtonPress or event.type() == QEvent.MouseButtonRelease:
+                return True
+            return False
 
-def menuTitle(icon, text, parent):
-    eventEater = EventEater()
-    buttonaction = QAction(parent)
-    font = buttonaction.font()
-    font.setBold(True)
-    buttonaction.setFont(font)
-    buttonaction.setText(text)
-    buttonaction.setIcon(icon)
+    def menuTitle(icon, text, parent):
+        eventEater = EventEater()
+        buttonaction = QAction(parent)
+        font = buttonaction.font()
+        font.setBold(True)
+        buttonaction.setFont(font)
+        buttonaction.setText(text)
+        buttonaction.setIcon(icon)
 
-    action = QWidgetAction(parent)
-    action.setObjectName('trayMenuTitle')
-    titleButton = QToolButton(parent)
-    titleButton.installEventFilter(eventEater)
-    titleButton.setDefaultAction(buttonaction)
-    titleButton.setDown(True)
-    titleButton.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
-    action.setDefaultWidget(titleButton)
+        action = QWidgetAction(parent)
+        action.setObjectName('trayMenuTitle')
+        titleButton = QToolButton(parent)
+        titleButton.installEventFilter(eventEater)
+        titleButton.setDefaultAction(buttonaction)
+        titleButton.setDown(True)
+        titleButton.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
+        action.setDefaultWidget(titleButton)
 
-    return action
+        return action
+
+
+def richTextLabel(song):
+    title = song.title
+    artist = song.artist
+    album = song.album
+    station = song.station
+    if album == 'None':
+        album = ''
+    if station and station != title:
+        station = 'on <i>%s</i>' % station
+    else:
+        station = ''
+    if title:
+        title = '<b><big>%s</big></b>' % title
+    if artist:
+        artist = 'by <big>%s</big>' % artist
+    if album:
+        album = 'from <i>%s</i>' % album
+    return '<br>'.join((item for item in (title, artist, album, station) if item))
+

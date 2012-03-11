@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #-------------------------------------------------------------------------------
-from PyQt4.QtCore import SIGNAL, Qt, QAbstractListModel, QModelIndex, QMimeData
+from PyQt4.QtCore import QObject, SIGNAL, Qt, QAbstractListModel, QModelIndex, QMimeData
 from PyQt4.QtGui import QIcon, QFont
 
 import cPickle as pickle
@@ -34,7 +34,7 @@ class PlayQueueModel(QAbstractListModel):
         self._boldFont = QFont()
         self._boldFont.setBold(True)
         self._stdFont = QFont()
-        self.playing = -1
+        self.playing = None
         self.clear()
         self._oneLine = config.oneLinePlaylist
         self.mpdclient = mpdclient
@@ -42,19 +42,29 @@ class PlayQueueModel(QAbstractListModel):
         self.config = config
         self.retriever = iconretriever.ThreadedRetriever(config.coverPath)
 
-    def setPlaying(self, row):
+    def setPlaying(self, songID):
         '''
         Sets the currently playing song to `row` and makes sure the view
         reads this change.
         '''
-        if self.playing != row:
-            self.emit(SIGNAL('dataChanged(const QModelIndex &, const QModelIndex &)'),
-                    self.createIndex(self.playing, 0), self.createIndex(self.playing, 0))
-            self.playing = row
-            if self.playing >= 0:
-                self.emit(SIGNAL('dataChanged(const QModelIndex &, const QModelIndex &)'),
-                        self.createIndex(self.playing, 0), self.createIndex(self.playing, 0))
-            self.emit(SIGNAL('currentChanged'))
+        if not songID is None:
+            songID = int(songID)
+        if self.playing != songID:
+            if not self.playing is None:
+                index = self.id_index(self.playing)
+                if not index is None:
+                    self.emit(SIGNAL('dataChanged(const QModelIndex &, const QModelIndex &)'),
+                            self.createIndex(index, 0), self.createIndex(index, 0))
+            self.playing = songID
+            if not self.playing is None:
+                index = self.id_index(self.playing)
+                if not index is None:
+                    self.emit(SIGNAL('dataChanged(const QModelIndex &, const QModelIndex &)'),
+                            self.createIndex(index, 0), self.createIndex(index, 0))
+                song = self._songs[index]
+            else:
+                song = None
+            self.emit(SIGNAL('currentSongChanged'), song)
 
     def totalTime(self):
         ''' Returns the total play time of all songs in the queue. '''
@@ -64,20 +74,19 @@ class PlayQueueModel(QAbstractListModel):
         return total
 
     def update(self, plist, status):
-        ''' Updates the playqueue model with the changes in `plist`.
-            Returns True if the last thing done is adding to the end.'''
-        version = int(status['playlist'])
-        if version <= self.version:
-            return
-        self.version = version
+        '''
+        Updates the playqueue model with the changes in `plist`.
+        Returns True if the last thing done is adding to the end.
+        '''
+        print 'debug: Starting update of playQueue model.'
         clist = []
         change = None
         self.emit(SIGNAL('aboutToUpdate'))
         for song in plist:
-            song = PlayQueueSong(song, self.library, self)
+            song = PlayQueueSong(song, self.library)
             pos = int(song.pos)
-            song_id = int(song.id)
-            index = self.id_index(song_id)
+            songID = int(song.id)
+            index = self.id_index(songID)
             if index is not None:
                 if change != 'move' or (clist and not (index-1 == clist[-1][0] and pos-1 == clist[-1][1])):
                     self._runCList(change, clist)
@@ -95,7 +104,9 @@ class PlayQueueModel(QAbstractListModel):
         length = int(status['playlistlength'])
         if length < len(self._songs):
             del self[length:]
+        self.version = status['playlist']
         self.emit(SIGNAL('updated'))
+        self.setPlaying(status.get('songid'))
         return change == 'insert'
 
     def _runCList(self, change, clist):
@@ -122,12 +133,14 @@ class PlayQueueModel(QAbstractListModel):
             if not old_song == song:
                 self.emit(SIGNAL('dataChanged(const QModelIndex &, const QModelIndex &)'),
                         self.createIndex(destination, 0), self.createIndex(destination, 0))
+                if int(song.id) == self.playing:
+                    self.emit(SIGNAL('currentSongChanged'), song)
         elif change == 'insert':
             self.beginInsertRows(QModelIndex(), clist[0][0], clist[-1][0])
             for pos, song in clist:
                 song.iconPath = ''
                 song.icon = None
-                self.retriever.fetchIcon(song)
+                self._fetchIcon(song)
                 self._insertSong(pos, song)
             self.endInsertRows()
 
@@ -136,7 +149,7 @@ class PlayQueueModel(QAbstractListModel):
         new_song.iconPath = old_song.iconPath
         new_song.icon = old_song.icon
         if not new_song.iconPath:
-            self.retriever.fetchIcon(new_song)
+            self._fetchIcon(new_song)
         return new_song
 
     def _popSong(self, pos):
@@ -148,6 +161,16 @@ class PlayQueueModel(QAbstractListModel):
         ''' Inserts a song in the list keeping the id_list correct. '''
         self._songs.insert(pos, song)
         self._id_list.insert(pos, int(song.id))
+
+    def _fetchIcon(self, song):
+        self.connect(song, SIGNAL('iconChanged'), self._iconChanged)
+        self.retriever.fetchIcon(song)
+
+    def _iconChanged(self, songID, iconPath):
+        index = self.id_index(songID)
+        if not index is None:
+            self.emit(SIGNAL('dataChanged(const QModelIndex &, const QModelIndex &)'),
+                    self.createIndex(index, 0), self.createIndex(index, 0))
 
     def clear(self):
         ''' Clears the playqueue and resets the views. '''
@@ -240,16 +263,16 @@ class PlayQueueModel(QAbstractListModel):
     def data(self, index, role):
         ''' Returns the data at `index` for the requested `role`. '''
         row = index.row()
+        songID = self._id_list[row]
         if role == Qt.DisplayRole:
             song = self._songs[row]
-            if row != self.playing and song.isStream:
+            if songID != self.playing and song.isStream:
                 return [unicode(song.station), '']
             else:
                 return [unicode(song.artist), unicode(song.title)]
         if role == Qt.ToolTipRole:
             return self._getTooltip(row)
         if role == Qt.DecorationRole:
-            #print "DecorationRole for row:", row
             song = self._songs[row]
             if song.iconPath:
                 if not song.icon:
@@ -258,13 +281,13 @@ class PlayQueueModel(QAbstractListModel):
             else:
                 return None
         if role == Qt.FontRole:
-            if row == self.playing and self.playing >= 0:
+            if songID == self.playing:
                 return self._boldFont
             else:
                 return self._stdFont
         if role == Qt.AccessibleTextRole:
             song = self._songs[row]
-            if row != self.playing and song.isStream:
+            if songID != self.playing and song.isStream:
                 return unicode(song.station)
             else:
                 return '%s by %s' % (unicode(song.title), unicode(song.artist))
@@ -304,18 +327,14 @@ class PlayQueueModel(QAbstractListModel):
         return self._songs.__getitem__(index)
 
 
-class PlayQueueSong(mpdlibrary.Song):
-    def __new__(cls, song, library, parent):
-        return mpdlibrary.Song.__new__(cls, song, library)
-
-    def __init__(self, song, library, parent):
+class PlayQueueSong(mpdlibrary.Song, QObject):
+    def __init__(self, song, library):
+        QObject.__init__(self)
         mpdlibrary.Song.__init__(self, song, library)
-        self.parent = parent
+        self.iconPath = None
 
     def setIcon(self, iconPath):
         self.iconPath = iconPath
-        #self.parent.newIcon()
-        index = int(self.pos)
-        self.parent.emit(SIGNAL('dataChanged(const QModelIndex &, const QModelIndex &)'),
-                self.parent.createIndex(index, 0), self.parent.createIndex(index, 0))
+        songID = int(self.id)
+        self.emit(SIGNAL('iconChanged'), songID, iconPath)
 

@@ -186,7 +186,7 @@ class LibraryIndex(dict):
 
 
 class LibraryObject(object):
-    def __new__(cls, value, library):
+    def __new__(cls, value, library=None):
         if not isinstance(value, cls) and isinstance(value, (list, tuple)):
             value = value[0]
         base = super(LibraryObject, cls)
@@ -195,7 +195,7 @@ class LibraryObject(object):
         else:
             return base.__new__(cls, value)
 
-    def __init__(self, value, library):
+    def __init__(self, value, library=None):
         self._library = library
         if not isinstance(value, self.__class__.__base__) and isinstance(value, (list, tuple)):
             value = tuple(x for x in value if isinstance(x, basestring))
@@ -387,7 +387,7 @@ class Song(LibraryObject):
         else:
             return False
         for item in ('file', 'title', 'artist'):
-            if left.get(item, True) != right.get(item, False):
+            if left.get(item) != right.get(item):
                 return False
         return True
 

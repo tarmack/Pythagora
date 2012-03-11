@@ -20,6 +20,7 @@ import thread
 import mutex
 import cPickle as pickle
 
+from state import PlayerState
 from playqueue import PlayQueueModel
 from playlists import PlaylistsModel
 from filesystem import FileSystemModel
@@ -29,7 +30,7 @@ from tracks import TracksModel
 
 class ModelManager(object):
     '''
-    This class collects and updates the data in the models.
+    This class manages the data in the models.
     '''
 
     def __init__(self, mpdclient, library, config):
@@ -46,13 +47,46 @@ class ModelManager(object):
         self.artists = ArtistsModel(library)
         self.albums = AlbumsModel(library)
         self.tracks = TracksModel(library)
+        self.playerState = PlayerState(self.playQueue)
 
-    def updatePlayQueue(self, change_list, status):
-        if not self.config.server:
-            return
-        self.playQueue.update(change_list, status)
+    ##################
+    # Main interface #
+    ##################
+    def processChanges(self, changes):
+        '''
+        Updates the models according to the change groups in the changes
+        argument.
+        '''
+        print 'debug: Processing changes'
+        self.mpdclient.send('status', callback=
+                lambda status, changes=changes: self._progressChanges(changes, status))
+
+    def _progressChanges(self, changes, status):
+        print 'debug: retrieved status form server.'
+        if 'database' in changes:
+            self.reloadLibrary(force=True)
+
+        if 'playlist' in changes:
+            self.updatePlayQueue(status)
+        else:
+            self.playQueue.setPlaying(status.get('songid'))
+        self.playerState.progress = status.get('time', '0:0').split(':')[0]
+        self.playerState.playState = status['state']
+        self.playerState.volume = status['volume']
+        self.playerState.xFade = status['xfade']
+        self.playerState.bitrate = status.get('bitrate', 0)
+        self.playerState.random = status['random']
+        self.playerState.repeat = status['repeat']
+        self.playerState.single = status['single']
+        self.playerState.consume = status['consume']
+
+        if 'stored_playlist' in changes:
+            self.reloadPlaylists()
 
     def clearForms(self):
+        '''
+        Clear all models.
+        '''
         self.playQueue.clear()
         self.playlists.clear()
         self.fileSystem.clear()
@@ -60,14 +94,42 @@ class ModelManager(object):
         self.albums.clear()
         self.tracks.clear()
 
-    def setCurrentSong(self, song):
-        playing = int(song['pos'])
-        self.playQueue.setPlaying(playing)
+    ##############
+    # Play queue #
+    ##############
+    def updatePlayQueue(self, status=None):
+        '''
+        Updates the play queue model.
+        '''
+        if not self.config.server:
+            return
+        if status is None:
+            self.mpdclient.send('status', callback=self.updatePlayQueue)
+            return
+        self.mpdclient.send('plchanges', (self.playQueue.version,), callback=
+                lambda changes: self.playQueue.update(changes, status))
 
-    def reloadPlaylists(self, playlists):
-        self.playlists.update(playlists)
 
+    ####################
+    # Stored playlists #
+    ####################
+    def reloadPlaylists(self):
+        self.mpdclient.send('listplaylists', callback=
+                self.playlists.update)
+
+
+    ###############
+    # MPD Library #
+    ###############
     def reloadLibrary(self, force=False):
+        '''
+        Reloads the library in the library models.
+
+        The library is loaded from cache when it is available and force is not
+        True. The timestamp of the cached content is checked against the
+        server.
+        The cache is automatically updated when necessary.
+        '''
         if force:
             self._getLibrary(0)
         else:
@@ -75,6 +137,9 @@ class ModelManager(object):
                     lambda stats: self._getLibrary(stats['db_update']))
 
     def _getCachePath(self):
+        '''
+        Returns the path of the library cache file for the current server.
+        '''
         file_name = 'db_cache - ' + self.config.server[0]
         cache = os.path.expanduser('~/.cache/pythagora')
         if not os.path.isdir(cache):
@@ -82,6 +147,9 @@ class ModelManager(object):
         return '/'.join((cache, file_name))
 
     def _getLibrary(self, timestamp):
+        '''
+        Retrieves the library from the appropriate source.
+        '''
         path = self._getCachePath()
         if os.path.exists(path):
             with open(path) as db_cache:
@@ -94,14 +162,20 @@ class ModelManager(object):
                 lambda mainlist: self._cacheLibrary(timestamp, mainlist))
 
     def _cacheLibrary(self, timestamp, mainlist):
+        '''
+        Updates the library cache.
+        '''
         print 'Downloading of the library took {0:.3f} seconds'.format(time.time() - self._downloadStart)
         path = self._getCachePath()
         with open(path, 'w') as db_cache:
-            db_cache.write(timestamp + '\n')
+            db_cache.write('%i\n' % timestamp)
             db_cache.write(pickle.dumps(mainlist))
         thread.start_new_thread(self._reloadLibrary, (mainlist,))
 
     def _reloadLibrary(self, mainlist):
+        '''
+        Reloads the library and updates all library models.
+        '''
         self._parseStart = time.time()
         server = self.config.server
         self.libraryMutex.lock(self.library.reload, mainlist)
@@ -120,13 +194,4 @@ class ModelManager(object):
             self.fileSystem.reload()
             print 'load file system took %.3f seconds' % (time.time() - t)
             print 'library load took %.3f seconds' % (time.time() - p)
-
-
-# Code for updating PlayQueueModel.
-
-# Code for updating PlaylistsModel.
-
-# Code for updating library models.
-
-# Put player state in a model like structure?
 

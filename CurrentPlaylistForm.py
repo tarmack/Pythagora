@@ -48,7 +48,10 @@ class CurrentPlaylistForm(QWidget, auxilia.Actions):
             uic.loadUi(DATA_DIR+'ui/CurrentListForm.ui', self)
         else:
             uic.loadUi(DATA_DIR+'ui/CurrentListForm.ui.Qt', self)
-        self.view.currentListLayout.addWidget(self)
+
+        self.connect(modelManager.playerState, SIGNAL('repeatChanged'), self.repeatButton.setChecked)
+        self.connect(modelManager.playerState, SIGNAL('randomChanged'), self.randomButton.setChecked)
+        self.connect(modelManager.playerState, SIGNAL('xFadeChanged'), self.crossFade.setValue)
 
         self.playQueueProxy = QSortFilterProxyModel()
         self.playQueueProxy.setSourceModel(self.playQueue)
@@ -314,8 +317,6 @@ class PlayQueueDelegate(QItemDelegate):
             self.height *= 2
 
     def sizeHint(self, option, index):
-        #size = QStyledItemDelegate.sizeHint(self, option, index)
-        #print "sizeHint for index:", index.row()
         artist, title = [unicode(val) for val in index.data(Qt.DisplayRole).toStringList()]
         if self.oneLine:
             width = self.height + option.fontMetrics.width(' - '.join((artist, title)))
@@ -325,8 +326,6 @@ class PlayQueueDelegate(QItemDelegate):
         return QSize(width + 4, self.height)
 
     def paint(self, painter, option, index):
-        #print "painting row:", index.row()
-        #QStyledItemDelegate.paint(self, painter, option, index)
         style = option.widget.style()
         style.drawControl(QStyle.CE_ItemViewItem, option, painter)
         artist, title = [unicode(val) for val in index.data(Qt.DisplayRole).toStringList()]
