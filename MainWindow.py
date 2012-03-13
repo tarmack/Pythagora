@@ -481,7 +481,6 @@ class SongLabel(QLabel):
             else:
                 label = 'Connected to %s.' % self.config.server[0]
             self.setText(label)
-            self.setSongIcon(None)
         else:
             title = song.title
             artist = song.artist
@@ -490,7 +489,6 @@ class SongLabel(QLabel):
             if album == 'None':
                 album = ''
             self.setText(title, artist, album, station)
-
 
     def setText(self, title='', artist='', album='', station=''):
         self.title = title
