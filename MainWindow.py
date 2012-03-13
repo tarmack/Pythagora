@@ -154,6 +154,7 @@ class View(QMainWindow, auxilia.Actions):
         self.trayIcon.addMenuItem(self.settingsAction)
         self.connect(self.trayIcon, SIGNAL('activate()'), self.toggleHideRestore)
         self.connect(self.trayIcon, SIGNAL('secondaryActivateRequested(QPoint)'), self.__playPause)
+        self.connect(self.modelManager.playerState, SIGNAL('playStateChanged'), self.trayIcon.setState)
 
         self.connect(self.tabs, SIGNAL('currentChanged(int)'), self.__tabsIndexChanged)
         self.connect(self.tabs.tabBar(), SIGNAL('tabMoved(int,int)'), self.__tabMoved)
