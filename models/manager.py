@@ -63,6 +63,11 @@ class ModelManager(object):
 
     def _progressChanges(self, changes, status):
         print 'debug: retrieved status form server.'
+        if status is None:
+            # Status returns None when the connection is in
+            # "command list" mode. We will get a decent
+            # update when that finishes.
+            return
         if 'database' in changes:
             self.reloadLibrary(force=True)
 
