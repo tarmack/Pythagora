@@ -47,7 +47,7 @@ class ModelManager(object):
         self.artists = ArtistsModel(library)
         self.albums = AlbumsModel(library)
         self.tracks = TracksModel(library)
-        self.playerState = PlayerState(self.playQueue)
+        self.playerState = PlayerState(self.mpdclient, self.playQueue)
 
     ##################
     # Main interface #
@@ -70,15 +70,8 @@ class ModelManager(object):
             self.updatePlayQueue(status)
         else:
             self.playQueue.setPlaying(status.get('songid'))
-        self.playerState.progress = status.get('time', '0:0').split(':')[0]
-        self.playerState.playState = status['state']
-        self.playerState.volume = status['volume']
-        self.playerState.xFade = status['xfade']
-        self.playerState.bitrate = status.get('bitrate', 0)
-        self.playerState.random = status['random']
-        self.playerState.repeat = status['repeat']
-        self.playerState.single = status['single']
-        self.playerState.consume = status['consume']
+
+        self.playerState.update(status)
 
         if 'stored_playlist' in changes:
             self.reloadPlaylists()
@@ -87,7 +80,7 @@ class ModelManager(object):
         '''
         Clear all models.
         '''
-        self.playQueue.clear()
+        self.playQueue._clear()
         self.playlists.clear()
         self.fileSystem.clear()
         self.artists.clear()

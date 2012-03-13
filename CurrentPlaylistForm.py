@@ -78,7 +78,7 @@ class CurrentPlaylistForm(QWidget, auxilia.Actions):
         self.connect(self.currentFilter,SIGNAL('textEdited(QString)'),self.playQueueProxy.setFilterFixedString)
 
         self.connect(self.currentRemove,SIGNAL('clicked()'),self._removeSelected)
-        self.connect(self.currentClear,SIGNAL('clicked()'),self._clearCurrent)
+        self.connect(self.currentClear,SIGNAL('clicked()'),self.playQueue.clear)
         self.connect(self.currentSave,SIGNAL('clicked()'),self._saveCurrent)
         self.connect(self.addStream,SIGNAL('clicked()'),self._addStream)
 
@@ -96,7 +96,7 @@ class CurrentPlaylistForm(QWidget, auxilia.Actions):
                 icon="media-playback-start", text='play', tooltip='Start playing the selected song.')
         self.currentMenuRemove = self.action(self.currentList, self._removeSelected,
                 icon="list-remove", text='Remove', tooltip="Remove the selected songs from the playlist.")
-        self.currentMenuClear = self.action(self.currentList, self._clearCurrent,
+        self.currentMenuClear = self.action(self.currentList, self.playQueue.clear,
                 icon="document-new", text='Clear', tooltip="Remove all songs from the playlist.")
         self.currentMenuSave = self.action(self.currentList, self._saveCurrent,
                 icon="document-save-as", text='Save', tooltip="Save the current playlist.")
@@ -164,9 +164,6 @@ class CurrentPlaylistForm(QWidget, auxilia.Actions):
     def _getSelectedRows(self):
         return (self.playQueueProxy.mapToSource(index).row() for index in self.currentList.selectedIndexes())
 
-    def _getSelectedIDs(self):
-        return (self.playQueue[row].id for row in self._getSelectedRows())
-
     def _ensurePlayingVisable(self, force=False):
         if time() - self.playQueue.lastEdit <= 5 and not force == False:
             return
@@ -197,27 +194,22 @@ class CurrentPlaylistForm(QWidget, auxilia.Actions):
                 self.mpdclient.send('rm', (name,))
             self.mpdclient.send('save', (name,))
 
-    def _clearCurrent(self):
-        '''Clear the current playlist'''
-        self.mpdclient.send('stop')
-        self.mpdclient.send('clear')
-
     def _removeSelected(self):
         '''Remove the selected item(s) from the current playlist'''
-        self._removeSongs(self._getSelectedIDs())
+        self._removeSongs(self._getSelectedRows())
         self.currentList.reset()
 
     def _cropCurrent(self):
         selection = set(self._getSelectedRows())
         rows = set(xrange(len(self.playQueue)))
-        self._removeSongs(self.playQueue[row].id for row in (rows - selection))
+        self._removeSongs(list(rows - selection))
 
-    def _removeSongs(self, idList):
+    def _removeSongs(self, rowList):
         self.mpdclient.send('command_list_ok_begin')
         try:
-            for id in idList:
+            for row in rowList:
                 try:
-                    self.mpdclient.send('deleteid', (id,))
+                    del self.playQueue[row]
                 except Exception, e:
                     print e
         finally:
@@ -229,13 +221,14 @@ class CurrentPlaylistForm(QWidget, auxilia.Actions):
                 row = index.row()
             else:
                 row = index
-            id = self.playQueue[row].id
         else:
             try:
-                id = self._getSelectedIDs().next()
+                row = self._getSelectedRows().next()
             except StopIteration:
                 return
-        self.mpdclient.send('playid', (id,))
+        self.modelManager.playerState.currentSong = row
+        self.modelManager.playerState.playState = 'play'
+
 
     def _setPlayTime(self, playTime=0):
         self.view.playTimeLabel.setText('Total play time: %s' % mpdlibrary.Time(playTime).human)
@@ -300,7 +293,7 @@ class CurrentPlaylistForm(QWidget, auxilia.Actions):
             self.mpdclient.send('command_list_ok_begin')
             try:
                 for address in adrlist:
-                    self.mpdclient.send('add', (address,))
+                    self.playQueue.append(address)
             finally:
                 self.mpdclient.send('command_list_end')
 

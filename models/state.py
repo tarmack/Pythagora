@@ -33,8 +33,9 @@ class PlayerState(QObject):
             'single':       False,
             'consume':      False,
             }
-    def __init__(self, playQueue):
+    def __init__(self, mpdclient, playQueue):
         QObject.__init__(self)
+        self.mpdclient = mpdclient
         self.playQueue = playQueue
         self._progressTimer = QTimer()
         self._progressTimer.start(1000)
@@ -49,25 +50,66 @@ class PlayerState(QObject):
                                  (self.__class__.__name__, attr))
 
     def __setattr__(self, attr, value):
-        if attr == 'progress':
+        if attr not in self._state:
+            return QObject.__setattr__(self, attr, value)
+        if attr == 'playState':
+            if value in ('play', 'stop'):
+                self.mpdclient.send(value)
+            elif value == 'pause':
+                self.mpdclient.send(value, (1,))
+            else:
+                raise RuntimeError
+        elif attr == 'currentSong':
+            if isinstance(value, int):
+                self.mpdclient.send('seek', (value, 0))
+            elif isinstance(value, mpdlibrary.Song):
+                self.mpdclient.send('seekid', (value.id, 0))
+            else:
+                raise RuntimeError
+        elif attr == 'progress':
+            self.mpdclient.send('seekid', (self.playQueue.playing, value))
+        else:
+            if attr == 'xFade':
+                attr = 'crossfade'
+            elif attr == 'volume':
+                attr = 'setvol'
+            self.mpdclient.send(attr, (value,))
+
+    def _setState(self, item, value):
+        if item == 'progress':
             if not isinstance(value, mpdlibrary.Time):
                 value = mpdlibrary.Time(value)
         # Integer values.
-        elif attr in ('volume', 'xFade', 'bitrate'):
+        elif item in ('volume', 'xFade', 'bitrate'):
             value = int(value)
         # boolean values.
-        elif attr in ('random', 'repeat', 'single', 'consume'):
+        elif item in ('random', 'repeat', 'single', 'consume'):
             value = bool(int(value))
 
-        try:
-            oldValue = self._state[attr]
-        except KeyError:
-            QObject.__setattr__(self, attr, value)
-            return
-        self._state[attr] = value
+        oldValue = self._state[item]
+        self._state[item] = value
         if value != oldValue:
-            self.emit(SIGNAL(attr+'Changed'), value)
+            self.emit(SIGNAL(item+'Changed'), value)
 
+    def update(self, status):
+        self._setState('progress', status.get('time', '0:0').split(':')[0])
+        self._setState('playState', status['state'])
+        self._setState('volume', status['volume'])
+        self._setState('xFade', status['xfade'])
+        self._setState('bitrate', status.get('bitrate', 0))
+        self._setState('random', status['random'])
+        self._setState('repeat', status['repeat'])
+        self._setState('single', status['single'])
+        self._setState('consume', status['consume'])
+
+    def _updateProgress(self):
+        if self.playState == 'play':
+            self._setState('progress', self.progress + 1)
+
+
+    ##############
+    # Public API #
+    ##############
     @property
     def currentSong(self):
         '''
@@ -78,6 +120,16 @@ class PlayerState(QObject):
         else:
             return self.playQueue[self.playQueue.playing]
 
-    def _updateProgress(self):
-        self.progress = self.progress + 1
+    def nextSong(self):
+        self.mpdclient.send('next')
 
+    def previousSong(self):
+        self.mpdclient.send('previous')
+
+    def volumeUp(self, amount):
+        value = self._state['volume'] + amount
+        self.mpdclient.send('setvol', (value,))
+
+    def volumeDown(self, amount):
+        value = self._state['volume'] - amount
+        self.mpdclient.send('setvol', (value,))

@@ -35,7 +35,7 @@ class PlayQueueModel(QAbstractListModel):
         self._boldFont.setBold(True)
         self._stdFont = QFont()
         self.playing = None
-        self.clear()
+        self._clear()
         self._oneLine = config.oneLinePlaylist
         self.mpdclient = mpdclient
         self.library = library
@@ -103,7 +103,11 @@ class PlayQueueModel(QAbstractListModel):
         self._runCList(change, clist)
         length = int(status['playlistlength'])
         if length < len(self._songs):
-            del self[length:]
+            end = len(self._songs)
+            self.beginRemoveRows(QModelIndex(), length, end)
+            self._songs.__delslice__(length, end)
+            self._id_list.__delslice__(length, end)
+            self.endRemoveRows()
         self.version = status['playlist']
         self.emit(SIGNAL('updated'))
         self.setPlaying(status.get('songid'))
@@ -173,6 +177,9 @@ class PlayQueueModel(QAbstractListModel):
                     self.createIndex(index, 0), self.createIndex(index, 0))
 
     def clear(self):
+        self.mpdclient.send('clear')
+
+    def _clear(self):
         ''' Clears the playqueue and resets the views. '''
         self.version = 0
         self._songs = []
@@ -243,18 +250,11 @@ class PlayQueueModel(QAbstractListModel):
 
     def removeRow(self, row, parent):
         ''' Removes the item at `row` in the model from the playqueue. '''
-        self.lastEdit = time()
-        self.mpdclient.send('delete', (row))
+        self.__delitem__(row)
 
     def removeRows(self, row, count, parent):
         ''' Removes `count` items starting at `row` from the mpd playqueue. '''
-        self.lastEdit = time()
-        self.mpdclient.send('command_list_ok_begin')
-        try:
-            for x in xrange(count):
-                self.mpdclient.send('delete', (row))
-        finally:
-            self.mpdclient.send('command_list_end')
+        self.__delslice__(row, row+count)
 
     def rowCount(self, index):
         ''' Returns the number of songs in the model. '''
@@ -308,23 +308,68 @@ class PlayQueueModel(QAbstractListModel):
         except ValueError:
             return None
 
+
+    ##########################################
+    # List like interface to the play queue. #
+    ##########################################
+    def insert(self, index, value):
+        self.lastEdit = time()
+        value = self._parseValue(value)
+        self.mpdclient.send('addid', (value, index))
+
+    def append(self, value):
+        self.lastEdit = time()
+        value = self._parseValue(value)
+        self.mpdclient.send('add', (value,))
+
+    def _parseValue(self, value):
+        if isinstance(value, mpdlibrary.Song):
+            value = value.file.absolute
+        elif isinstance(value, mpdlibrary.File):
+            value = value.absolute
+        return value
+
+    def extend(self, songList):
+        self.lastEdit = time()
+        self.mpdclient.send('command_list_ok_begin')
+        try:
+            for song in songList:
+                self.append(song)
+        finally:
+            self.mpdclient.send('command_list_end')
+
+    def pop(self, index=None):
+        self.lastEdit = time()
+        if index is None:
+            index = len(self._songs)
+        song = self._songs[index]
+        self.mpdclient.send('deleteid', song.id)
+        return song
+
     def __len__(self):
-        return self._songs.__len__()
+        return len(self._songs)
+
+    def __getitem__(self, index):
+        return self._songs.__getitem__(index)
 
     def __getslice__(self, start, end):
         return self._songs.__getslice__(start, end)
 
-    def __delslice__(self, start, end):
-        ''' Removes multiple items from the view. '''
-        if not end or end >= len(self._songs):
-            end = len(self._songs)
-        self.beginRemoveRows(QModelIndex(), start, end)
-        self._songs.__delslice__(start, end)
-        self._id_list.__delslice__(start, end)
-        self.endRemoveRows()
+    def __delitem__(self, index):
+        self.lastEdit = time()
+        self.mpdclient.send('deleteid', (self._id_list[index],))
 
-    def __getitem__(self, index):
-        return self._songs.__getitem__(index)
+    def __delslice__(self, start, end):
+        self.lastEdit = time()
+        self.mpdclient.send('command_list_ok_begin')
+        try:
+            for row in xrange(start, end):
+                try:
+                    self.__delitem__(row)
+                except Exception, e:
+                    print e
+        finally:
+            self.mpdclient.send('command_list_end')
 
 
 class PlayQueueSong(mpdlibrary.Song, QObject):
