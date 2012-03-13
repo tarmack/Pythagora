@@ -80,6 +80,11 @@ class View(QMainWindow, auxilia.Actions):
         self.currentList = CurrentPlaylistForm.CurrentPlaylistForm(
                 self.modelManager, self, self.app, self.mpdclient, self.config)
         self.currentListLayout.addWidget(self.currentList)
+        self.connect(self.playerForm.play, SIGNAL('clicked(bool)'), self.modelManager.playerState.playPause)
+        self.connect(self.playerForm.back, SIGNAL('clicked(bool)'), self.modelManager.playerState.previousSong)
+        self.connect(self.playerForm.forward, SIGNAL('clicked(bool)'), self.modelManager.playerState.nextSong)
+        self.connect(self.playerForm.stop, SIGNAL('clicked(bool)'), self.modelManager.playerState.stop)
+        self.connect(self.playerForm.volume, SIGNAL('valueChanged(int)'), self.modelManager.playerState.setVolume)
 
         # Standard toolbar buttons.
         self.exitAction = self.actionExit(self, self.app.quit)
@@ -154,6 +159,8 @@ class View(QMainWindow, auxilia.Actions):
         self.trayIcon.addMenuItem(self.settingsAction)
         self.connect(self.trayIcon, SIGNAL('activate()'), self.toggleHideRestore)
         self.connect(self.trayIcon, SIGNAL('secondaryActivateRequested(QPoint)'), self.__playPause)
+        self.connect(self.trayIcon, SIGNAL('scrollRequested(int, Qt::Orientation)'),
+                lambda amount: self.modelManager.playerState.volumeUp((amount+30)/60))
         self.connect(self.modelManager.playerState, SIGNAL('playStateChanged'), self.trayIcon.setState)
 
         self.connect(self.tabs, SIGNAL('currentChanged(int)'), self.__tabsIndexChanged)
@@ -392,8 +399,6 @@ class PlayerForm(QWidget):
         # Put in trayicon class.
         #self.view.trayIcon.setState(state)
         self.state = state
-        # Put in main class.
-        #self.playControls.state = self.state
 
     def dragEnterEvent(self, event):
         if event.provides('mpd/uri'):

@@ -44,15 +44,19 @@ class CurrentPlaylistForm(QWidget, auxilia.Actions):
         self.config = config
         self._temp = {}
         self.playQueue = modelManager.playQueue
+        self.playerState = modelManager.playerState
         self.playQueueDelegate = PlayQueueDelegate(self.config)
         if self.view.KDE:
             uic.loadUi(DATA_DIR+'ui/CurrentListForm.ui', self)
         else:
             uic.loadUi(DATA_DIR+'ui/CurrentListForm.ui.Qt', self)
 
-        self.connect(modelManager.playerState, SIGNAL('repeatChanged'), self.repeatButton.setChecked)
-        self.connect(modelManager.playerState, SIGNAL('randomChanged'), self.randomButton.setChecked)
-        self.connect(modelManager.playerState, SIGNAL('xFadeChanged'), self.crossFade.setValue)
+        self.connect(self.playerState, SIGNAL('repeatChanged'), self.repeatButton.setChecked)
+        self.connect(self.playerState, SIGNAL('randomChanged'), self.randomButton.setChecked)
+        self.connect(self.playerState, SIGNAL('xFadeChanged'), self.crossFade.setValue)
+        self.connect(self.crossFade, SIGNAL('valueChanged(int)'), self.playerState.setXFade)
+        self.connect(self.repeatButton, SIGNAL('toggled(bool)'), self.playerState.setRepeat)
+        self.connect(self.randomButton, SIGNAL('toggled(bool)'), self.playerState.setRandom)
 
         self.playQueueProxy = QSortFilterProxyModel()
         self.playQueueProxy.setSourceModel(self.playQueue)
@@ -226,8 +230,8 @@ class CurrentPlaylistForm(QWidget, auxilia.Actions):
                 row = self._getSelectedRows().next()
             except StopIteration:
                 return
-        self.modelManager.playerState.currentSong = row
-        self.modelManager.playerState.play()
+        self.playerState.currentSong = row
+        self.playerState.play()
 
 
     def _setPlayTime(self, playTime=0):

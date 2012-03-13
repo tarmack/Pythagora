@@ -23,7 +23,6 @@ import sys
 import signal
 
 import mpdthreaded as mpd
-import playControls
 import configuration
 import MainWindow
 import mpdlibrary
@@ -88,8 +87,8 @@ class Manager():
         self.idleTimer.setSingleShot(True)
         self.config = configuration.Configuration(sys.argv)
         self.modelManager = ModelManager(self.mpdclient, self.library, self.config)
+        self.playerState = self.modelManager.playerState
         self.view = MainWindow.View(self.modelManager, self.config, self.mpdclient, self.library, app)
-        self.playControls = playControls.PlayControls(self.mpdclient)
         self.__connectSignals()
         self.__connectMPD()
         # Load the plugin forms.
@@ -149,19 +148,19 @@ class Manager():
         print 'keyEvent main'
         if event.modifiers() == Qt.ControlModifier:
             if event.key() == Qt.Key_MediaPlay:
-                self.playControls.playPause()
+                self.playerState.playPause()
             elif event.key() == Qt.Key_MediaStop:
-                self.playControls.stop()
+                self.playerState.stop()
             elif event.key() == Qt.Key_MediaPrevious:
-                self.playControls.back()
+                self.playerState.previousSong()
             elif event.key() == Qt.Key_MediaNext:
-                self.playControls.forward()
+                self.playerState.nextSong()
             elif event.key() == Qt.Key_VolumeUp:
-                self.playControls.volumeUp()
+                self.playerState.volumeUp()
             elif event.key() == Qt.Key_VolumeDown:
-                self.playControls.volumeDown()
+                self.playerState.volumeDown()
             elif event.key() == Qt.Key_VolumeMute:
-                self.playControls.toggleMute()
+                self.playerState.mute()
             else:
                 print 'keyEvent main ignored'
                 QWidget.keyPressEvent(self.view, event)
@@ -169,19 +168,19 @@ class Manager():
 
     def setGlobalShortcuts(self):
         self.playAction = self.__setGlobalShortcut(
-                "Play/Pause", "Play/pause", Qt.CTRL + Qt.Key_MediaPlay, self.playControls.playPause)
+                "Play/Pause", "Play/pause", Qt.CTRL + Qt.Key_MediaPlay, self.playerState.playPause)
         self.stopAction = self.__setGlobalShortcut(
-                "Stop", "Stop playing", Qt.CTRL + Qt.Key_MediaStop, self.playControls.stop)
+                "Stop", "Stop playing", Qt.CTRL + Qt.Key_MediaStop, self.playerState.stop)
         self.backAction = self.__setGlobalShortcut(
-                "Back", "Play previous song", Qt.CTRL + Qt.Key_MediaPrevious, self.playControls.back)
+                "Back", "Play previous song", Qt.CTRL + Qt.Key_MediaPrevious, self.playerState.previousSong)
         self.forwardAction = self.__setGlobalShortcut(
-                "Forward", "Play next song", Qt.CTRL + Qt.Key_MediaNext, self.playControls.forward)
+                "Forward", "Play next song", Qt.CTRL + Qt.Key_MediaNext, self.playerState.nextSong)
         self.volumeUpAction = self.__setGlobalShortcut(
-                "Volume Up", "Volume up", Qt.CTRL + Qt.Key_VolumeUp, self.playControls.volumeUp)
+                "Volume Up", "Volume up", Qt.CTRL + Qt.Key_VolumeUp, self.playerState.volumeUp)
         self.volumeDownAction = self.__setGlobalShortcut(
-                "Volume Down", "Volume down", Qt.CTRL + Qt.Key_VolumeDown, self.playControls.volumeDown)
+                "Volume Down", "Volume down", Qt.CTRL + Qt.Key_VolumeDown, self.playerState.volumeDown)
         self.muteAction = self.__setGlobalShortcut(
-                "Mute", "Mute/unmute", Qt.CTRL + Qt.Key_VolumeMute, self.playControls.toggleMute)
+                "Mute", "Mute/unmute", Qt.CTRL + Qt.Key_VolumeMute, self.playerState.mute)
         self.hideRestoreAction = self.__setGlobalShortcut(
                 "Hide/Restore", "Hide or Restore the main window.", Qt.CTRL + Qt.SHIFT + Qt.Key_P, self.view.toggleHideRestore)
 
@@ -255,7 +254,6 @@ class Manager():
                 self.view.emit(SIGNAL('ConnectionError()'))
 
     def __connectSignals(self):
-        self.playControls.connectSignals(self.view)
         self.view.connect(self.view.menuConnect, SIGNAL('triggered(QAction *)'), self.connectTo)
         self.view.connect(self.view.menuOutputs, SIGNAL('triggered(QAction *)'), self.toggleOutput)
 
