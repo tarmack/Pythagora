@@ -33,6 +33,7 @@ class PlayerState(QObject):
             'single':       False,
             'consume':      False,
             }
+    _muteVolume = 0
     def __init__(self, mpdclient, playQueue):
         QObject.__init__(self)
         self.mpdclient = mpdclient
@@ -73,6 +74,7 @@ class PlayerState(QObject):
                 attr = 'crossfade'
             elif attr == 'volume':
                 attr = 'setvol'
+                self._setState('volume', value)
             self.mpdclient.send(attr, (value,))
 
     def _setState(self, item, value):
@@ -82,6 +84,8 @@ class PlayerState(QObject):
         # Integer values.
         elif item in ('volume', 'xFade', 'bitrate'):
             value = int(value)
+            if item == 'volume' and value > 0:
+                self._muteVolume = 0
         # boolean values.
         elif item in ('random', 'repeat', 'single', 'consume'):
             value = bool(int(value))
@@ -107,9 +111,9 @@ class PlayerState(QObject):
             self._setState('progress', self.progress + 1)
 
 
-    ##############
-    # Public API #
-    ##############
+    #########################
+    # Convenience methods. #
+    #########################
     @property
     def currentSong(self):
         '''
@@ -120,16 +124,57 @@ class PlayerState(QObject):
         else:
             return self.playQueue[self.playQueue.playing]
 
+    def playPause(self):
+        if self._state['playState'] == 'play':
+            self.playState = 'pause'
+        else:
+            self.playState = 'play'
+
+    def play(self):
+        self.playState = 'play'
+
+    def stop(self):
+        self.playState = 'stop'
+
     def nextSong(self):
         self.mpdclient.send('next')
 
     def previousSong(self):
         self.mpdclient.send('previous')
 
-    def volumeUp(self, amount):
+    def volumeUp(self, amount=2):
         value = self._state['volume'] + amount
-        self.mpdclient.send('setvol', (value,))
+        self.volume = value
 
-    def volumeDown(self, amount):
+    def volumeDown(self, amount=2):
         value = self._state['volume'] - amount
-        self.mpdclient.send('setvol', (value,))
+        self.volume = value
+
+    def setVolume(self, value):
+        self.volume = value
+
+    def setRandom(self, value):
+        self.random = value
+
+    def setRepeat(self, value):
+        self.repeat = value
+
+    def setSingle(self, value):
+        self.single = value
+
+    def setXFade(self, value):
+        self.xFade = value
+
+    def setConsume(self, value):
+        self.consume = value
+
+    def seek(self, value):
+        self.progress = value
+
+    def mute(self):
+        if self._muteVolume:
+            self.volume = self._muteVolume
+            self._muteVolume = 0
+        else:
+            self._muteVolume = self.volume
+            self.volume = 0

@@ -227,7 +227,7 @@ class CurrentPlaylistForm(QWidget, auxilia.Actions):
             except StopIteration:
                 return
         self.modelManager.playerState.currentSong = row
-        self.modelManager.playerState.playState = 'play'
+        self.modelManager.playerState.play()
 
 
     def _setPlayTime(self, playTime=0):
