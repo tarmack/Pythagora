@@ -126,7 +126,7 @@ class CurrentPlaylistForm(QWidget, auxilia.Actions):
         self.repeatButton.setIcon(icon)
 
     def prepareForUpdate(self):
-        '''Causes the current play list to be reloaded from the server'''
+        '''Save some state prior to applying changes to the play queue.'''
         self._temp['oldLength'] = len(self.playQueue)
         scrollBar = self.currentList.verticalScrollBar()
         oldScroll = scrollBar.value()
