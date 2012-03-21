@@ -69,11 +69,11 @@ class Library(object):
 
     def artists(self):
         '''Returns a list containing all artists in the library.'''
-        return (Artist(value, self) for value in sorted(self._artists.keys(), locale.strcoll))
+        return (Artist(value, self) for value in sorted(self._artists.iterkeys(), locale.strcoll))
 
     def albums(self):
         '''Returns a list containing all albums in the library.'''
-        return (Album(album, self) for album in sorted(self._albums.keys(), locale.strcoll))
+        return (Album(album, self) for album in sorted(self._albums.iterkeys(), locale.strcoll))
 
     def songs(self):
         '''Returns a list containing all songs in the library.'''
@@ -81,7 +81,7 @@ class Library(object):
 
     def genres(self):
         '''Returns a list containing all genres in the library.'''
-        return (Genre(genre, self) for genre in self._genres.keys())
+        return (Genre(genre, self) for genre in self._genres.iterkeys())
 
     def artist_songs(self, artist):
         '''Returns a list containing all songs from the supplied artist.'''
