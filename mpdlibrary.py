@@ -386,6 +386,8 @@ class Song(LibraryObject):
                 return False
         return True
 
+    def __ne__(self, other):
+        return not self.__eq__(other)
 
 class Path(LibraryObject, unicode):
     @property
