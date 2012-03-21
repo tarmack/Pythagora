@@ -310,46 +310,46 @@ class Song(LibraryObject):
 
     def __getitem__(self, item):
         if item == 'artist':
-            return Artist(self._getAttr('artist', 'performer', 'composer') or 'Unknown',
+            return Artist(self._get_value('artist', 'performer', 'composer') or 'Unknown',
                     self._library)
         elif item == 'title':
-            return Text(self._getAttr('title', 'name', 'file'),
+            return Text(self._get_value('title', 'name', 'file'),
                     self._library)
         elif item == 'album':
-            return Album(self._getAttr('album') or 'None',
+            return Album(self._get_value('album') or 'None',
                     self._library)
         elif item == 'genre':
-            return Genre(self._getAttr('genre'),
+            return Genre(self._get_value('genre'),
                     self._library)
         elif item == 'file':
-            return File(self._getAttr('file'),
+            return File(self._get_value('file'),
                     self._library)
         elif item == 'time':
-            return Time(self._getAttr('time') or 0,
+            return Time(self._get_value('time') or 0,
                     self._library)
         elif item == 'track':
-            return Track(self._getAttr('track') or '',
+            return Track(self._get_value('track') or '',
                     self._library)
         elif item == 'disc':
-            return DiscNumber(self._getAttr('disc') or '',
+            return DiscNumber(self._get_value('disc') or '',
                     self._library)
         elif item == 'station':
             # Only applicable when the Song object
             # is created from a play queue item.
             if self.isStream:
-                return Text(self._getAttr('name', 'file'),
+                return Text(self._get_value('name', 'file'),
                     self._library)
             else:
                 return Text('', self._library)
         elif item == 'isStream':
             return self._value.get('file', '').startswith('http://')
         else:
-            value = self._getAttr(item)
+            value = self._get_value(item)
             if value is None:
                 raise KeyError
             return Text(value, self._library)
 
-    def _getAttr(self, *attrs):
+    def _get_value(self, *attrs):
         '''Returns the value for the first key in attrs that exists.'''
         value = None
         if ('artist' in attrs or 'title' in attrs) and self.isStream:
