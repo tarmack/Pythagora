@@ -16,6 +16,7 @@
 #-------------------------------------------------------------------------------
 import locale
 import time
+import array
 
 locale.setlocale(locale.LC_ALL, "")
 
@@ -177,7 +178,7 @@ class LibraryIndex(dict):
                 if not value in part:
                     part.append(value)
             else:
-                dict.__setitem__(self, key, [value])
+                dict.__setitem__(self, key, array.array('H', [value]))
 
 
 class LibraryObject(object):
