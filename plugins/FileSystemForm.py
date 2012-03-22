@@ -37,10 +37,7 @@ class FileSystemForm(PluginBase.PluginBase, auxilia.Actions):
     def load(self):
         self.fileSystemModel = FileSystemModel(self.library)
         # Load and place the FileSystem form.
-        if self.view.KDE:
-            uic.loadUi(DATA_DIR+'ui/FileSystemForm.ui', self)
-        else:
-            uic.loadUi(DATA_DIR+'ui/FileSystemForm.ui.Qt', self)
+        uic.loadUi(DATA_DIR+'ui/FileSystemForm.ui', self)
         self.filesystemTree.setModel(self.fileSystemModel)
 
         self.view.connect(self.view,SIGNAL('reloadLibrary'),self.reload)
