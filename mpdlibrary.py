@@ -375,6 +375,8 @@ class Song(LibraryObject):
         return value.strip() if isinstance(value, basestring) else value
 
     def __eq__(self, other):
+        if id(self) == id(other):
+            return True
         left = self._value
         if isinstance(other, Song):
             right = other._value
