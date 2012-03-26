@@ -169,7 +169,7 @@ class CurrentPlaylistForm(QWidget, auxilia.Actions):
         return (self.playQueueProxy.mapToSource(index).row() for index in self.currentList.selectedIndexes())
 
     def _ensurePlayingVisable(self, force=False):
-        if time() - self.playQueue.lastEdit <= 5 and not force == False:
+        if time() - self.playQueue.lastEdit <= 5 and not force == True:
             return
         if self.playQueue.playing is None:
             return
@@ -180,7 +180,7 @@ class CurrentPlaylistForm(QWidget, auxilia.Actions):
         self.currentList.scrollTo(playing, 1) # PositionAtTop
         height = self.currentList.viewport().height()
         scrollBar = self.currentList.verticalScrollBar()
-        correction = (height / 8) - self.currentList.rowViewportPosition(playing)
+        correction = (height / 8) - self.currentList.rowViewportPosition(playing.row())
         new_pos = scrollBar.value() - correction
         scrollBar.setValue(new_pos)
 
