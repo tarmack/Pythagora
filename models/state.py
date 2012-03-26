@@ -60,13 +60,6 @@ class PlayerState(QObject):
                 self.mpdclient.send(value, (1,))
             else:
                 raise RuntimeError
-        elif attr == 'currentSong':
-            if isinstance(value, int):
-                self.mpdclient.send('seek', (value, 0))
-            elif isinstance(value, mpdlibrary.Song):
-                self.mpdclient.send('seekid', (value.id, 0))
-            else:
-                raise RuntimeError
         elif attr == 'progress':
             self.mpdclient.send('seekid', (self.playQueue.playing, value))
         else:
@@ -123,6 +116,15 @@ class PlayerState(QObject):
             return None
         else:
             return self.playQueue[self.playQueue.playing]
+
+    @currentSong.setter
+    def currentSong(self, value):
+        if isinstance(value, int):
+            self.mpdclient.send('seek', (value, 0))
+        elif isinstance(value, mpdlibrary.Song):
+            self.mpdclient.send('seekid', (value.id, 0))
+        else:
+            raise AttributeError('currentSong only accepts int or mpdlibrary.Song. Got %s instead.' % type(value))
 
     def playPause(self):
         if self._state['playState'] == 'play':
