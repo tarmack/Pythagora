@@ -599,7 +599,7 @@ class DBusNotifications(QObject):
             print 'debug: error using dbus - %s' % e
 
     def showNotification(self, song):
-        if self.config.showNotification:
+        if (not song is None) and self.config.showNotification:
             if song.iconPath:
                 self._showNotification(song)
             else:
