@@ -436,7 +436,7 @@ class PlayerForm(QWidget):
             self.mpdclient.send('seekid', (currentsong['id'], int(time * position)))
 
     def _iconOverlayEvent(self, event):
-        popup = QMenu(self.view)
+        popup = QMenu(self)
         layout = QVBoxLayout()
         layout.setContentsMargins(4, 4, 4, 4)
         popup.setLayout(layout)
