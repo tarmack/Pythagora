@@ -74,6 +74,7 @@ class View(QMainWindow, auxilia.Actions):
         self.connect(self.modelManager.playerState, SIGNAL('volumeChanged'), self.playerForm.setVolume)
         self.connect(self.modelManager.playerState, SIGNAL('progressChanged'), self.playerForm.setProgress)
         self.connect(self.modelManager.playerState, SIGNAL('playStateChanged'), self.playerForm.setPlayState)
+        self.connect(self.modelManager.playerState, SIGNAL('bitrateChanged'), self.playerForm.songLabel.setBitrate)
         self.dbusNotifications = DBusNotifications(self.config)
         self.connect(self.modelManager.playerState, SIGNAL('currentSongChanged'), self.dbusNotifications.showNotification)
         self.toolBarLayout = self.playerForm.toolBarLayout
