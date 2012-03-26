@@ -55,14 +55,15 @@ class PlayQueueModel(QAbstractListModel):
                 if not index is None:
                     self.emit(SIGNAL('dataChanged(const QModelIndex &, const QModelIndex &)'),
                             self.createIndex(index, 0), self.createIndex(index, 0))
-            self.playing = songID
-            if not self.playing is None:
-                index = self.id_index(self.playing)
-                if not index is None:
+            index = self.id_index(songID) if not songID is None else None
+            if not index is None:
+                self.playing = songID
+                if not self.playing is None:
                     self.emit(SIGNAL('dataChanged(const QModelIndex &, const QModelIndex &)'),
                             self.createIndex(index, 0), self.createIndex(index, 0))
                 song = self._songs[index]
             else:
+                self.playing = None
                 song = None
             self.emit(SIGNAL('currentSongChanged'), song)
 
