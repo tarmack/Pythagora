@@ -110,7 +110,7 @@ class View(QMainWindow, auxilia.Actions):
         # Create 'MDP' menu.
         self.menuMPD = QMenu('MPD')
         self.menuMPD.menuAction().setIcon(auxilia.PIcon('network-workgroup'))
-        self.connect(self.menuConnect, SIGNAL('aboutToShow()'), self.__buildConnectTo)
+        self.connect(self.menuConnect, SIGNAL('aboutToShow()'), self._buildConnectTo)
         self.mpdButton = QToolButton()
         self.mpdButton.setAutoRaise(True)
         self.mpdButton.setIconSize(QSize(22, 22))
@@ -124,7 +124,7 @@ class View(QMainWindow, auxilia.Actions):
         # Create 'Outputs' menu.
         self.menuOutputs = QMenu('Outputs')
         self.menuOutputs.menuAction().setIcon(auxilia.PIcon('audio-card'))
-        self.connect(self.menuOutputs, SIGNAL('aboutToShow()'), self.__buildOutputs)
+        self.connect(self.menuOutputs, SIGNAL('aboutToShow()'), self._buildOutputs)
         self.outputsButton = QToolButton()
         self.outputsButton.setAutoRaise(True)
         self.outputsButton.setIconSize(QSize(22, 22))
@@ -158,14 +158,14 @@ class View(QMainWindow, auxilia.Actions):
         self.trayIcon.addMenuItem(connectMenuAction)
         self.trayIcon.addMenuItem(self.settingsAction)
         self.connect(self.trayIcon, SIGNAL('activate()'), self.toggleHideRestore)
-        self.connect(self.trayIcon, SIGNAL('secondaryActivateRequested(QPoint)'), self.__playPause)
+        self.connect(self.trayIcon, SIGNAL('secondaryActivateRequested(QPoint)'), self._playPause)
         self.connect(self.trayIcon, SIGNAL('scrollRequested(int, Qt::Orientation)'),
                 lambda amount: self.modelManager.playerState.volumeUp((amount+30)/60))
         self.connect(self.modelManager.playerState, SIGNAL('playStateChanged'), self.trayIcon.setState)
 
-        self.connect(self.tabs, SIGNAL('currentChanged(int)'), self.__tabsIndexChanged)
-        self.connect(self.tabs.tabBar(), SIGNAL('tabMoved(int,int)'), self.__tabMoved)
-        self.connect(self.splitter, SIGNAL('splitterMoved(int, int)'), self.__storeSplitter)
+        self.connect(self.tabs, SIGNAL('currentChanged(int)'), self._tabsIndexChanged)
+        self.connect(self.tabs.tabBar(), SIGNAL('tabMoved(int,int)'), self._tabMoved)
+        self.connect(self.splitter, SIGNAL('splitterMoved(int, int)'), self._storeSplitter)
 
         # Apply configuration.
         self.resize(configuration.mgrSize)
@@ -261,21 +261,17 @@ class View(QMainWindow, auxilia.Actions):
         else:
             QMainWindow.closeEvent(self, event)
 
-    def __storeSplitter(self):
+    def _storeSplitter(self):
         self.config.mgrSplit = self.splitter.sizes()
 
-    def __tabsIndexChanged(self, value):
+    def _tabsIndexChanged(self, value):
         self.config.tabsIndex = self.tabs.currentIndex()
 
-    def __tabMoved(self, old, new):
+    def _tabMoved(self, old, new):
         print "DEBUG: Tab from", old, "moved to", new
         order = self.config.tabOrder
         order.insert(new, order.pop(old))
         self.config.tabOrder = order
-
-    def __toggleShoutCast(self, value):
-        self.config.showShoutcast = value
-        self.stackedWidget.setCurrentIndex(value)
 
     def toggleHideRestore(self):
         '''Show or hide the window based on some parameters. We can detect
@@ -293,10 +289,10 @@ class View(QMainWindow, auxilia.Actions):
                 self.hide()
             else: self.show()
 
-    def __playPause(self):
+    def _playPause(self):
         self.playerForm.play.emit(SIGNAL('clicked(bool)'), True)
 
-    def __buildConnectTo(self):
+    def _buildConnectTo(self):
         self.menuConnect.clear()
         self.menuConnect.addAction(auxilia.PIcon('dialog-cancel'), 'None (disconnect)')
         connected = self.mpdclient.connected()
@@ -306,7 +302,7 @@ class View(QMainWindow, auxilia.Actions):
             else: icon = auxilia.PIcon('network-disconnect')
             self.menuConnect.addAction(icon, server)
 
-    def __buildOutputs(self):
+    def _buildOutputs(self):
         self.menuOutputs.clear()
         if self.mpdclient.connected():
             print 'debug: Building output menu.'
@@ -533,24 +529,24 @@ class SongLabel(QLabel):
 
     def paintEvent(self, event):
         self.songInToolTip = False
-        gradient = self.__gradient()
+        gradient = self._gradient()
         self.spaceLeft = self.contentsRect()
         for part in self.parts:
             font = getattr(self, '%sFont' % part)
             text = getattr(self, part)
             if text:
-                self.__write(self.prepends.get(part, ''), self.font(), gradient)
-                self.__write(text, font, gradient)
+                self._write(self.prepends.get(part, ''), self.font(), gradient)
+                self._write(text, font, gradient)
         if self.spaceLeft.width() <= 3:
             self.songInToolTip = True
         self.spaceLeft = self.contentsRect()
         self.spaceLeft.setBottom(self.spaceLeft.bottom() - QFontMetrics(self.artistFont).height())
-        self.__write(self.title, self.titleFont, gradient)
+        self._write(self.title, self.titleFont, gradient)
         if self.spaceLeft.width() <= 3:
             self.songInToolTip = True
         self.setToolTip(self.getToolTip())
 
-    def __write(self, text, font, pen):
+    def _write(self, text, font, pen):
         width = QFontMetrics(font).width(text+' ')
         painter = QPainter(self)
         painter.setFont(font)
@@ -558,7 +554,7 @@ class SongLabel(QLabel):
         painter.drawText(self.spaceLeft, Qt.AlignBottom, text)
         self.spaceLeft.setLeft(self.spaceLeft.left() + width ) # move the left edge to the end of what we just painted.
 
-    def __gradient(self):
+    def _gradient(self):
         left = QPointF(self.contentsRect().topLeft())
         right = QPointF(self.contentsRect().topRight())
         gradient = QLinearGradient(left, right)
@@ -644,7 +640,7 @@ if KDE:
         def __init__(self, icon, parent):
             KStatusNotifierItem.__init__(self, parent)
             self.setStandardActionsEnabled(False)
-            self.connect(self.contextMenu(), SIGNAL('aboutToShow()'), self.__buildMenu)
+            self.connect(self.contextMenu(), SIGNAL('aboutToShow()'), self._buildMenu)
             self.actionQuit = KStandardAction.quit(parent.app, SLOT("quit()"), self)
             self.hideResoreAction = QAction('Minimize', self.contextMenu())
             self.connect(self.hideResoreAction, SIGNAL('triggered()'), SIGNAL("activate()"))
@@ -670,7 +666,7 @@ if KDE:
         def activate(self, pos):
             self.emit(SIGNAL('activate()'))
 
-        def __buildMenu(self):
+        def _buildMenu(self):
             if self.parent.isVisible():
                 self.hideResoreAction.setText('Minimize')
             else:
@@ -694,9 +690,9 @@ else:
             self.menu.addAction(menuTitle(QIcon(icon), 'Pythagora', parent))
             self.setContextMenu(self.menu)
             self.hideResoreAction = QAction('Minimize', self.menu)
-            self.connect(self.hideResoreAction, SIGNAL('triggered()'), self.__activated)
-            self.connect(self, SIGNAL('activated(QSystemTrayIcon::ActivationReason)'), self.__activated)
-            self.connect(self.menu, SIGNAL('aboutToShow()'), self.__buildMenu)
+            self.connect(self.hideResoreAction, SIGNAL('triggered()'), self._activated)
+            self.connect(self, SIGNAL('activated(QSystemTrayIcon::ActivationReason)'), self._activated)
+            self.connect(self.menu, SIGNAL('aboutToShow()'), self._buildMenu)
             self.show()
 
         def setState(self, state):
@@ -710,13 +706,13 @@ else:
         def setToolTip(self, iconPath, text):
             super(QTrayIcon, self).setToolTip('Pythagora,&nbsp;Now&nbsp;Playing:<br>%s' % text)
 
-        def __activated(self, reason=None):
+        def _activated(self, reason=None):
             if reason == QSystemTrayIcon.MiddleClick:
                 self.emit(SIGNAL('secondaryActivateRequested(QPoint)'), QPoint())
             if reason == None or reason == QSystemTrayIcon.Trigger:
                 self.emit(SIGNAL('activate()'))
 
-        def __buildMenu(self):
+        def _buildMenu(self):
             if self.parent.isVisible():
                 self.hideResoreAction.setText('Minimize')
             else:

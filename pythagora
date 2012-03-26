@@ -89,8 +89,8 @@ class Manager():
         self.modelManager = ModelManager(self.mpdclient, self.library, self.config)
         self.playerState = self.modelManager.playerState
         self.view = MainWindow.View(self.modelManager, self.config, self.mpdclient, self.library, app)
-        self.__connectSignals()
-        self.__connectMPD()
+        self._connectSignals()
+        self._connectMPD()
         # Load the plugin forms.
         self.view.createPluginViews()
 
@@ -119,7 +119,7 @@ class Manager():
             self.config.server = None
         else:
             self.config.server = [name]+self.config.knownHosts[name]
-        self.__connectMPD()
+        self._connectMPD()
         self.config.save()
 
     def toggleOutput(self, action):
@@ -167,24 +167,24 @@ class Manager():
         else: QWidget.keyPressEvent(self.view, event)
 
     def setGlobalShortcuts(self):
-        self.playAction = self.__setGlobalShortcut(
+        self.playAction = self._setGlobalShortcut(
                 "Play/Pause", "Play/pause", Qt.CTRL + Qt.Key_MediaPlay, self.playerState.playPause)
-        self.stopAction = self.__setGlobalShortcut(
+        self.stopAction = self._setGlobalShortcut(
                 "Stop", "Stop playing", Qt.CTRL + Qt.Key_MediaStop, self.playerState.stop)
-        self.backAction = self.__setGlobalShortcut(
+        self.backAction = self._setGlobalShortcut(
                 "Back", "Play previous song", Qt.CTRL + Qt.Key_MediaPrevious, self.playerState.previousSong)
-        self.forwardAction = self.__setGlobalShortcut(
+        self.forwardAction = self._setGlobalShortcut(
                 "Forward", "Play next song", Qt.CTRL + Qt.Key_MediaNext, self.playerState.nextSong)
-        self.volumeUpAction = self.__setGlobalShortcut(
+        self.volumeUpAction = self._setGlobalShortcut(
                 "Volume Up", "Volume up", Qt.CTRL + Qt.Key_VolumeUp, self.playerState.volumeUp)
-        self.volumeDownAction = self.__setGlobalShortcut(
+        self.volumeDownAction = self._setGlobalShortcut(
                 "Volume Down", "Volume down", Qt.CTRL + Qt.Key_VolumeDown, self.playerState.volumeDown)
-        self.muteAction = self.__setGlobalShortcut(
+        self.muteAction = self._setGlobalShortcut(
                 "Mute", "Mute/unmute", Qt.CTRL + Qt.Key_VolumeMute, self.playerState.mute)
-        self.hideRestoreAction = self.__setGlobalShortcut(
+        self.hideRestoreAction = self._setGlobalShortcut(
                 "Hide/Restore", "Hide or Restore the main window.", Qt.CTRL + Qt.SHIFT + Qt.Key_P, self.view.toggleHideRestore)
 
-    def __setGlobalShortcut(self, name, helpText, keys, connectTo):
+    def _setGlobalShortcut(self, name, helpText, keys, connectTo):
         print 'debug: Registering global shortcut for %s as %s.' % (name, str(keys))
         action = self.actionCollection.addAction(name, self.view)
         action.setHelpText(helpText)
@@ -196,7 +196,7 @@ class Manager():
         return action
 
 
-    def __connectMPD(self, error=False):
+    def _connectMPD(self, error=False):
         if self.view.shuttingDown:
             return True
         self.modelManager.clearForms()
@@ -214,7 +214,7 @@ class Manager():
             self.mpdclient.connect(server[1], int(server[2]), callback=
                     lambda exc: self.view.emit(SIGNAL('connectionTry'), exc))
 
-    def __connectionTry(self, exc):
+    def _connectionTry(self, exc):
         print 'debug: tried to connect again :$'
         self.view.emit(SIGNAL('clearForms'))
         if isinstance(exc, Exception):
@@ -243,9 +243,9 @@ class Manager():
     def _error(self):
         print 'error: Lost connection to mpd server.'
         if self.config.server:
-            self.__connectMPD(True)
+            self._connectMPD(True)
 
-    def __runIdle(self):
+    def _runIdle(self):
         print 'debug: requesting idle.'
         if not self.view.shuttingDown:
             if self.mpdclient.connected():
@@ -253,14 +253,14 @@ class Manager():
             else:
                 self.view.emit(SIGNAL('ConnectionError()'))
 
-    def __connectSignals(self):
+    def _connectSignals(self):
         self.view.connect(self.view.menuConnect, SIGNAL('triggered(QAction *)'), self.connectTo)
         self.view.connect(self.view.menuOutputs, SIGNAL('triggered(QAction *)'), self.toggleOutput)
 
-        self.view.connect(self.idleTimer, SIGNAL("timeout()"), self.__runIdle)
-        self.view.connect(self.view, SIGNAL('reconnect()'), self.__connectMPD)
+        self.view.connect(self.idleTimer, SIGNAL("timeout()"), self._runIdle)
+        self.view.connect(self.view, SIGNAL('reconnect()'), self._connectMPD)
         self.view.connect(self.view, SIGNAL('ConnectionError()'), self._error)
-        self.view.connect(self.view, SIGNAL('connectionTry'), self.__connectionTry)
+        self.view.connect(self.view, SIGNAL('connectionTry'), self._connectionTry)
 
     def keyboardInterrupt(self, signum, frame):
         print 'debug: KeyboardInterrupt'
