@@ -27,16 +27,18 @@ class ParseError(Exception):
     pass
 
 def getStreamList(url):
-    if url.endswith('.pls'):
-        data = _retreiveURL(url)
+    response = _retreiveURL(url)
+    mime_type = response.getheader('content-type').split(';')[0]
+    if mime_type == 'audio/x-scpls':
+        data = response.read()
         if data:
             adrlist = parsePLS(data)
-    elif url.endswith('.m3u'):
-        data = _retreiveURL(url)
+    elif mime_type == 'audio/x-mpegurl':
+        data = response.read()
         if data:
             adrlist = parseM3U(data)
-    elif url.endswith('.xspf'):
-        data = _retreiveURL(url)
+    elif mime_type == 'application/xspf+xml':
+        data = response.read()
         if data:
             adrlist = parseXSPF(data)
     else:
@@ -70,7 +72,7 @@ def parseXSPF(data):
     xml = etree.parse(StringIO.StringIO(data))
     root = xml.getroot()
     locations = root.findall('.//{http://xspf.org/ns/0/}location')
-    adrlist = [adr.text.strip() for adr in locations 
+    adrlist = [adr.text.strip() for adr in locations
                if adr.text.startswith('http://')]
     if not adrlist:
          raise ParseError('Encountered error during '
@@ -97,7 +99,7 @@ def _retreiveURL(url):
     conn.request("GET", '/'+path)
     resp = conn.getresponse()
     if resp.status == 200:
-        return resp.read()
+        return resp
     else:
-        raise httplib.HTTPException('Got bad status code.')
+        raise httplib.HTTPException('Got bad status code while retrieving url: "%s".' % url)
 

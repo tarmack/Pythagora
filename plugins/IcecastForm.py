@@ -19,14 +19,12 @@ from PyQt4.QtGui import QVBoxLayout
 from PyQt4.QtWebKit import QWebView, QWebPage
 
 import re
-import httplib
 
 import PluginBase
 import streamTools
 
 HOMEURL = "http://dir.xiph.org/"
-TUNEIN = "dir.xiph.org"
-TUNEINFORMAT = re.compile(r'/listen/\d+/listen\.(m3u|xspf)$')
+TUNEIN = re.compile(r'/listen/\d+/listen\.(m3u|xspf)$')
 
 class IcecastForm(PluginBase.PluginBase):
     ''' Embeds the xiph.org Icecast yellow pages, and loads the 
@@ -57,40 +55,20 @@ class IcecastForm(PluginBase.PluginBase):
 
     def _processLink(self, url):
         urlString = unicode(url.toString())
-        urlMatch = TUNEINFORMAT.search(urlString)
+        urlMatch = TUNEIN.search(urlString)
         if urlMatch is not None:
-            self._playStation(urlString, urlMatch)
+            self._playStation(urlString)
         else:
             self.webView.load(url)
             self.webView.show()
 
-    def _playStation(self, url, match):
-        path = match.group(0)
-        format = match.group(1)
-        data = self._retreivePlaylist(path)
-        if data:
-            try:
-                if format == 'xspf':
-                    adrlist = streamTools._parseXSPF(data)
-                else:
-                    adrlist = streamTools._parseM3U(data)
-            except streamTools.ParseError:
-                return
-            self.mpdclient.send('command_list_ok_begin')
-            try:
-                for address in adrlist:
-                    self.mpdclient.send('add', (address,))
-            finally:
-                self.mpdclient.send('command_list_end')
-
-    def _retreivePlaylist(self, path):
-        conn = httplib.HTTPConnection(TUNEIN)
-        conn.request("GET", path)
-        resp = conn.getresponse()
-        if resp.status == 200:
-            return resp.read()
-        else:
-            raise httplib.HTTPException('Got bad status code.')
+    def _playStation(self, url):
+        try:
+            streamList = streamTools.getStreamList(url)
+        except streamTools.ParseError:
+            return
+        if streamList:
+            self.modelManager.playQueue.extend(streamList)
 
 
 def getWidget(modelManager, mpdclient, config, library):

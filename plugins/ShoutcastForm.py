@@ -18,14 +18,12 @@ from PyQt4.QtCore import SIGNAL, QUrl, QDateTime, QEvent
 from PyQt4.QtGui import QVBoxLayout
 from PyQt4.QtWebKit import QWebView, QWebPage
 from PyQt4.QtNetwork import QNetworkCookie, QNetworkCookieJar
-import httplib
 
 import PluginBase
 import streamTools
 
 HOMEURL = "http://www.shoutcast.com/radio/top"
 TUNEIN = "yp.shoutcast.com"
-TUNEINFORMAT = "/sbin/tunein-station.pls?id=%s"
 
 class ShoutCastForm(PluginBase.PluginBase):
     '''Grab Shoutcast streams and save them as "bookmarks" - and play them on
@@ -68,33 +66,18 @@ class ShoutCastForm(PluginBase.PluginBase):
 
     def _processLink(self, url):
         if url.host() == TUNEIN:
-            self._playStation(url.toString())
+            self._playStation(unicode(url.toString()))
         else:
             self.webView.load(url)
             self.webView.show()
 
     def _playStation(self, url):
-        data = self._retreivePLS(url)
-        if data:
-            try:
-                adrlist = streamTools._parsePLS(data)
-            except streamTools.ParseError:
-                return
-            self.mpdclient.send('command_list_ok_begin')
-            try:
-                for address in adrlist:
-                    self.mpdclient.send('add', (address,))
-            finally:
-                self.mpdclient.send('command_list_end')
-
-    def _retreivePLS(self, url):
-        conn = httplib.HTTPConnection(TUNEIN)
-        conn.request("GET", TUNEINFORMAT % url.split('=')[-1])
-        resp = conn.getresponse()
-        if resp.status == 200:
-            return resp.read()
-        else:
-            raise httplib.HTTPException('Got bad status code.')
+        try:
+            streamList = streamTools.getStreamList(url)
+        except streamTools.ParseError:
+            return
+        if streamList:
+            self.modelManager.playQueue.extend(streamList)
 
 
 def getWidget(modelManager, mpdclient, config, library):
