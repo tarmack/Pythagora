@@ -355,14 +355,17 @@ class PlayerForm(QWidget):
 
     def updateSong(self, song):
         self.songLabel.updateSong(song)
-        self.progress.setMaximum(song.time or 1)
-        if song.iconPath:
-            self.setSongIcon(song.iconPath)
+        if not song is None:
+            self.progress.setMaximum(song.time or 1)
+            if song.iconPath:
+                self.setSongIcon(song.iconPath)
+            else:
+                if not self._currentSong is None:
+                    self.disconnect(self._currentSong, SIGNAL('iconChanged'), self._iconChanged)
+                self.connect(song, SIGNAL('iconChanged'), self._iconChanged)
         else:
-            if not self._currentSong is None:
-                self.disconnect(self._currentSong, SIGNAL('iconChanged'), self._iconChanged)
-            self._currentSong = song
-            self.connect(song, SIGNAL('iconChanged'), self._iconChanged)
+            self.setSongIcon(None)
+        self._currentSong = song
 
     def _iconChanged(self, songID, iconPath):
         self.setSongIcon(iconPath)
