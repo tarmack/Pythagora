@@ -40,6 +40,8 @@ class LibraryForm(PluginBase.PluginBase, auxilia.Actions):
         self.artistModel = self.modelManager.artists
         self.albumModel = self.modelManager.albums
         self.trackModel = self.modelManager.tracks
+        self.playQueue = self.modelManager.playQueue
+        self.playerState = self.modelManager.playerState
         # Load and place the Library form.
         if self.config.KDE:
             uic.loadUi(DATA_DIR+'ui/LibraryForm.ui', self)
@@ -167,35 +169,33 @@ class LibraryForm(PluginBase.PluginBase, auxilia.Actions):
 
     def _addSongSet(self, songs, play=False):
         if play:
-            self.mpdclient.send('addid', (songs.next().file.absolute,), callback=
-                    lambda song_id: self.mpdclient.send('playid', (song_id,)))
-        try:
-            self.mpdclient.send('command_list_ok_begin')
-            for song in songs:
-                self.mpdclient.send('addid', (song.file.absolute,))
-        finally:
-            return self.mpdclient.send('command_list_end')
+            self.playQueue.append(songs.next())
+            # The playQueue model will not be updated yet so we can use the
+            # length of the model here.
+            self.playerState.currentSong = len(self.playQueue)
+            self.playerState.play()
+        self.playQueue.extend(songs)
 
 
     def _addPlayArtist(self):
         self.addArtist(play=True)
 
     def _clearPlayArtist(self):
-        self.mpdclient.send('clear')
+        self.playQueue.clear()
         self._addPlayArtist()
 
     def _addPlayAlbum(self):
         self.addAlbum(play=True)
 
     def _clearPlayAlbum(self):
-        self.mpdclient.send('clear')
+        self.playQueue.clear()
         self._addPlayAlbum()
 
     def _addPlayTrack(self):
         self.addTrack(play=True)
 
     def _clearPlayTrack(self):
-        self.mpdclient.send('clear')
+        self.playQueue.clear()
         self._addPlayTrack()
 
     def _storeSplitter(self):
