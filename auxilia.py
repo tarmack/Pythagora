@@ -15,8 +15,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #-------------------------------------------------------------------------------
-import locale
-import re
 import sys
 from PyQt4.QtCore import SIGNAL
 from PyQt4.QtGui import QAction, QIcon
@@ -31,16 +29,6 @@ try:
 except ImportError:
     KDE = False
 
-locale.setlocale(locale.LC_ALL, "")
-
-def cmpUnicode(a, b):
-    return locale.strcoll(a, b)#filter(lambda x: x.isalnum(), a), filter(lambda x: x.isalnum(), b))
-
-def cmpTracks(a, b):
-    try:
-        return int(re.match('^\d+', a).group()) - int(re.match('^\d+', b).group())
-    except:
-        return cmpUnicode(a, b)
 
 # Actions
 #==============================================================================
@@ -154,10 +142,10 @@ class Actions:
             action.setIcon(PIcon(icon))
         if type(tooltip) == str:
             action.setToolTip(tooltip)
-        self.__addAction(action, parent, slot)
+        self._addAction(action, parent, slot)
         return action
 
-    def __addAction(self, action, parent, slot):
+    def _addAction(self, action, parent, slot):
         parent.addAction(action)
         self.connect(action, SIGNAL('triggered()'), slot)
 
