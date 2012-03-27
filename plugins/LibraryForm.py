@@ -168,13 +168,12 @@ class LibraryForm(PluginBase.PluginBase, auxilia.Actions):
         return self._addSongSet(songs, play)
 
     def _addSongSet(self, songs, play=False):
+        self.playQueue.extend(songs)
         if play:
-            self.playQueue.append(songs.next())
             # The playQueue model will not be updated yet so we can use the
             # length of the model here.
             self.playerState.currentSong = len(self.playQueue)
             self.playerState.play()
-        self.playQueue.extend(songs)
 
 
     def _addPlayArtist(self):
