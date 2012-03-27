@@ -36,15 +36,15 @@ DATA_DIR = ''
 class CurrentPlaylistForm(QWidget, auxilia.Actions):
     '''List and controls for the currently loaded playlist'''
     editing = 0
-    def __init__(self, modelManager, view, app, mpdclient, config):
+    def __init__(self, modelManager, view, app, config):
         QWidget.__init__(self)
         self.app = app
         self.view = view
-        self.mpdclient = mpdclient
         self.config = config
         self._temp = {}
         self.playQueue = modelManager.playQueue
         self.playerState = modelManager.playerState
+        self.modelManager = modelManager
         self.playQueueDelegate = PlayQueueDelegate(self.config)
         if self.view.KDE:
             uic.loadUi(DATA_DIR+'ui/CurrentListForm.ui', self)
@@ -186,17 +186,15 @@ class CurrentPlaylistForm(QWidget, auxilia.Actions):
 
     def _saveCurrent(self):
         '''Save the current playlist'''
-        lsinfo = self.mpdclient.lsinfo()
-        playlists = []
-        for somedict in lsinfo:
-            if somedict.get('playlist',None) != None:
-                playlists.append(somedict['playlist'])
-
-        (name,ok) = QInputDialog.getItem(self,'Save Playlist','Enter or select the playlist name',playlists,0,True)
+        playlistModel = self.modelManager.playlists
+        (name, ok) = QInputDialog.getItem(self,
+                'Save Playlist',
+                'Enter or select the playlist name',
+                playlistModel.playlists,
+                0,
+                True)
         if ok == True:
-            if name in playlists:
-                self.mpdclient.send('rm', (name,))
-            self.mpdclient.send('save', (name,))
+            playlistModel.saveCurrent(name)
 
     def _removeSelected(self):
         '''Remove the selected item(s) from the current playlist'''
@@ -209,15 +207,14 @@ class CurrentPlaylistForm(QWidget, auxilia.Actions):
         self._removeSongs(list(rows - selection))
 
     def _removeSongs(self, rowList):
-        self.mpdclient.send('command_list_ok_begin')
-        try:
-            for row in rowList:
-                try:
-                    del self.playQueue[row]
-                except Exception, e:
-                    print e
-        finally:
-            self.mpdclient.send('command_list_end')
+        start = rowList.next()
+        end = start + 1
+        for row in rowList:
+            if row != end:
+                del self.playQueue[start:end]
+                start = row
+            end = row + 1
+        del self.playQueue[start:end]
 
     def _playSong(self, index=None):
         if index is not None:
@@ -290,16 +287,11 @@ class CurrentPlaylistForm(QWidget, auxilia.Actions):
         url = str(url)
         if ok == True and url:
             try:
-                adrlist = streamTools.getStreamList(url)
+                streamList = streamTools.getStreamList(url)
             except streamTools.ParseError:
                 print 'error: Could not parse stream address.'
                 return
-            self.mpdclient.send('command_list_ok_begin')
-            try:
-                for address in adrlist:
-                    self.playQueue.append(address)
-            finally:
-                self.mpdclient.send('command_list_end')
+            self.playQueue.extend(streamList)
 
     def _setEditing(self):
         self.playQueue.lastEdit = time()

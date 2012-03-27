@@ -79,7 +79,7 @@ class View(QMainWindow, auxilia.Actions):
         self.connect(self.modelManager.playerState, SIGNAL('currentSongChanged'), self.dbusNotifications.showNotification)
         self.toolBarLayout = self.playerForm.toolBarLayout
         self.currentList = CurrentPlaylistForm.CurrentPlaylistForm(
-                self.modelManager, self, self.app, self.mpdclient, self.config)
+                self.modelManager, self, self.app, self.config)
         self.currentListLayout.addWidget(self.currentList)
         self.connect(self.playerForm.play, SIGNAL('clicked(bool)'), self.modelManager.playerState.playPause)
         self.connect(self.playerForm.back, SIGNAL('clicked(bool)'), self.modelManager.playerState.previousSong)

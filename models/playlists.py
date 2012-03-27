@@ -305,3 +305,13 @@ class PlaylistsModel(QAbstractItemModel):
         data.setData('mpd/playlist', pickle.dumps(playlists))
         data.setData('mpd/uri', pickle.dumps(uri_list))
         return data
+
+    @property
+    def playlists(self):
+        return list(self._names)
+
+    def saveCurrent(self, name):
+        if name in self._names:
+            self.mpdclient.send('rm', (name,))
+        self.mpdclient.send('save', (name,))
+
