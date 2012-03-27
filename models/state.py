@@ -59,7 +59,7 @@ class PlayerState(QObject):
             elif value == 'pause':
                 self.mpdclient.send(value, (1,))
             else:
-                raise RuntimeError
+                raise AttributeError('playState can only be set to "play", "pause" of "stop". Got %s instead.' % value)
         elif attr == 'progress':
             self.mpdclient.send('seekid', (self.playQueue.playing, value))
         else:
