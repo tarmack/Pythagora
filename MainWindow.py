@@ -68,7 +68,7 @@ class View(QMainWindow, auxilia.Actions):
         self.setWindowTitle('Pythagora')
         self.setWindowIcon(QIcon(self.appIcon))
         # Create standard views.
-        self.playerForm = PlayerForm(self.mpdclient, self.config)
+        self.playerForm = PlayerForm(self.modelManager, self.config)
         self.topLayout.addWidget(self.playerForm)
         self.connect(self.modelManager.playerState, SIGNAL('currentSongChanged'), self.playerForm.updateSong)
         self.connect(self.modelManager.playerState, SIGNAL('volumeChanged'), self.playerForm.setVolume)
@@ -329,9 +329,9 @@ class View(QMainWindow, auxilia.Actions):
 
 
 class PlayerForm(QWidget):
-    def __init__(self, mpdclient, config):
+    def __init__(self, modelManager, config):
         QWidget.__init__(self)
-        self.mpdclient = mpdclient
+        self.modelManager = modelManager
         self.iconPath = ''
         self._currentSong = None
         uic.loadUi(DATA_DIR+'ui/PlayerForm.ui', self)
@@ -347,7 +347,6 @@ class PlayerForm(QWidget):
         self.progress.mouseReleaseEvent = self._progressSeekEvent
         self.progress.mouseMoveEvent = self._progressShowTimeEvent
         self.progress.setMouseTracking(True)
-        self.connect(self, SIGNAL('songSeek'), self.songSeek)
         self.songIcon.mousePressEvent = self._iconOverlayEvent
 
     def updateSong(self, song):
@@ -409,31 +408,22 @@ class PlayerForm(QWidget):
             event.accept()
             data = event.mimeData()
             uri_list = pickle.loads(str(data.data('mpd/uri')))
-            self.mpdclient.send('clear')
-            self.mpdclient.send('addid', (uri_list.pop(0),), callback=
-                    lambda song_id: self.mpdclient.send('playid', (song_id,)))
-            try:
-                self.mpdclient.send('command_list_ok_begin')
-                for uri in uri_list:
-                    self.mpdclient.send('addid', (uri,))
-            finally:
-                return self.mpdclient.send('command_list_end')
+            self.modelManager.playQueue.clear()
+            self.modelManager.playQueue.extend(uri_list)
+            self.modelManager.playerState.currentSong = 0
+            self.modelManager.playerState.play()
 
     def _progressSeekEvent(self, event):
         if event.button() == Qt.LeftButton:
             position = float(event.x()) / int(self.progress.geometry().width())
-            self.mpdclient.send('currentsong', callback=
-                    lambda currentsong: self.emit(SIGNAL('songSeek'), currentsong, position))
+        time = self.modelManager.playerState.currentSong.time
+        if time > 0:
+            self.modelManager.playerState.progress = int(time * position)
 
     def _progressShowTimeEvent(self, event):
         position = float(event.x()) / int(self.progress.geometry().width())
         seconds = position * self.progress.maximum()
         self.progress.setToolTip(mpdlibrary.Time(seconds).human)
-
-    def songSeek(self, currentsong, position):
-        time = int(currentsong.get('time', None))
-        if time is not None:
-            self.mpdclient.send('seekid', (currentsong['id'], int(time * position)))
 
     def _iconOverlayEvent(self, event):
         popup = QMenu(self)
