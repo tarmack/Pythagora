@@ -362,15 +362,18 @@ class PlayQueueModel(QAbstractListModel):
 
     def __delslice__(self, start, end):
         self.lastEdit = time()
-        self.mpdclient.send('command_list_ok_begin')
-        try:
-            for row in xrange(start, end):
-                try:
-                    self.__delitem__(row)
-                except Exception, e:
-                    print e
-        finally:
-            self.mpdclient.send('command_list_end')
+        if start + 1 == end:
+            self.__delitem__(start)
+        else:
+            self.mpdclient.send('command_list_ok_begin')
+            try:
+                for row in xrange(start, end):
+                    try:
+                        self.__delitem__(row)
+                    except Exception, e:
+                        print e
+            finally:
+                self.mpdclient.send('command_list_end')
 
 
 class PlayQueueSong(mpdlibrary.Song, QObject):
