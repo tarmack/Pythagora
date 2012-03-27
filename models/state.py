@@ -115,7 +115,8 @@ class PlayerState(QObject):
         if self.playQueue.playing is None:
             return None
         else:
-            return self.playQueue[self.playQueue.playing]
+            index = self.playQueue.id_index(self.playQueue.playing)
+            return self.playQueue[index]
 
     @currentSong.setter
     def currentSong(self, value):
