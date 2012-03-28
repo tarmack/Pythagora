@@ -19,7 +19,6 @@ from PyQt4.QtCore import SIGNAL, Qt, QModelIndex, QMimeData
 from PyQt4.QtGui import QMessageBox, QKeySequence, QListView, QTableView, QFontMetrics, QFont
 from PyQt4 import uic
 
-import mpd
 import auxilia
 import PluginBase
 
@@ -35,6 +34,7 @@ class PlaylistForm(PluginBase.PluginBase, auxilia.Actions):
 
     def load(self):
         self.playlistModel = self.modelManager.playlists
+        self.playQueue = self.modelManager.playQueue
         # Load and place the stored playlists form.
         if self.config.KDE:
             uic.loadUi(DATA_DIR+'ui/PlaylistsForm.ui', self)
@@ -128,11 +128,16 @@ class PlaylistForm(PluginBase.PluginBase, auxilia.Actions):
                     SIGNAL('rowsAboutToBeRemoved(const QModelIndex &, int , int)'),
                     disconnect)
 
-    def _getSelectedPlaylists(self):
-        return (self.playlistModel.data(index, Qt.DisplayRole) for index in self.playlistList.selectedIndexes())
+    def _getSelectedPlaylist(self):
+        try:
+            index = self.playlistList.selectionModel().selectedIndexes()[0]
+        except ValueError:
+            return
+        return self.playlistModel.data(index, Qt.DisplayRole)
 
     def _getSelectedSongs(self):
-        return (index.internalPointer() for index in self.songList.selectedIndexes() if index.column() == 1)
+        playlist = self.playlistModel[self._getSelectedPlaylist()]
+        return (playlist[index.row()] for index in self.songList.selectedIndexes() if index.column() == 1)
 
     def _newList(self):
         ''' Insert a new row in the list of playlists and open the editor on it. '''
@@ -144,73 +149,65 @@ class PlaylistForm(PluginBase.PluginBase, auxilia.Actions):
 
     def _deleteList(self):
         '''Delete the currently selected playlist.'''
-        for name in self._getSelectedPlaylists():
-            resp = QMessageBox.question(self,
-                    'Delete Playlist',
-                    'Are you sure you want to delete '+name,
-                    QMessageBox.Yes|QMessageBox.No,
-                    QMessageBox.No)
-            if resp == QMessageBox.Yes:
-                try:
-                    self.mpdclient.send('rm', (name,))
-                except mpd.CommandError:
-                    pass
-        self.playlistList.setCurrentIndex(QModelIndex())
+        name = self._getSelectedPlaylist()
+        resp = QMessageBox.question(self,
+                'Delete Playlist',
+                'Are you sure you want to delete '+name,
+                QMessageBox.Yes|QMessageBox.No,
+                QMessageBox.No)
+        if resp == QMessageBox.Yes:
+            del self.playlistModel[name]
+            self.playlistList.setCurrentIndex(QModelIndex())
 
     def _removeSongs(self):
-        self.mpdclient.send('command_list_ok_begin')
-        try:
-            for index in sorted(self.songList.selectionModel().selectedIndexes(), key=lambda i:i.row(), reverse=True):
-                if index.column() == 1:
-                    song = index.internalPointer()
-                    self.mpdclient.send('playlistdelete', (song.playlist, index.row()))
-        finally:
-            self.mpdclient.send('command_list_end')
+        name = self._getSelectedPlaylist()
+        if name is None:
+            return
+        playlist = self.playlistModel[name]
+        indexList = sorted(index.row() for index in self.songList.selectedIndexes() if index.column() == 1)
+        start = indexList.pop(0)
+        end = start + 1
+        for index in indexList:
+            if index != end:
+                del playlist[start:end]
+                start = index
+            end = index + 1
+        del playlist[start:end]
 
     def _loadPlayList(self):
         self._loadList()
-        self.mpdclient.send('play')
+        self.modelManager.playerState.play()
 
     def _addPlayList(self):
-        last = int(self.mpdclient.status()['playlistlength'])
+        last = len(self.playQueue)
         self._addList()
-        self.mpdclient.send('play', (last,))
+        self.modelManager.playerState.currentSong = last
+        self.modelManager.playerState.play()
 
     def _loadList(self):
         '''Load the currently selected playlist onto the server.
            Note: this operation clears the current playlist.
         '''
-        self.mpdclient.send('clear')
+        self.playQueue.clear()
         self._addList()
 
-    def _addList(self, state=None):
+    def _addList(self):
         '''Load the currently selected playlist onto the server.
         '''
-        if not state:
-            state = self.mpdclient.status()['state']
-        try:
-            for name in self._getSelectedPlaylists():
-                self.mpdclient.send('load', (name,))
-        except:
-            return
-        if state == 'play':
-            self.mpdclient.send('play')
+        name = self._getSelectedPlaylist()
+        self.playlistModel.loadPlaylist(name)
 
     def _addSongs(self):
-        self.mpdclient.send('command_list_ok_begin')
-        try:
-            for song in self._getSelectedSongs():
-                self.mpdclient.send('add', (song.file.absolute,))
-        finally:
-            self.mpdclient.send('command_list_end')
+        self.playQueue.extend(self._getSelectedSongs())
 
     def _addPlaySongs(self):
-        last = len(self.modelManager.playQueue)
+        last = len(self.playQueue)
         self._addSongs()
-        self.mpdclient.send('play', (last,))
+        self.modelManager.playerState.currentSong = last
+        self.modelManager.playerState.play()
 
     def _clearPlaySong(self):
-        self.mpdclient.send('clear')
+        self.playQueue.clear()
         self._addPlaySongs()
 
     def _storeSplitter(self):

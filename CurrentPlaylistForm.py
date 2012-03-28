@@ -190,7 +190,7 @@ class CurrentPlaylistForm(QWidget, auxilia.Actions):
         (name, ok) = QInputDialog.getItem(self,
                 'Save Playlist',
                 'Enter or select the playlist name',
-                playlistModel.playlists,
+                [name for name in playlistModel],
                 0,
                 True)
         if ok == True:

@@ -15,6 +15,7 @@
 # limitations under the License.
 #-------------------------------------------------------------------------------
 from PyQt4.QtCore import SIGNAL, Qt, QAbstractItemModel, QModelIndex, QMimeData
+from PyQt4.QtGui import QApplication
 
 import cPickle as pickle
 import time
@@ -54,7 +55,7 @@ class PlaylistsModel(QAbstractItemModel):
 
     def _updatePlaylist(self, name, songs):
         parent = self.createIndex(self._names.index(name), 0)
-        playlist = self._playlists[name]
+        playlist = self._playlists[name]._songs
         self.emit(SIGNAL('layoutAboutToBeChanged()'))
         for pos, song in enumerate(songs):
             if song in playlist[pos:]:
@@ -65,8 +66,6 @@ class PlaylistsModel(QAbstractItemModel):
                     playlist.insert(pos, playlist.pop(index))
                     self.endMoveRows()
             else:
-                song = mpdlibrary.Song(song, self.library)
-                song.playlist = name
                 # New song, insert at the right place.
                 self.beginInsertRows(parent, pos, pos)
                 playlist.insert(pos, song)
@@ -80,8 +79,8 @@ class PlaylistsModel(QAbstractItemModel):
 
     def hasChildren(self, index):
         if index.isValid():
-            item = index.internalPointer()
-            return item is None
+            name = self._names[index.row()]
+            return name in self._playlists
         else:
             return bool(self._names)
 
@@ -95,18 +94,13 @@ class PlaylistsModel(QAbstractItemModel):
     def fetchMore(self, parent):
         if parent.isValid():
             name = self._names[parent.row()]
-            self._playlists[name] = []
-            self.mpdclient.send('listplaylistinfo', (name,),
-                    callback=lambda playlist, name=name: self.emit(SIGNAL('loadPlaylist'), name, playlist))
+            self._fetchPlaylist(name)
 
     def _loadPlaylist(self, name, playlist):
-        count = len(playlist)
         parent = self.createIndex(self._names.index(name), 0)
-        playlist = [mpdlibrary.Song(s, self.library) for s in playlist]
-        for song in playlist:
-            song.playlist = name
+        playlist = Playlist(name, playlist, self.mpdclient, self.library)
         self.emit(SIGNAL('layoutAboutToBeChanged()'))
-        self.beginInsertRows(parent, 0, count-1)
+        self.beginInsertRows(parent, 0, len(playlist)-1)
         self._playlists[name] = playlist
         self.endInsertRows()
         self.emit(SIGNAL('layoutChanged()'))
@@ -136,11 +130,10 @@ class PlaylistsModel(QAbstractItemModel):
                 if old_name:
                     self._dates[value] = self._dates.pop(old_name)
                     self._playlists[value] = self._playlists.pop(old_name)
-                    for song in self._playlists[value]:
-                        song.playlist = value
+                    self._playlists[value]._name = value
                     self.mpdclient.send('rename', (old_name, value))
                 else:
-                    self._playlists[value] = []
+                    self._playlists[value] = Playlist(value, [], self.mpdclient, self.library)
                 index = self.createIndex(row, 0)
                 self.emit(SIGNAL('dataChanged(const QModelIndex &, const QModelIndex &)'), index, index)
                 return True
@@ -165,16 +158,12 @@ class PlaylistsModel(QAbstractItemModel):
 
     def removeRows(self, row, count, parent):
         if parent.isValid():
-            name = parent.internalPointer()
-            self.mpdclient.send('command_list_ok_begin')
-            try:
-                for index in xrange(row, row+count):
-                    self.mpdclient.send('playlistdelete', (name, index))
-            finally:
-                self.mpdclient.send('command_list_end')
+            name = self._names[parent.row()]
+            playlist = self._playlists[name]
+            del playlist[row, row+count]
         else:
-            for name in [self._names[index] for index in xrange(row, row+count)]:
-                self.mpdclient.send('rm', (name,))
+            for name in (self._names[index] for index in xrange(row, row+count)):
+                del self[name]
         return True
 
     def rowCount(self, parent):
@@ -194,13 +183,11 @@ class PlaylistsModel(QAbstractItemModel):
         if parent.isValid():
             name = self._names[parent.row()]
             if name in self._playlists and row < len(self._playlists[name]):
-                item = self._playlists[name][row]
-                return self.createIndex(row, column, item)
+                return self.createIndex(row, column, name)
             else:
                 return QModelIndex()
         else:
             if 0 <= row < len(self._names):
-                item = self._names[row]
                 return self.createIndex(row, column)
             else:
                 return QModelIndex()
@@ -208,11 +195,14 @@ class PlaylistsModel(QAbstractItemModel):
     def parent(self, index):
         if not index.isValid():
             return QModelIndex()
-        item = index.internalPointer()
-        if item is None:
+        name = index.internalPointer()
+        if name is None:
             return QModelIndex()
-        parent = unicode(item.playlist)
-        row = self._names.index(parent)
+        parent = unicode(name)
+        try:
+            row = self._names.index(parent)
+        except ValueError:
+            return QModelIndex()
         return self.createIndex(row, 0)
 
     def headerData(self, section, orientation, role):
@@ -242,21 +232,23 @@ class PlaylistsModel(QAbstractItemModel):
     def data(self, index, role):
         if not index.isValid():
             return
-        item = index.internalPointer()
+        name = index.internalPointer()
         if role == Qt.DisplayRole or role == Qt.EditRole:
             column = index.column()
-            if item is None:
+            if name is None:
                 if column == 0:
                     return self._names[index.row()]
             else:
+                playlist = self._playlists[name]
+                row = index.row()
                 if column == 0:
-                    return unicode(index.row())
+                    return unicode(row)
                 if column == 1:
-                    return unicode(item.artist)
+                    return unicode(playlist[row].artist)
                 if column == 2:
-                    return unicode(item.title)
+                    return unicode(playlist[row].title)
                 if column == 3:
-                    return unicode(item.album)
+                    return unicode(playlist[row].album)
 
     def mimeTypes(self):
         return ['mpd/uri']
@@ -271,16 +263,10 @@ class PlaylistsModel(QAbstractItemModel):
             # whatever, as long as mpd can add it to a playlist.
             uri_list = pickle.loads(str(data.data('mpd/uri')))
             name = self._names[parent.row()]
-            self.mpdclient.send('command_list_ok_begin')
-            try:
-                for uri in uri_list:
-                    self.mpdclient.send('playlistadd', (name, uri))
-                if row != -1:
-                    length = len(self._playlists[name])
-                    for x in xrange(len(uri_list)):
-                        self.mpdclient.send('playlistmove', (name, length, row+x))
-            finally:
-                self.mpdclient.send('command_list_end')
+            if row == -1:
+                self._playlists[name].extend(uri_list)
+            else:
+                self._playlists[name].insert(row, uri_list)
             self.emit(SIGNAL('dataChanged(const QModelIndex &, const QModelIndex &)'), parent, parent)
             return True
         return False
@@ -293,25 +279,111 @@ class PlaylistsModel(QAbstractItemModel):
             row = index.row()
             if not row in rows_done:
                 rows_done.append(row)
-                item = index.internalPointer()
-                if item is None:
+                name = index.internalPointer()
+                if name is None:
                     name = self._names[row]
                     playlists.append(name)
                     for song in self._playlists.get(name):
                         uri_list.append(song.file.absolute)
                 else:
-                    uri_list.append(item.file.absolute)
+                    playlist = self._playlists[name]
+                    song = playlist[row]
+                    uri_list.append(song.file.absolute)
         data = QMimeData()
         data.setData('mpd/playlist', pickle.dumps(playlists))
         data.setData('mpd/uri', pickle.dumps(uri_list))
         return data
 
-    @property
-    def playlists(self):
-        return list(self._names)
-
     def saveCurrent(self, name):
         if name in self._names:
             self.mpdclient.send('rm', (name,))
         self.mpdclient.send('save', (name,))
+
+    def loadPlaylist(self, name):
+        self.mpdclient.send('load', (name,))
+
+    def _fetchPlaylist(self, name):
+        self.mpdclient.send('listplaylistinfo', (name,),
+                callback=lambda playlist, name=name: self.emit(SIGNAL('loadPlaylist'), name, playlist))
+
+    def __iter__(self):
+        return self._names.__iter__()
+
+    def __getitem__(self, name):
+        try:
+            playlist = self._playlists[name]
+        except KeyError:
+            self._fetchPlaylist(name)
+        while not name in self._playlists:
+            QApplication().processEvents()
+        playlist = self._playlists[name]
+        return playlist
+
+    def __delitem__(self, name):
+        self.mpdclient.send('rm', (name,))
+
+class Playlist(object):
+    def __init__(self, name, songs, mpdclient, library):
+        self._name = name
+        self._songs = list(songs)
+        self._mpdclient = mpdclient
+        self._library = library
+
+    def __iter__(self):
+        return (mpdlibrary.Song(song, self._library) for song in self._songs)
+
+    def __getitem__(self, index):
+        return mpdlibrary.Song(self._songs[index], self._library)
+
+    def __getslice__(self, start, end, step=1):
+        return [self[index] for index in xrange(start, end, step)]
+
+    def __setitem__(self, index, song):
+        raise NotImplementedError
+
+    def insert(self, index, song):
+        length = len(self)
+        if isinstance(song, basestring):
+            self._mpdclient.send('playlistadd', (self._name, song))
+            self._mpdclient.send('playlistmove', (self._name, length, index))
+        else:
+            self._mpdclient.send('command_list_ok_begin')
+            try:
+                for uri in reversed(song):
+                    self.insert(index, uri)
+                    length += 1
+            finally:
+                self._mpdclient.send('command_list_end')
+
+    def append(self, song):
+        if isinstance(song, mpdlibrary.Song):
+            song = song.file.absolute
+        elif isinstance(song, mpdlibrary.File):
+            song = song.absolute
+        self._mpdclient.send('playlistadd', (self._name, song))
+
+    def extend(self, songs):
+        self._mpdclient.send('command_list_ok_begin')
+        try:
+            for song in songs:
+                self.append(song)
+        finally:
+            self._mpdclient.send('command_list_end')
+
+    def __delitem__(self, index):
+        self._mpdclient.send('playlistdelete', (self._name, index))
+
+    def __delslice__(self, start, end, step=1):
+        if start + step == end:
+            del self[start]
+        else:
+            self._mpdclient.send('command_list_ok_begin')
+            try:
+                for index in reversed(xrange(start, end, step)):
+                    del self[index]
+            finally:
+                self._mpdclient.send('command_list_end')
+
+    def __len__(self):
+        return len(self._songs)
 
