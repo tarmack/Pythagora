@@ -375,17 +375,25 @@ class Song(LibraryObject):
         return value.strip() if isinstance(value, basestring) else value
 
     def __eq__(self, other):
-        if id(self) == id(other):
-            return True
         left = self._value
-        if isinstance(other, Song):
+        try:
             right = other._value
-        elif isinstance(other, dict):
-            right = other
-        else:
-            return False
-        for item in ('file', 'title', 'artist'):
-            if left.get(item) != right.get(item):
+        except AttributeError:
+            if isinstance(other, dict):
+                right = other
+            else:
+                return False
+        for item in ('title', 'artist', 'file'):
+            try:
+                left_item = left[item]
+            except KeyError:
+                left_item = None
+            try:
+                right_item = right[item]
+            except KeyError:
+                if not left_item is None:
+                    return False
+            if left_item != right_item:
                 return False
         return True
 
