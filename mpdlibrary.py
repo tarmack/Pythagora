@@ -17,6 +17,7 @@
 import locale
 import time
 import array
+import collections
 
 locale.setlocale(locale.LC_ALL, "")
 
@@ -65,95 +66,105 @@ class Library(object):
                     else:
                         fslist[part] = fslist.get(part, {})
                         fslist = fslist[part]
+
+        print('info: Setting up of the library took %.3f seconds.' % (time.time() - reload_start))
+        self._artists._order.sort(cmp=locale.strcoll)
+        self._albums._order.sort(cmp=locale.strcoll)
+        self._genres._order.sort(cmp=locale.strcoll)
         print('info: Building of the library took %.3f seconds.' % (time.time() - reload_start))
         return self
 
     def artists(self):
-        '''Returns a list containing all artists in the library.'''
-        return (Artist(value, self) for value in sorted(self._artists.iterkeys(), locale.strcoll))
+        '''Returns a view over all artists in the library.'''
+        return LibraryView(Artist, self, self._artists)
 
     def albums(self):
-        '''Returns a list containing all albums in the library.'''
-        return (Album(album, self) for album in sorted(self._albums.iterkeys(), locale.strcoll))
+        '''Returns a view over all albums in the library.'''
+        return LibraryView(Album, self, self._albums)
 
     def songs(self):
-        '''Returns a list containing all songs in the library.'''
-        return (Song(song, self) for song in self._song_list)
+        '''Returns a view over all songs in the library.'''
+        return LibraryView(Song, self, self._song_list)
 
     def genres(self):
-        '''Returns a list containing all genres in the library.'''
-        return (Genre(genre, self) for genre in self._genres.iterkeys())
+        '''Returns a view over all genres in the library.'''
+        return LibraryView(Genre, self, self._genres)
 
     def artist_songs(self, artist):
-        '''Returns a list containing all songs from the supplied artist.'''
-        return (Song(self._song_list[index], self) for index in self._artists.get(artist, []))
+        '''Returns a view over all songs from the supplied artist.'''
+        return LibraryView(Song, self, self._song_list, self._artists.get(artist, []))
 
     def artist_albums(self, artist):
-        '''Returns a list containing all albums the artist is listed on.'''
+        '''Returns a view over all albums the artist is listed on.'''
         albums = set()
         for song in self.artist_songs(artist):
             albums.update(song.album.all())
-        return (Album(album, self) for album in albums)
+        return LibraryView(Album, self, sorted(albums, locale.strcoll))
 
     def artist_genres(self, artist):
-        '''Returns a list containing all genres listed in songs by the given artist.'''
+        '''Returns a view over all genres listed in songs by the given artist.'''
         genres = set()
         for song in self.artist_songs(artist):
             genres.update(song.genre.all())
-        return (Genre(genre, self) for genre in genres)
+        return LibraryView(Genre, self, sorted(genres, locale.strcoll))
 
     def album_songs(self, album, artists=[]):
-        '''Returns a list containing all songs on the supplied album title.
+        '''Returns a view over all songs on the supplied album title.
         The optional artist argument can be used to only get the songs of a particular artist or list of artists.'''
-        if isinstance(artists, basestring):
-            artists = [artists]
-        songs = (Song(self._song_list[index], self) for index in self._albums.get(album, []))
-        for song in sorted(songs, _sort_album_songs):
-            if artists == [] or song.artist in artists:
-                yield song
+        if artists == []:
+            return LibraryView(Song, self, self._song_list, self._albums.get(album, []))
+        else:
+            if isinstance(artists, basestring):
+                artists = [artists]
+            songs = (Song(self._song_list[index], self) for index in self._albums.get(album, []))
+            if artists != []:
+                songs = (song for song in songs if song.artist in artists)
+            return LibraryView(None, self, sorted(songs, _sort_album_songs))
 
     def album_artists(self, album):
-        '''Returns a list containing all artists listed on the album.'''
+        '''Returns a view over all artists listed on the album.'''
         artists = set()
         for song in self.album_songs(album):
             artists.update(song.artist.all())
-        return (Artist(artist, self) for artist in artists)
+        return LibraryView(Artist, self, sorted(artists, locale.strcoll))
 
     def album_genres(self, album):
-        '''Returns a list containing all genres listed in songs on the given album.'''
+        '''Returns a view over all genres listed in songs on the given album.'''
         genres = set()
         for song in self.album_songs(album):
             genres.update(song.genre.all())
-        return (Genre(genre, self) for genre in genres)
+        return LibraryView(Genre, self, sorted(genres, locale.strcoll))
 
     def genre_songs(self, genre):
-        '''Returns a list containing all songs in the given genre.'''
-        return (Song(self._song_list[index], self) for index in self._genres.get(genre, []))
+        '''Returns a view over all songs in the given genre.'''
+        return LibraryView(Song, self, self._song_list, self._genres.get(genre, []))
 
     def genre_artists(self, genre):
-        '''Returns a list containing all artists in the given genre.'''
+        '''Returns a view over all artists in the given genre.'''
         artists = set()
         for song in self.genre_songs(genre):
             artists.update(song.artist.all())
-        return (Artist(artist, self) for artist in artists)
+        return LibraryView(Artist, self, sorted(artists, locale.strcoll))
 
     def genre_albums(self, genre):
-        '''Returns a list containing all albums in the given genre.'''
+        '''Returns a view over all albums in the given genre.'''
         albums = set()
         for song in self.genre_songs(genre):
             albums.update(song.album.all())
-        return (Album(album, self) for album in albums)
+        return LibraryView(Album, self, sorted(albums, locale.strcoll))
 
     def ls(self, path):
-        '''Returns a list of songs and directories contained in the given path.'''
+        '''Returns a view over the songs and directories contained in the given path.'''
         if path.startswith('/'):
             path = path[1:]
         fslist = self._fsNode(path)
+        results = []
         for key, value in sorted(fslist.items()):
             if isinstance(value, int):
-                yield File(self._song_list[value]['file'], self)
+                results.append(File(self._song_list[value]['file'], self))
             else:
-                yield Dir(path + '/' + key, self)
+                results.append(Dir(path + '/' + key, self))
+        return LibraryView(None, self, sorted(results, locale.strcoll))
 
     def _fsNode(self, path):
         fslist = self._filesystem
@@ -163,11 +174,16 @@ class Library(object):
 
 def _sort_album_songs(x, y):
     # Sorting album songs by disc number, then by track number
-    return cmp(int(x.disc), int(y.disc)) or cmp(int(x.track), int(y.track))
+    return cmp(int(DiscNumber(x.get('disc'))), int(DiscNumber(y.get('disc')))) \
+            or cmp(int(Track(x.get('track'))), int(Track(y.get('track'))))
 
 
 class LibraryIndex(dict):
     '''A dictionary for storing the library data.'''
+    def __init__(self, values=[]):
+        dict.__init__(self, values)
+        self._order = []
+
     def __setitem__(self, key, value):
         if isinstance(key, list):
             for k in key:
@@ -178,7 +194,44 @@ class LibraryIndex(dict):
                 if not value in part:
                     part.append(value)
             else:
+                self._order.append(key)
                 dict.__setitem__(self, key, array.array('H', [value]))
+
+    def __iter__(self):
+        return self._order.__iter__()
+
+    def __getitem__(self, key):
+        if isinstance(key, int):
+            return self._order[key]
+        return dict.__getitem__(self, key)
+
+
+class LibraryView(collections.Sequence):
+    def __init__(self, cls, library, store, mapping=None):
+        if cls is None:
+            self._cls = lambda value, lib: value
+        else:
+            self._cls = cls
+        self._library = library
+        self._store = store
+        self._mapping = mapping
+
+    def __iter__(self):
+        if not self._mapping is None:
+            return (self._cls(self._store[index], self._library) for index in self._mapping)
+        else:
+            return (self._cls(value, self._library) for value in self._store)
+
+    def __getitem__(self, index):
+        if not self._mapping is None:
+            index = self._mapping[index]
+        return self._cls(self._store[index], self._library)
+
+    def __len__(self):
+        if not self._mapping is None:
+            return len(self._mapping)
+        else:
+            return len(self._store)
 
 
 class LibraryObject(object):
@@ -290,6 +343,10 @@ class DiscNumber(Text):
 
 
 class Song(LibraryObject):
+    def __init__(self, song, library=None):
+        self._value = song
+        self._library = library
+
     def __getattr__(self, attr):
         try:
             return self.__getitem__(attr)
@@ -422,7 +479,7 @@ class Dir(Path):
         return len(self._library._fsNode(self._value))
 
     def __iter__(self):
-        return self._library.ls(self._value)
+        return (item for item in self._library.ls(self._value))
 
     def __getitem__(self, index):
         if not hasattr(self, 'node'):

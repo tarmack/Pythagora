@@ -29,7 +29,9 @@ class TracksModel(QAbstractItemModel):
         return self._songMap[song.file.absolute]
 
     def reload(self, songs):
-        self._songs = list(songs)
+        if not hasattr(songs, '__getitem__'):
+            songs = list(songs)
+        self._songs = songs
         self._songMap = {}
         for index, song in enumerate(self._songs):
             self._songMap[song.file.absolute] = index
@@ -38,7 +40,9 @@ class TracksModel(QAbstractItemModel):
     def data(self, index, role):
         if not index.isValid:
             return
-        song = index.internalPointer()
+        song = self._songs[index.row()]
+        if role == Qt.UserRole:
+            return song
         if role == Qt.DisplayRole:
             column = index.column()
             if column == 0:
@@ -62,7 +66,7 @@ class TracksModel(QAbstractItemModel):
 
     def index(self, row, column, parent):
         if self._songs:
-            return self.createIndex(row, column, self._songs[row])
+            return self.createIndex(row, column)
         else:
             return QModelIndex()
 
@@ -83,7 +87,7 @@ class TracksModel(QAbstractItemModel):
             return defaultFlags
 
     def mimeData(self, indexes):
-        uri_list = [index.internalPointer().file.absolute for index in indexes if index.column() == 0]
+        uri_list = [self._songs[index.row()].file.absolute for index in indexes if index.column() == 0]
         uri_list.sort()
         data = QMimeData()
         data.setData('mpd/uri', pickle.dumps(uri_list))

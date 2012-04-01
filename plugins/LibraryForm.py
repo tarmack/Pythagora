@@ -115,15 +115,15 @@ class LibraryForm(PluginBase.PluginBase, auxilia.Actions):
 
     def _selectedArtists(self):
         selection = self.artistView.selectedIndexes()
-        return [self.artistProxy.mapToSource(index).internalPointer() for index in selection]
+        return [self.artistProxy.mapToSource(index).data(Qt.UserRole).toPyObject() for index in selection]
 
     def _selectedAlbums(self):
         selection = self.albumView.selectedIndexes()
-        return [self.albumHideProxy.mapToSource(self.albumProxy.mapToSource(index)).internalPointer() for index in selection]
+        return [self.albumHideProxy.mapToSource(self.albumProxy.mapToSource(index)).data(Qt.UserRole).toPyObject() for index in selection]
 
     def _selectedTracks(self):
         selection = (index for index in self.trackView.selectedIndexes() if index.column() == 0)
-        return [self.trackHideProxy.mapToSource(self.trackProxy.mapToSource(index)).internalPointer() for index in selection]
+        return [self.trackHideProxy.mapToSource(self.trackProxy.mapToSource(index)).data(Qt.UserRole).toPyObject() for index in selection]
 
     def artistFilter(self, selected, deselected):
         artists = self._selectedArtists()
@@ -228,6 +228,9 @@ class HidingProxyModel(QAbstractProxyModel):
         index = self._sourceModel.index(row, column, parent)
         return self.mapFromSource(index)
 
+    def parent(self, index):
+        return QModelIndex()
+
     def reset(self):
         self.shown = range(self._sourceModel.rowCount(QModelIndex()))
         self.emit(SIGNAL('modelReset()'))
@@ -254,7 +257,7 @@ class HidingProxyModel(QAbstractProxyModel):
     def mapToSource(self, index):
         if index.isValid():
             row = self.mapRowToSource(index.row())
-            index = self._sourceModel.createIndex(row, index.column(), index.internalPointer())
+            index = self._sourceModel.createIndex(row, index.column())
         return index
 
     def mapRowToSource(self, row):
@@ -267,7 +270,7 @@ class HidingProxyModel(QAbstractProxyModel):
     def mapFromSource(self, index):
         if index.isValid():
             row = self.mapRowFromSource(index.row())
-            index = self.createIndex(row, index.column(), index.internalPointer())
+            index = self.createIndex(row, index.column())
         return index
 
     def mapRowFromSource(self, row):

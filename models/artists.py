@@ -26,13 +26,17 @@ class ArtistsModel(QAbstractListModel):
         self._artists = []
 
     def reload(self, artists):
-        self._artists = list(artists)
+        if not hasattr(artists, '__getitem__'):
+            artists = list(artists)
+        self._artists = artists
         self.reset()
 
     def data(self, index, role):
         if not index.isValid:
             return
-        artist = index.internalPointer()
+        artist = self._artists[index.row()]
+        if role == Qt.UserRole:
+            return artist
         if role == Qt.DisplayRole:
             return unicode(artist)
 
@@ -44,7 +48,7 @@ class ArtistsModel(QAbstractListModel):
         return len(self._artists)
 
     def index(self, row, column, parent):
-        return self.createIndex(row, column, self._artists[row])
+        return self.createIndex(row, column)
 
     def flags(self, index):
         defaultFlags = QAbstractListModel.flags(self, index)
@@ -54,7 +58,7 @@ class ArtistsModel(QAbstractListModel):
             return defaultFlags
 
     def mimeData(self, indexes):
-        artists = (index.internalPointer() for index in indexes if index.isValid())
+        artists = (self._artists[index.row()] for index in indexes if index.isValid())
         uri_list = []
         for artist in artists:
             uri_list.extend(song.file.absolute for song in artist.songs)
