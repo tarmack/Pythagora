@@ -447,11 +447,11 @@ class Song(LibraryObject):
                 left_item = None
             try:
                 right_item = right[item]
+                if left_item != right_item:
+                    return False
             except KeyError:
                 if not left_item is None:
                     return False
-            if left_item != right_item:
-                return False
         return True
 
     def __ne__(self, other):
