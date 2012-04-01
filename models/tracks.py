@@ -26,10 +26,13 @@ class TracksModel(QAbstractItemModel):
         self._songs = []
 
     def findRow(self, song):
-        return self._songs.index(song)
+        return self._songMap[song.file.absolute]
 
     def reload(self, songs):
         self._songs = list(songs)
+        self._songMap = {}
+        for index, song in enumerate(self._songs):
+            self._songMap[song.file.absolute] = index
         self.reset()
 
     def data(self, index, role):
