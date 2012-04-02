@@ -27,10 +27,11 @@ import configuration
 import MainWindow
 import mpdlibrary
 from models import ModelManager
+from ui import KDE
 
 def main():
     print 'debug:', sys.argv
-    if MainWindow.KDE:
+    if KDE:
         from PyKDE4.kdecore import ki18n, KCmdLineArgs, KAboutData, KCmdLineOptions
         from PyKDE4.kdeui import KApplication
         appName     = "Pythagora"
@@ -85,7 +86,7 @@ class Manager():
         self.mpdclient = mpd.MPDClient()
         self.idleTimer = QTimer()
         self.idleTimer.setSingleShot(True)
-        self.config = configuration.Configuration(sys.argv)
+        self.config = configuration.Configuration()
         self.modelManager = ModelManager(self.mpdclient, self.library, self.config)
         self.playerState = self.modelManager.playerState
         self.view = MainWindow.View(self.modelManager, self.config, self.mpdclient, self.library, app)
@@ -95,7 +96,7 @@ class Manager():
         self.view.createPluginViews()
 
         # Set global shortcuts if KDE is available otherwise overload keyPressEvent.
-        if self.config.KDE:
+        if KDE:
             from PyKDE4.kdeui import KActionCollection
             self.actionCollection = KActionCollection(self.view)
             self.setGlobalShortcuts()

@@ -17,8 +17,9 @@
 #-------------------------------------------------------------------------------
 from PyQt4.QtCore import SIGNAL, Qt, QModelIndex
 from PyQt4.QtGui import QHeaderView, QSortFilterProxyModel, QAbstractProxyModel, QFontMetrics, QFont
-from PyQt4 import uic
 import bisect
+
+from ui import LibraryForm
 
 import auxilia
 import PluginBase
@@ -28,7 +29,7 @@ DATA_DIR = ''
 def getWidget(modelManager, mpdclient, config, library):
     return LibraryForm(modelManager, mpdclient, config, library)
 
-class LibraryForm(PluginBase.PluginBase, auxilia.Actions):
+class LibraryForm(PluginBase.PluginBase, auxilia.Actions, LibraryForm):
     '''List and controls for the full "library" of music known to the server.
        Note that this does not actually manage the filesystem or tags or covers.
        There are many other programs that do that exceedingly well already.
@@ -42,11 +43,7 @@ class LibraryForm(PluginBase.PluginBase, auxilia.Actions):
         self.trackModel = self.modelManager.tracks
         self.playQueue = self.modelManager.playQueue
         self.playerState = self.modelManager.playerState
-        # Load and place the Library form.
-        if self.config.KDE:
-            uic.loadUi(DATA_DIR+'ui/LibraryForm.ui', self)
-        else:
-            uic.loadUi(DATA_DIR+'ui/LibraryForm.ui.Qt', self)
+        self.setupUi(self)
         self.artistProxy = QSortFilterProxyModel()
         self.artistProxy.setSourceModel(self.artistModel)
         self.artistProxy.setFilterCaseSensitivity(Qt.CaseInsensitive)

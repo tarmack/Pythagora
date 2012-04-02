@@ -18,9 +18,7 @@
 from PyQt4.QtCore import SIGNAL, SLOT, QTimer, Qt, QObject, QEvent, QPoint, QPointF, QSize
 from PyQt4.QtGui import QMainWindow, QLabel, QMenu, QIcon, QWidget, QAction, QWidgetAction, QToolButton, \
         QBrush, QFontMetrics, QPainter, QLinearGradient, QPalette, QPen, QApplication, QPixmap, QVBoxLayout
-from PyQt4 import uic
 from time import time
-import sys
 import os
 import cPickle as pickle
 try:
@@ -33,22 +31,18 @@ import mpdlibrary
 import CurrentPlaylistForm
 import plugins
 import auxilia
+from ui import KDE, MainWindow, PlayerForm
 
 DATA_DIR = ''
 
-try:
-    if "--nokde" in sys.argv:
-        raise ImportError
-    else:
-        from PyKDE4.kdeui import KWindowSystem
-        from PyKDE4.kdeui import KStatusNotifierItem
-        from PyKDE4.kdeui import KStandardAction
-        KDE = True
-except ImportError:
+if KDE:
+    from PyKDE4.kdeui import KWindowSystem
+    from PyKDE4.kdeui import KStatusNotifierItem
+    from PyKDE4.kdeui import KStandardAction
+else:
     from PyQt4.QtGui import QSystemTrayIcon
-    KDE = False
 
-class View(QMainWindow, auxilia.Actions):
+class View(QMainWindow, auxilia.Actions, MainWindow):
     partyMode = False
     hide_window = True
 
@@ -63,8 +57,7 @@ class View(QMainWindow, auxilia.Actions):
         self.mpdclient = mpdclient
         self.library = library
         self.appIcon = os.path.abspath(DATA_DIR+'icons/Pythagora.png')
-        uic.loadUi(DATA_DIR+'ui/Pythagora.ui', self)
-        self.KDE = KDE
+        self.setupUi(self)
         self.setWindowTitle('Pythagora')
         self.setWindowIcon(QIcon(self.appIcon))
         # Create standard views.
@@ -328,13 +321,13 @@ class View(QMainWindow, auxilia.Actions):
             self.showFullScreen()
 
 
-class PlayerForm(QWidget):
+class PlayerForm(QWidget, PlayerForm):
     def __init__(self, modelManager, config):
         QWidget.__init__(self)
         self.modelManager = modelManager
         self.iconPath = ''
         self._currentSong = None
-        uic.loadUi(DATA_DIR+'ui/PlayerForm.ui', self)
+        self.setupUi(self)
         # Set attributes not set trough xml file.
         self.back.setIcon(auxilia.PIcon("media-skip-backward"))
         self.stop.setIcon(auxilia.PIcon("media-playback-stop"))

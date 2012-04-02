@@ -15,7 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #-------------------------------------------------------------------------------
-from PyQt4 import uic
+from ui import FileSystemForm
 
 import PluginBase
 
@@ -24,13 +24,13 @@ DATA_DIR = ''
 def getWidget(modelManager, mpdclient, config, library):
     return FileSystemForm(modelManager, mpdclient, config, library)
 
-class FileSystemForm(PluginBase.PluginBase):
+class FileSystemForm(PluginBase.PluginBase, FileSystemForm):
     moduleName = 'F&ileSystem'
     moduleIcon = 'folder-sound'
 
     def load(self):
         self.fileSystemModel = self.modelManager.fileSystem
         # Load and place the FileSystem form.
-        uic.loadUi(DATA_DIR+'ui/FileSystemForm.ui', self)
+        self.setupUi(self)
         self.filesystemTree.setModel(self.fileSystemModel)
 

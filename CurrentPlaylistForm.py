@@ -18,8 +18,9 @@
 from PyQt4.QtCore import SIGNAL, Qt, QSize
 from PyQt4.QtGui import QWidget, QInputDialog, QKeySequence, QListView, QIcon, QFont, \
         QSortFilterProxyModel, QItemDelegate, QStyle, QFontMetrics
-from PyQt4 import uic
 from time import time
+
+from ui import CurrentListForm
 
 import auxilia
 import mpdlibrary
@@ -33,7 +34,7 @@ DATA_DIR = ''
 #===============================================================================
 # List and controls for the currently loaded playlist
 #===============================================================================
-class CurrentPlaylistForm(QWidget, auxilia.Actions):
+class CurrentPlaylistForm(QWidget, auxilia.Actions, CurrentListForm):
     '''List and controls for the currently loaded playlist'''
     editing = 0
     def __init__(self, modelManager, view, app, config):
@@ -46,10 +47,7 @@ class CurrentPlaylistForm(QWidget, auxilia.Actions):
         self.playerState = modelManager.playerState
         self.modelManager = modelManager
         self.playQueueDelegate = PlayQueueDelegate(self.config)
-        if self.view.KDE:
-            uic.loadUi(DATA_DIR+'ui/CurrentListForm.ui', self)
-        else:
-            uic.loadUi(DATA_DIR+'ui/CurrentListForm.ui.Qt', self)
+        self.setupUi(self)
 
         self.connect(self.playerState, SIGNAL('repeatChanged'), self.repeatButton.setChecked)
         self.connect(self.playerState, SIGNAL('randomChanged'), self.randomButton.setChecked)

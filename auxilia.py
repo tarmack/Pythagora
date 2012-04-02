@@ -15,19 +15,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #-------------------------------------------------------------------------------
-import sys
 from PyQt4.QtCore import SIGNAL
 from PyQt4.QtGui import QAction, QIcon
 
+from ui import KDE
+
 DATA_DIR = ''
 
-try:
-    if "--nokde" in sys.argv:
-        raise ImportError
+if KDE:
     from PyKDE4.kdeui import KIcon
-    KDE = True
-except ImportError:
-    KDE = False
 
 
 # Actions

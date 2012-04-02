@@ -17,7 +17,8 @@
 #-------------------------------------------------------------------------------
 from PyQt4.QtCore import SIGNAL, Qt, QModelIndex, QMimeData
 from PyQt4.QtGui import QMessageBox, QKeySequence, QListView, QTableView, QFontMetrics, QFont
-from PyQt4 import uic
+
+from ui import PlaylistsForm
 
 import auxilia
 import PluginBase
@@ -27,7 +28,7 @@ DATA_DIR = ''
 def getWidget(modelManager, mpdclient, config, library):
     return PlaylistForm(modelManager, mpdclient, config, library)
 
-class PlaylistForm(PluginBase.PluginBase, auxilia.Actions):
+class PlaylistForm(PluginBase.PluginBase, auxilia.Actions, PlaylistsForm):
     '''Display and manage the currently known playlists.'''
     moduleName = '&PlayLists'
     moduleIcon = 'document-multiple'
@@ -35,11 +36,7 @@ class PlaylistForm(PluginBase.PluginBase, auxilia.Actions):
     def load(self):
         self.playlistModel = self.modelManager.playlists
         self.playQueue = self.modelManager.playQueue
-        # Load and place the stored playlists form.
-        if self.config.KDE:
-            uic.loadUi(DATA_DIR+'ui/PlaylistsForm.ui', self)
-        else:
-            uic.loadUi(DATA_DIR+'ui/PlaylistsForm.ui.Qt', self)
+        self.setupUi(self)
         self.playlistSplitter.setSizes(self.config.playlistSplit)
 
         # Playlist list

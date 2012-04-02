@@ -17,14 +17,14 @@
 #-------------------------------------------------------------------------------
 from PyQt4.QtCore import QSize, Qt, SIGNAL, QVariant, QSettings
 from PyQt4.QtGui import QIcon, QMessageBox, QFileDialog, QTableWidget, QTableWidgetItem, QLineEdit, QKeySequence, QAction
-from PyQt4 import uic
 import os.path
 import auxilia
 
+from ui import Configuration
+
 DATA_DIR = ''
 
-class Configuration(object):
-    KDE = True
+class Configuration(Configuration):
     types = {
                 int: QVariant.toInt,
                 bool: QVariant.toBool,
@@ -52,15 +52,6 @@ class Configuration(object):
                 'playlistSplit':        [5,20],
                 'tabOrder':             ['&Library', 'F&ileSystem', '&PlayLists', '&Shoutcast'],
                 }
-
-    def __init__(self, argv):
-        try:
-            if '--nokde' in argv:
-                raise ImportError
-            else:
-                __import__('PyKDE4')
-        except ImportError:
-            self.KDE = False
 
     def __getattr__(self, attr):
         try:
@@ -128,7 +119,7 @@ class Configuration(object):
     def showConfiguration(self, parent, modal=False):
         '''Display the configuration dialog and activate the changes.'''
         self.parent = parent
-        self.setup = uic.loadUi(DATA_DIR+'ui/Configuration.ui')
+        self.setupUi(self)
         self.setup.setWindowTitle('Pythagora settings')
         self.setup.setWindowIcon(QIcon('Pythagora.png'))
         self.setup.setAttribute(Qt.WA_QuitOnClose, False)
