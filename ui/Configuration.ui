@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>Dialog</class>
- <widget class="QDialog" name="Dialog">
+ <class>Configuration</class>
+ <widget class="QDialog" name="Configuration">
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>528</width>
+    <width>563</width>
     <height>255</height>
    </rect>
   </property>
@@ -200,7 +200,7 @@ If no folder.jpg can be found the cover art will be downloaded and cached in the
   <connection>
    <sender>buttonBox</sender>
    <signal>accepted()</signal>
-   <receiver>Dialog</receiver>
+   <receiver>Configuration</receiver>
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
@@ -216,7 +216,7 @@ If no folder.jpg can be found the cover art will be downloaded and cached in the
   <connection>
    <sender>buttonBox</sender>
    <signal>rejected()</signal>
-   <receiver>Dialog</receiver>
+   <receiver>Configuration</receiver>
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">
