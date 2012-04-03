@@ -156,6 +156,7 @@ class View(QMainWindow, auxilia.Actions, MainWindow):
         self.connect(self.trayIcon, SIGNAL('scrollRequested(int, Qt::Orientation)'),
                 lambda amount: self.modelManager.playerState.volumeUp((amount+30)/60))
         self.connect(self.modelManager.playerState, SIGNAL('playStateChanged'), self.trayIcon.setState)
+        self.connect(self.playerForm, SIGNAL('tooltipChanged'), self.trayIcon.setToolTip)
 
         self.connect(self.tabs, SIGNAL('currentChanged(int)'), self._tabsIndexChanged)
         self.connect(self.tabs.tabBar(), SIGNAL('tabMoved(int,int)'), self._tabMoved)
@@ -325,6 +326,7 @@ class PlayerForm(QWidget, PlayerForm):
     def __init__(self, modelManager, config):
         QWidget.__init__(self)
         self.modelManager = modelManager
+        self.config = config
         self.iconPath = ''
         self._currentSong = None
         self.setupUi(self)
@@ -349,14 +351,22 @@ class PlayerForm(QWidget, PlayerForm):
             if song.iconPath:
                 self.setSongIcon(song.iconPath)
             else:
+                self.setSongIcon(None)
                 if not self._currentSong is None:
                     self.disconnect(self._currentSong, SIGNAL('iconChanged'), self._iconChanged)
                 self.connect(song, SIGNAL('iconChanged'), self._iconChanged)
+            self.emit(SIGNAL('tooltipChanged'), song.iconPath, richTextLabel(song))
         else:
             self.setSongIcon(None)
+            if self.config.server is None:
+                label = 'Disconnected'
+            else:
+                label = 'Connected to %s.' % self.config.server[0]
+            self.emit(SIGNAL('tooltipChanged'), None, label)
         self._currentSong = song
 
     def _iconChanged(self, songID, iconPath):
+        self.emit(SIGNAL('tooltipChanged'), iconPath, richTextLabel(self._currentSong))
         self.setSongIcon(iconPath)
 
     def setSongIcon(self, iconPath):
