@@ -279,9 +279,7 @@ if __name__ == "__main__":
             sys.exit(0)
     import WriteOut
     # silence pyflakes.
-    WriteOut.Quiet()
+    WriteOut
 
     main()
-#    import cProfile
-#    cProfile.run('main()')
 
