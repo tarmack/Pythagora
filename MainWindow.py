@@ -43,7 +43,7 @@ else:
     from PyQt4.QtGui import QSystemTrayIcon
 
 class View(QMainWindow, auxilia.Actions, MainWindow):
-    partyMode = False
+    partyMode = None
     hide_window = True
 
     def __init__(self, modelManager, configuration, mpdclient, library, app):
@@ -309,17 +309,16 @@ class View(QMainWindow, auxilia.Actions, MainWindow):
                 self.menuOutputs.addAction(action)
 
     def _togglePartymode(self):
-        if self.partyMode:
-            self.toolBar.show()
-            self.showNormal()
-            QApplication.instance().processEvents()
-            if self.partyMode != self.geometry().size():
-                self.showMaximized()
-            self.partyMode = False
-        else:
-            self.partyMode = self.geometry().size()
-            self.toolBar.hide()
+        if self.partyMode is None:
+            self.partyMode = self.isMaximized()
             self.showFullScreen()
+        else:
+            if self.partyMode == True:
+                self.showNormal()
+                self.showMaximized()
+            else:
+                self.showNormal()
+            self.partyMode = None
 
 
 class PlayerForm(QWidget, PlayerForm):
