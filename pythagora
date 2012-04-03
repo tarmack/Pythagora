@@ -217,11 +217,9 @@ class Manager():
 
     def _connectionTry(self, exc):
         print 'debug: tried to connect again :$'
-        self.view.emit(SIGNAL('clearForms'))
+        self.modelManager.clearForms()
         if isinstance(exc, Exception):
-            self.update.setSongLabel('Could not connect to %s at %s.' % (self.config.server[0], self.config.server[1]))
             self.view.serverLabel.setText('Not connected')
-            self.update.currentsong = mpdlibrary.Song({}, self.update.library)
             self.misses += 1
             self.misses = min(30, self.misses)
             self.idleTimer.start(3000*self.misses)
