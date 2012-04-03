@@ -38,7 +38,7 @@ import threading
 import Queue
 import sys
 
-class MPDClient():
+class MPDClient(object):
     '''This proxy class wraps round the mpd(unicode) module. It supplies a
     threaded interface to the mpd server on top of the normal methods in the
     mpd module.
@@ -120,7 +120,7 @@ class MPDThread(MPDClientBase, threading.Thread):
         threading.Thread.__init__(self)
         self.daemon = True
         self.queue = Queue.PriorityQueue(256)
-        self._lock = threading.RLock()
+        self._lock = threading.Lock()
         MPDClientBase.__init__(self)
         self.connecting = False
         self.exit = False
@@ -145,9 +145,11 @@ class MPDThread(MPDClientBase, threading.Thread):
         priority = self.priority
         if command == 'idle':
             priority += 256
-        self.queue.put((priority, command, args, callback, callbackArgs))
-        if command != 'noidle' and self._idle:
-            self._write_proxy('noidle', [])
+        with self._lock:
+            if not (command == 'idle' and self._idle):
+                self.queue.put((priority, command, args, callback, callbackArgs))
+                if command != 'noidle' and self._idle:
+                    self._write_proxy('noidle', [])
 
     def idle(self, subsystems=[], timeout=None):
         ''' Calls the idle command on the server and blocks until
@@ -161,6 +163,7 @@ class MPDThread(MPDClientBase, threading.Thread):
         if timeout is not None:
             self._sock.settimeout(timeout)
         try:
+            self._lock.release()
             rtn = self._execute('idle', subsystems)
         except socket.timeout:
             try:
@@ -176,6 +179,7 @@ class MPDThread(MPDClientBase, threading.Thread):
             except socket.timeout:
                 raise ConnectionError("Connection timed out")
         finally:
+            self._lock.acquire()
             self._sock.settimeout(oldTimeout)
             self._idle = False
         return rtn
@@ -183,18 +187,19 @@ class MPDThread(MPDClientBase, threading.Thread):
     def run(self):
         while True:
             _, command, args, callback, callbackArgs = self.queue.get()
-            print 'debug: got ', command, ' with arguments ', args, 'from queue.'
-            try:
-                value = self.__do(command, args)
-            except CommandError, e:
-                print 'debug: MPD thread - CommandError: ', e, '\n', sys.exc_info()
-                value = sys.exc_info()[1]
-            except Exception, e:
-                print 'debug: MPD thread - Exception: ', e, '\n', sys.exc_info()
-                value = sys.exc_info()[1]
-                self.exit = True
-            finally:
-                self.queue.task_done()
+            with self._lock:
+                print 'debug: got ', command, ' with arguments ', args, 'from queue.'
+                try:
+                    value = self._do(command, args)
+                except CommandError, e:
+                    print 'debug: MPD thread - CommandError: ', e, '\n', sys.exc_info()
+                    value = sys.exc_info()[1]
+                except Exception, e:
+                    print 'debug: MPD thread - Exception: ', e, '\n', sys.exc_info()
+                    value = sys.exc_info()[1]
+                    self.exit = True
+                finally:
+                    self.queue.task_done()
             if command == 'connect':
                 self.connecting = False
             if self.abort:
@@ -205,8 +210,8 @@ class MPDThread(MPDClientBase, threading.Thread):
             if self.exit:
                 self.callbackQueue.put((sys.exit, (0,)))
                 try:
-                    self.__do('close', ())
-                    self.__do('disconnect', ())
+                    self._do('close', ())
+                    self._do('disconnect', ())
                 except:
                     pass
                 while not self.queue.empty():
@@ -214,7 +219,7 @@ class MPDThread(MPDClientBase, threading.Thread):
                     self.queue.task_done()
                 sys.exit(1)
 
-    def __do(self, command, args):
+    def _do(self, command, args):
         try:
             function = self.__getattribute__(command)
         except AttributeError:
@@ -225,8 +230,7 @@ class MPDThread(MPDClientBase, threading.Thread):
         def _docommand(self, command, args, retval):
             if command not in ('idle', 'noidle') and self._idle:
                 self._writecommand('noidle', [])
-            with self._lock:
-                return super(MPDThread, self)._docommand(command, args, retval)
+            return super(MPDThread, self)._docommand(command, args, retval)
 
         def _execute(self, command, args):
             retval = self._commands[command]
@@ -235,8 +239,7 @@ class MPDThread(MPDClientBase, threading.Thread):
         def _execute(self, command, args):
             if command not in ('idle', 'noidle') and self._idle:
                 self._write_command('noidle', [])
-            with self._lock:
-                return super(MPDThread, self)._execute(command, args)
+            return super(MPDThread, self)._execute(command, args)
 
     if hasattr(MPDClientBase, '_writecommand'):
         def _writecommand(self, command, args=[]):
@@ -244,8 +247,7 @@ class MPDThread(MPDClientBase, threading.Thread):
                 self._writecommand('noidle', [])
             if self._idle and command not in ('idle', 'noidle'):
                 raise ProtocolError('%s not allowed in idle mode.' % command)
-                with self._lock:
-                    super(MPDThread, self)._writecommand(command, args)
+                super(MPDThread, self)._writecommand(command, args)
             else:
                 super(MPDThread, self)._writecommand(command, args)
     else:
@@ -254,8 +256,7 @@ class MPDThread(MPDClientBase, threading.Thread):
                 self._write_command('noidle', [])
             if self._idle and command not in ('idle', 'noidle'):
                 raise ProtocolError('%s not allowed in idle mode.' % command)
-                with self._lock:
-                    super(MPDThread, self)._write_command(command, args)
+                super(MPDThread, self)._write_command(command, args)
             else:
                 super(MPDThread, self)._write_command(command, args)
 
