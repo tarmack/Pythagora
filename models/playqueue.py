@@ -186,6 +186,7 @@ class PlayQueueModel(QAbstractListModel):
         self._songs = []
         self._id_list = []
         self._iconChanges = 0
+        self.setPlaying(None)
         self.reset()
 
     def supportedDropActions(self):

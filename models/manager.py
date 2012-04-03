@@ -73,6 +73,8 @@ class ModelManager(object):
 
         if 'playlist' in changes:
             self.updatePlayQueue(status)
+        elif self.playerState.playState == 'stop':
+            self.playQueue.setPlaying(None)
         else:
             self.playQueue.setPlaying(status.get('songid'))
 
@@ -85,6 +87,7 @@ class ModelManager(object):
         '''
         Clear all models.
         '''
+        self.playerState.reset()
         self.playQueue._clear()
         self.playlists.clear()
         self.fileSystem.clear()

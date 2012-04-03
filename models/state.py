@@ -22,7 +22,7 @@ class PlayerState(QObject):
     '''
     Manages the player state and information.
     '''
-    _state = {
+    _default_state = {
             'progress':     mpdlibrary.Time(0),
             'playState':    '',
             'volume':       0,
@@ -33,11 +33,11 @@ class PlayerState(QObject):
             'single':       False,
             'consume':      False,
             }
-    _muteVolume = 0
     def __init__(self, mpdclient, playQueue):
         QObject.__init__(self)
         self.mpdclient = mpdclient
         self.playQueue = playQueue
+        self.reset()
         self._progressTimer = QTimer()
         self._progressTimer.start(1000)
         self.connect(self._progressTimer, SIGNAL('timeout()'), self._updateProgress)
@@ -51,7 +51,7 @@ class PlayerState(QObject):
                                  (self.__class__.__name__, attr))
 
     def __setattr__(self, attr, value):
-        if attr not in self._state:
+        if attr not in self._default_state:
             return QObject.__setattr__(self, attr, value)
         if attr == 'playState':
             if value in ('play', 'stop'):
@@ -87,6 +87,11 @@ class PlayerState(QObject):
         self._state[item] = value
         if value != oldValue:
             self.emit(SIGNAL(item+'Changed'), value)
+
+    def reset(self):
+        self.playQueue.setPlaying(None)
+        self._state = self._default_state.copy()
+        self._muteVolume = 0
 
     def update(self, status):
         self._setState('progress', status.get('time', '0:0').split(':')[0])
