@@ -169,7 +169,7 @@ class ModelManager(object):
         print 'Downloading of the library took {0:.3f} seconds'.format(time.time() - self._downloadStart)
         path = self._getCachePath()
         with open(path, 'w') as db_cache:
-            db_cache.write('%i\n' % timestamp)
+            db_cache.write('%s\n' % timestamp)
             db_cache.write(pickle.dumps(mainlist))
         thread.start_new_thread(self._reloadLibrary, (mainlist,))
 
