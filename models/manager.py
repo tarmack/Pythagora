@@ -153,11 +153,11 @@ class ModelManager(object):
         '''
         path = self._getCachePath()
         if os.path.exists(path):
-            with open(path) as db_cache:
-                if db_cache.readline().strip('\n') == timestamp:
-                    mainlist = pickle.loads(db_cache.read())
-                    thread.start_new_thread(self._reloadLibrary, (mainlist,))
-                    return
+            db_cache = open(path, 'rb')
+            if db_cache.readline().strip('\n') == timestamp:
+                mainlist = _unpickle(db_cache)
+                thread.start_new_thread(self._reloadLibrary, (mainlist,))
+                return
         self._downloadStart = time.time()
         self.mpdclient.send('listallinfo', callback=
                 lambda mainlist: self._cacheLibrary(timestamp, mainlist))
@@ -168,9 +168,11 @@ class ModelManager(object):
         '''
         print 'Downloading of the library took {0:.3f} seconds'.format(time.time() - self._downloadStart)
         path = self._getCachePath()
-        with open(path, 'w') as db_cache:
+        with open(path, 'wb') as db_cache:
             db_cache.write('%s\n' % timestamp)
-            db_cache.write(pickle.dumps(mainlist))
+            pickler = pickle.Pickler(db_cache, pickle.HIGHEST_PROTOCOL)
+            for song in mainlist:
+                pickler.dump(song)
         thread.start_new_thread(self._reloadLibrary, (mainlist,))
 
     def _reloadLibrary(self, mainlist):
@@ -179,7 +181,12 @@ class ModelManager(object):
         '''
         self._parseStart = time.time()
         server = self.config.server
-        self.libraryMutex.lock(self.library.reload, mainlist)
+        try:
+            self.libraryMutex.lock(self.library.reload, mainlist)
+        except pickle.UnpickleableError:
+            self.reloadLibrary(force=True)
+            self.libraryMutex.unlock()
+            return
         self.libraryMutex.unlock()
         print 'library parsing took {0:.3} seconds'.format(time.time() - self._parseStart)
         if self.config.server == server:
@@ -195,4 +202,19 @@ class ModelManager(object):
             self.fileSystem.reload()
             print 'load file system took %.3f seconds' % (time.time() - t)
             print 'library load took %.3f seconds' % (time.time() - p)
+
+
+def _unpickle(db_cache):
+    unpickler = pickle.Unpickler(db_cache)
+    try:
+        song = unpickler.load()
+        if not isinstance(song, dict):
+            db_cache.close()
+            raise pickle.UnpickleableError
+        yield song
+        while True:
+            yield unpickler.load()
+    except EOFError:
+        db_cache.close()
+        raise StopIteration
 
