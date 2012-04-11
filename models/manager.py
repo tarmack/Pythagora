@@ -131,11 +131,8 @@ class ModelManager(object):
         server.
         The cache is automatically updated when necessary.
         '''
-        if force:
-            self._getLibrary(0)
-        else:
-            self.mpdclient.send('stats', callback=
-                    lambda stats: self._getLibrary(stats['db_update']))
+        self.mpdclient.send('stats', callback=
+                lambda stats: self._getLibrary(stats['db_update'], force=force))
 
     def _getCachePath(self):
         '''
@@ -147,20 +144,20 @@ class ModelManager(object):
             os.makedirs(cache)
         return '/'.join((cache, file_name))
 
-    def _getLibrary(self, timestamp):
+    def _getLibrary(self, timestamp, force=False):
         '''
         Retrieves the library from the appropriate source.
         '''
         path = self._getCachePath()
-        if os.path.exists(path):
+        if os.path.exists(path) and not force:
             db_cache = open(path, 'rb')
             if db_cache.readline().strip('\n') == timestamp:
                 mainlist = _unpickle(db_cache)
                 thread.start_new_thread(self._reloadLibrary, (mainlist,))
-                return
-        self._downloadStart = time.time()
-        self.mpdclient.send('listallinfo', callback=
-                lambda mainlist: self._cacheLibrary(timestamp, mainlist))
+        else:
+            self._downloadStart = time.time()
+            self.mpdclient.send('listallinfo', callback=
+                    lambda mainlist: self._cacheLibrary(timestamp, mainlist))
 
     def _cacheLibrary(self, timestamp, mainlist):
         '''
