@@ -35,6 +35,7 @@ class MPDClient(MPDClientBase):
     objects and adds support for unicode input.
     '''
     def __init__(self):
+        self._cache = {}
         MPDClientBase.__init__(self)
         if hasattr(MPDClientBase, '_writecommand'):
             self._commands.update({'rescan': self._getitem
@@ -54,7 +55,7 @@ class MPDClient(MPDClientBase):
         def _readitem(self, separator):
             item = MPDClientBase._readitem(self, separator)
             if item:
-                item[1] = item[1].decode(ENCODING)
+                item[1] = self._decode(item[1])
             return item
 
     else:
@@ -67,6 +68,15 @@ class MPDClient(MPDClientBase):
         def _read_pair(self, separator):
             item = MPDClientBase._read_pair(self, separator)
             if item:
-                item[1] = item[1].decode(ENCODING)
+                item[1] = self._decode(item[1])
             return item
+
+
+    def _decode(self, value):
+        try:
+            return self._cache[value]
+        except KeyError:
+            result = value.decode(ENCODING)
+            self._cache[value] = result
+            return result
 
