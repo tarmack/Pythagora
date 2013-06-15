@@ -68,6 +68,8 @@ class PlayerState(QObject):
             elif attr == 'volume':
                 attr = 'setvol'
                 self._setState('volume', value)
+            elif attr in ('random', 'repeat', 'single', 'consume'):
+                value = int(value)
             self.mpdclient.send(attr, (value,))
 
     def _setState(self, item, value):
