@@ -104,6 +104,8 @@ class CurrentPlaylistForm(QWidget, auxilia.Actions, CurrentListForm):
                 icon="document-save-as", text='Save', tooltip="Save the current playlist.")
         self.currentMenuCrop = self.action(self.currentList, self._cropCurrent,
                 icon="project-development-close", text='Crop', tooltip="Remove all but the selected songs.")
+        self.currentMenuShuffle = self.action(self.currentList, self.playQueue.shuffle,
+                icon="media-playlist-shuffle", text='Shuffle', tooltip="Shuffle the songs in the playlist.")
 
         # Set the Off icon for the repeat and random buttons.
         icon = self.randomButton.icon()

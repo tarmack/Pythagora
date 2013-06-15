@@ -348,6 +348,9 @@ class PlayQueueModel(QAbstractListModel):
         self.mpdclient.send('deleteid', song.id)
         return song
 
+    def shuffle(self):
+        self.mpdclient.send('shuffle')
+
     def __len__(self):
         return len(self._songs)
 
