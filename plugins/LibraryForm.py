@@ -88,9 +88,9 @@ class LibraryForm(PluginBase.PluginBase, auxilia.Actions, LibraryForm):
         self.connect(self.showAllTracks, SIGNAL('clicked()'), self.trackHideProxy.reset)
 
         # Double click actions.
-        self.connect(self.artistView, SIGNAL('itemDoubleClicked(QListWidgetItem*)'), self.addArtist)
-        self.connect(self.albumView, SIGNAL('itemDoubleClicked(QListWidgetItem*)'), self.addAlbum)
-        self.connect(self.trackView, SIGNAL('itemDoubleClicked(QTreeWidgetItem*,int)'), self.addTrack)
+        self.connect(self.artistView, SIGNAL('doubleClicked(const QModelIndex &)'), self.addArtist)
+        self.connect(self.albumView, SIGNAL('doubleClicked(const QModelIndex &)'), self.addAlbum)
+        self.connect(self.trackView, SIGNAL('doubleClicked(const QModelIndex &)'), self.addTrack)
 
 
         # Create context menu's.
@@ -150,17 +150,17 @@ class LibraryForm(PluginBase.PluginBase, auxilia.Actions, LibraryForm):
                 row = self.trackModel.findRow(song)
                 self.trackHideProxy.showRow(row)
 
-    def addArtist(self, play=False):
+    def addArtist(self, index=0, play=False):
         '''Add all songs from the currently selected artist into the current playlist'''
         songs = (song for artist in self._selectedArtists() for song in artist.songs)
         return self._addSongSet(songs, play)
 
-    def addAlbum(self, play=False):
+    def addAlbum(self, index=0, play=False):
         '''Add all songs from the currently selected album into the current playlist'''
         songs = (song for album in self._selectedAlbums() for song in album.songs)
         return self._addSongSet(songs, play)
 
-    def addTrack(self, play=False):
+    def addTrack(self, index=0, play=False):
         '''Add all selected songs into the current playlist'''
         songs = (song for song in self._selectedTracks())
         return self._addSongSet(songs, play)
