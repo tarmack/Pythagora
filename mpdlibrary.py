@@ -44,11 +44,13 @@ class Library(object):
                 album = song.get('album', 'None')
                 self._albums[album] = index
 
-                artist = 'Unknown'
+                artist = None
                 for field in ('artist', 'performer', 'composer'):
                     if field in song:
                         artist = song[field]
                         self._artists[artist] = index
+                    if artist is None:
+                        self._artists['Unknown'] = index
                 if 'albumartist' in song:
                     self._artists[song['albumartist']] = index
 
