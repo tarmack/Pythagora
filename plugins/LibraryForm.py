@@ -18,6 +18,7 @@
 from PyQt4.QtCore import SIGNAL, Qt, QModelIndex
 from PyQt4.QtGui import QHeaderView, QSortFilterProxyModel, QAbstractProxyModel, QFontMetrics, QFont
 import bisect
+import array
 
 from ui import LibraryForm
 
@@ -203,8 +204,8 @@ class HidingProxyModel(QAbstractProxyModel):
     def __init__(self, sourceModel):
         QAbstractProxyModel.__init__(self)
         self.setSourceModel(sourceModel)
+        self.shown = array.array('i', xrange(sourceModel.rowCount(QModelIndex())))
         self.connect(sourceModel, SIGNAL('modelReset()'), self.reset)
-        self.shown = []
 
     def setSourceModel(self, sourceModel):
         self._sourceModel = sourceModel
@@ -229,11 +230,11 @@ class HidingProxyModel(QAbstractProxyModel):
         return QModelIndex()
 
     def reset(self):
-        self.shown = range(self._sourceModel.rowCount(QModelIndex()))
+        self.shown = array.array('i', xrange(self._sourceModel.rowCount(QModelIndex())))
         self.emit(SIGNAL('modelReset()'))
 
     def hideRow(self, row):
-        index = self.mapFromSource(row)
+        index = self.mapRowFromSource(row)
         if index >= 0:
             self.beginRemoveRows(QModelIndex(), index, index)
             del self.shown[index]
@@ -248,7 +249,7 @@ class HidingProxyModel(QAbstractProxyModel):
 
     def hideAll(self):
         self.beginRemoveRows(QModelIndex(), 0, len(self.shown))
-        self.shown = []
+        self.shown = array.array('i')
         self.endRemoveRows()
 
     def mapToSource(self, index):
