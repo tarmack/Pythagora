@@ -17,8 +17,6 @@
 import locale
 import time
 import collections
-from array import array
-import trie
 
 locale.setlocale(locale.LC_ALL, "")
 
@@ -184,10 +182,10 @@ def _sort_album_songs(x, y):
             or cmp(int(Track(x.get('track'))), int(Track(y.get('track'))))
 
 
-class LibraryIndex(trie.Trie):
+class LibraryIndex(dict):
     '''A dictionary for storing the library data.'''
     def __init__(self, values=[]):
-        trie.Trie.__init__(self, values)
+        dict.__init__(self, values)
         self._order = []
 
     def __setitem__(self, key, value):
@@ -201,7 +199,7 @@ class LibraryIndex(trie.Trie):
                     part.append(value)
             else:
                 self._order.append(key)
-                trie.Trie.__setitem__(self, key, array('I', [value]))
+                dict.__setitem__(self, key, [value])
 
     def __iter__(self):
         return self._order.__iter__()
@@ -209,7 +207,7 @@ class LibraryIndex(trie.Trie):
     def __getitem__(self, key):
         if isinstance(key, int):
             return self._order[key]
-        return trie.Trie.__getitem__(self, key)
+        return dict.__getitem__(self, key)
 
 
 class LibraryView(collections.Sequence):
