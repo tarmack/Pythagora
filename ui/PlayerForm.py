@@ -2,8 +2,8 @@
 
 # Form implementation generated from reading ui file 'PlayerForm.ui'
 #
-# Created: Mon Apr  2 21:30:45 2012
-#      by: PyQt4 UI code generator 4.8.5
+# Created: Sat Aug 11 18:48:04 2012
+#      by: PyQt4 UI code generator 4.9.1
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -23,7 +23,6 @@ class Ui_PlayerForm(object):
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(PlayerForm.sizePolicy().hasHeightForWidth())
         PlayerForm.setSizePolicy(sizePolicy)
-        PlayerForm.setWindowTitle(QtGui.QApplication.translate("PlayerForm", "Form", None, QtGui.QApplication.UnicodeUTF8))
         self.gridLayout_2 = QtGui.QGridLayout(PlayerForm)
         self.gridLayout_2.setMargin(0)
         self.gridLayout_2.setVerticalSpacing(0)
@@ -81,7 +80,6 @@ class Ui_PlayerForm(object):
         self.progress.setObjectName(_fromUtf8("progress"))
         self.gridLayout.addWidget(self.progress, 1, 1, 1, 1)
         self.songIcon = QtGui.QLabel(PlayerForm)
-        self.songIcon.setToolTip(QtGui.QApplication.translate("PlayerForm", "Click to enlarge", None, QtGui.QApplication.UnicodeUTF8))
         self.songIcon.setLineWidth(0)
         self.songIcon.setText(_fromUtf8(""))
         self.songIcon.setAlignment(QtCore.Qt.AlignBottom|QtCore.Qt.AlignLeading|QtCore.Qt.AlignLeft)
@@ -100,5 +98,6 @@ class Ui_PlayerForm(object):
         QtCore.QMetaObject.connectSlotsByName(PlayerForm)
 
     def retranslateUi(self, PlayerForm):
-        pass
+        PlayerForm.setWindowTitle(QtGui.QApplication.translate("PlayerForm", "Form", None, QtGui.QApplication.UnicodeUTF8))
+        self.songIcon.setToolTip(QtGui.QApplication.translate("PlayerForm", "Click to enlarge", None, QtGui.QApplication.UnicodeUTF8))
 

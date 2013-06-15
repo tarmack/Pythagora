@@ -2,8 +2,8 @@
 
 # Form implementation generated from reading ui file 'FileSystemForm.ui'
 #
-# Created: Mon Apr  2 21:30:45 2012
-#      by: PyQt4 UI code generator 4.8.5
+# Created: Sat Aug 11 18:48:04 2012
+#      by: PyQt4 UI code generator 4.9.1
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -18,7 +18,6 @@ class Ui_FileSystemForm(object):
     def setupUi(self, FileSystemForm):
         FileSystemForm.setObjectName(_fromUtf8("FileSystemForm"))
         FileSystemForm.resize(400, 300)
-        FileSystemForm.setWindowTitle(QtGui.QApplication.translate("FileSystemForm", "Form", None, QtGui.QApplication.UnicodeUTF8))
         self.horizontalLayout = QtGui.QHBoxLayout(FileSystemForm)
         self.horizontalLayout.setObjectName(_fromUtf8("horizontalLayout"))
         self.filesystemTree = QtGui.QTreeView(FileSystemForm)
@@ -39,5 +38,5 @@ class Ui_FileSystemForm(object):
         QtCore.QMetaObject.connectSlotsByName(FileSystemForm)
 
     def retranslateUi(self, FileSystemForm):
-        pass
+        FileSystemForm.setWindowTitle(QtGui.QApplication.translate("FileSystemForm", "Form", None, QtGui.QApplication.UnicodeUTF8))
 

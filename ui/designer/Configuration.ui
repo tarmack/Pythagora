@@ -42,7 +42,7 @@ If no folder.jpg can be found the cover art will be downloaded and cached in the
          </property>
          <property name="icon">
           <iconset>
-           <normaloff>../icons/document-open-folder.png</normaloff>../icons/document-open-folder.png</iconset>
+           <normaloff>ui/icons/document-open-folder.png</normaloff>ui/icons/document-open-folder.png</iconset>
          </property>
         </widget>
        </item>

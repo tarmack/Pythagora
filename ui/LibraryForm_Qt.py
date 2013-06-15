@@ -2,8 +2,8 @@
 
 # Form implementation generated from reading ui file 'LibraryForm.ui.Qt'
 #
-# Created: Mon Apr  2 21:30:45 2012
-#      by: PyQt4 UI code generator 4.8.5
+# Created: Sat Aug 11 18:48:04 2012
+#      by: PyQt4 UI code generator 4.9.1
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -18,7 +18,6 @@ class Ui_LibraryForm(object):
     def setupUi(self, LibraryForm):
         LibraryForm.setObjectName(_fromUtf8("LibraryForm"))
         LibraryForm.resize(570, 512)
-        LibraryForm.setWindowTitle(QtGui.QApplication.translate("LibraryForm", "Form", None, QtGui.QApplication.UnicodeUTF8))
         self.horizontalLayout = QtGui.QHBoxLayout(LibraryForm)
         self.horizontalLayout.setObjectName(_fromUtf8("horizontalLayout"))
         self.libSplitter_1 = QtGui.QSplitter(LibraryForm)
@@ -40,7 +39,6 @@ class Ui_LibraryForm(object):
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.label.sizePolicy().hasHeightForWidth())
         self.label.setSizePolicy(sizePolicy)
-        self.label.setText(QtGui.QApplication.translate("LibraryForm", "Artist", None, QtGui.QApplication.UnicodeUTF8))
         self.label.setMargin(2)
         self.label.setIndent(2)
         self.label.setObjectName(_fromUtf8("label"))
@@ -79,7 +77,6 @@ class Ui_LibraryForm(object):
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.label_3.sizePolicy().hasHeightForWidth())
         self.label_3.setSizePolicy(sizePolicy)
-        self.label_3.setText(QtGui.QApplication.translate("LibraryForm", "Album", None, QtGui.QApplication.UnicodeUTF8))
         self.label_3.setMargin(2)
         self.label_3.setIndent(2)
         self.label_3.setObjectName(_fromUtf8("label_3"))
@@ -105,8 +102,6 @@ class Ui_LibraryForm(object):
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.showAllAlbums.sizePolicy().hasHeightForWidth())
         self.showAllAlbums.setSizePolicy(sizePolicy)
-        self.showAllAlbums.setToolTip(QtGui.QApplication.translate("LibraryForm", "Resets the album list to show all your albums again.", None, QtGui.QApplication.UnicodeUTF8))
-        self.showAllAlbums.setText(QtGui.QApplication.translate("LibraryForm", "Show All", None, QtGui.QApplication.UnicodeUTF8))
         self.showAllAlbums.setObjectName(_fromUtf8("showAllAlbums"))
         self.gridLayout_3.addWidget(self.showAllAlbums, 0, 2, 1, 1)
         self.widget_4 = QtGui.QWidget(self.libSplitter_1)
@@ -122,7 +117,6 @@ class Ui_LibraryForm(object):
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.label_2.sizePolicy().hasHeightForWidth())
         self.label_2.setSizePolicy(sizePolicy)
-        self.label_2.setText(QtGui.QApplication.translate("LibraryForm", "Tracks", None, QtGui.QApplication.UnicodeUTF8))
         self.label_2.setMargin(2)
         self.label_2.setIndent(2)
         self.label_2.setObjectName(_fromUtf8("label_2"))
@@ -168,8 +162,6 @@ class Ui_LibraryForm(object):
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.showAllTracks.sizePolicy().hasHeightForWidth())
         self.showAllTracks.setSizePolicy(sizePolicy)
-        self.showAllTracks.setToolTip(QtGui.QApplication.translate("LibraryForm", "Resets the track list to show all your songs again.", None, QtGui.QApplication.UnicodeUTF8))
-        self.showAllTracks.setText(QtGui.QApplication.translate("LibraryForm", "Show All", None, QtGui.QApplication.UnicodeUTF8))
         self.showAllTracks.setObjectName(_fromUtf8("showAllTracks"))
         self.gridLayout_9.addWidget(self.showAllTracks, 0, 2, 1, 1)
         self.horizontalLayout.addWidget(self.libSplitter_1)
@@ -188,5 +180,12 @@ class Ui_LibraryForm(object):
         LibraryForm.setTabOrder(self.showAllTracks, self.trackView)
 
     def retranslateUi(self, LibraryForm):
-        pass
+        LibraryForm.setWindowTitle(QtGui.QApplication.translate("LibraryForm", "Form", None, QtGui.QApplication.UnicodeUTF8))
+        self.label.setText(QtGui.QApplication.translate("LibraryForm", "Artist", None, QtGui.QApplication.UnicodeUTF8))
+        self.label_3.setText(QtGui.QApplication.translate("LibraryForm", "Album", None, QtGui.QApplication.UnicodeUTF8))
+        self.showAllAlbums.setToolTip(QtGui.QApplication.translate("LibraryForm", "Resets the album list to show all your albums again.", None, QtGui.QApplication.UnicodeUTF8))
+        self.showAllAlbums.setText(QtGui.QApplication.translate("LibraryForm", "Show All", None, QtGui.QApplication.UnicodeUTF8))
+        self.label_2.setText(QtGui.QApplication.translate("LibraryForm", "Tracks", None, QtGui.QApplication.UnicodeUTF8))
+        self.showAllTracks.setToolTip(QtGui.QApplication.translate("LibraryForm", "Resets the track list to show all your songs again.", None, QtGui.QApplication.UnicodeUTF8))
+        self.showAllTracks.setText(QtGui.QApplication.translate("LibraryForm", "Show All", None, QtGui.QApplication.UnicodeUTF8))
 

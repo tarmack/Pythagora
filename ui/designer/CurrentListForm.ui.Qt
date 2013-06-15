@@ -227,7 +227,7 @@
            </property>
            <property name="icon">
             <iconset>
-             <normaloff>../icons/edit-clear-list.png</normaloff>../icons/edit-clear-list.png</iconset>
+             <normaloff>ui/icons/edit-clear-list.png</normaloff>ui/icons/edit-clear-list.png</iconset>
            </property>
           </widget>
          </item>
@@ -244,7 +244,7 @@
            </property>
            <property name="icon">
             <iconset>
-             <normaloff>../icons/list-remove.png</normaloff>../icons/list-remove.png</iconset>
+             <normaloff>ui/icons/list-remove.png</normaloff>ui/icons/list-remove.png</iconset>
            </property>
           </widget>
          </item>
@@ -261,7 +261,7 @@
            </property>
            <property name="icon">
             <iconset>
-             <normaloff>../icons/document-save-as.png</normaloff>../icons/document-save-as.png</iconset>
+             <normaloff>ui/icons/document-save-as.png</normaloff>ui/icons/document-save-as.png</iconset>
            </property>
           </widget>
          </item>
@@ -278,7 +278,7 @@
            </property>
            <property name="icon">
             <iconset>
-             <normaloff>../icons/network-workgroup.png</normaloff>../icons/network-workgroup.png</iconset>
+             <normaloff>ui/icons/network-workgroup.png</normaloff>ui/icons/network-workgroup.png</iconset>
            </property>
           </widget>
          </item>
@@ -344,7 +344,7 @@
            </property>
            <property name="icon">
             <iconset>
-             <normaloff>../icons/task-recurring.png</normaloff>../icons/task-recurring.png</iconset>
+             <normaloff>ui/icons/task-recurring.png</normaloff>ui/icons/task-recurring.png</iconset>
            </property>
            <property name="checkable">
             <bool>true</bool>
@@ -376,7 +376,7 @@
            </property>
            <property name="icon">
             <iconset>
-             <normaloff>../icons/media-playlist-shuffle.png</normaloff>../icons/media-playlist-shuffle.png</iconset>
+             <normaloff>ui/icons/media-playlist-shuffle.png</normaloff>ui/icons/media-playlist-shuffle.png</iconset>
            </property>
            <property name="checkable">
             <bool>true</bool>

@@ -2,8 +2,8 @@
 
 # Form implementation generated from reading ui file 'Configuration.ui'
 #
-# Created: Mon Apr  2 21:30:45 2012
-#      by: PyQt4 UI code generator 4.8.5
+# Created: Sat Aug 11 18:48:04 2012
+#      by: PyQt4 UI code generator 4.9.1
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -18,7 +18,6 @@ class Ui_Configuration(object):
     def setupUi(self, Configuration):
         Configuration.setObjectName(_fromUtf8("Configuration"))
         Configuration.resize(563, 255)
-        Configuration.setWindowTitle(QtGui.QApplication.translate("Configuration", "Dialog", None, QtGui.QApplication.UnicodeUTF8))
         self.verticalLayout = QtGui.QVBoxLayout(Configuration)
         self.verticalLayout.setObjectName(_fromUtf8("verticalLayout"))
         self.tabs = QtGui.QTabWidget(Configuration)
@@ -28,15 +27,11 @@ class Ui_Configuration(object):
         self.gridLayout = QtGui.QGridLayout(self.mainTab)
         self.gridLayout.setObjectName(_fromUtf8("gridLayout"))
         self.coverPath = QtGui.QLineEdit(self.mainTab)
-        self.coverPath.setToolTip(QtGui.QApplication.translate("Configuration", "Path to the mpd library root to use folder.jpg\'s as cover art.\n"
-"If no folder.jpg can be found the cover art will be downloaded and cached in the \'covers\' subdirectory.", None, QtGui.QApplication.UnicodeUTF8))
         self.coverPath.setObjectName(_fromUtf8("coverPath"))
         self.gridLayout.addWidget(self.coverPath, 4, 1, 1, 1)
         self.coverDirButton = QtGui.QPushButton(self.mainTab)
-        self.coverDirButton.setToolTip(QtGui.QApplication.translate("Configuration", "Browse for the directory.", None, QtGui.QApplication.UnicodeUTF8))
-        self.coverDirButton.setText(QtGui.QApplication.translate("Configuration", "Browse", None, QtGui.QApplication.UnicodeUTF8))
         icon = QtGui.QIcon()
-        icon.addPixmap(QtGui.QPixmap(_fromUtf8("../icons/document-open-folder.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        icon.addPixmap(QtGui.QPixmap(_fromUtf8("ui/icons/document-open-folder.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.coverDirButton.setIcon(icon)
         self.coverDirButton.setObjectName(_fromUtf8("coverDirButton"))
         self.gridLayout.addWidget(self.coverDirButton, 4, 2, 1, 2)
@@ -57,7 +52,6 @@ class Ui_Configuration(object):
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.showNotification.sizePolicy().hasHeightForWidth())
         self.showNotification.setSizePolicy(sizePolicy)
-        self.showNotification.setText(QtGui.QApplication.translate("Configuration", "Show notifications on song change for ", None, QtGui.QApplication.UnicodeUTF8))
         self.showNotification.setObjectName(_fromUtf8("showNotification"))
         self.horizontalLayout.addWidget(self.showNotification)
         self.notificationTimeout = QtGui.QSpinBox(self.showNotificationWidget)
@@ -75,7 +69,6 @@ class Ui_Configuration(object):
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.label_3.sizePolicy().hasHeightForWidth())
         self.label_3.setSizePolicy(sizePolicy)
-        self.label_3.setText(QtGui.QApplication.translate("Configuration", "seconds", None, QtGui.QApplication.UnicodeUTF8))
         self.label_3.setObjectName(_fromUtf8("label_3"))
         self.horizontalLayout.addWidget(self.label_3)
         self.gridLayout.addWidget(self.showNotificationWidget, 0, 1, 1, 3)
@@ -85,9 +78,6 @@ class Ui_Configuration(object):
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.label.sizePolicy().hasHeightForWidth())
         self.label.setSizePolicy(sizePolicy)
-        self.label.setToolTip(QtGui.QApplication.translate("Configuration", "Path to the mpd library root to use folder.jpg\'s as cover art.\n"
-"If no folder.jpg can be found the cover art will be downloaded and cached in the \'covers\' subdirectory.", None, QtGui.QApplication.UnicodeUTF8))
-        self.label.setText(QtGui.QApplication.translate("Configuration", "Cover directory:", None, QtGui.QApplication.UnicodeUTF8))
         self.label.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
         self.label.setObjectName(_fromUtf8("label"))
         self.gridLayout.addWidget(self.label, 4, 0, 1, 1)
@@ -104,16 +94,12 @@ class Ui_Configuration(object):
         self.serverTable.setColumnCount(4)
         self.serverTable.setRowCount(0)
         item = QtGui.QTableWidgetItem()
-        item.setText(QtGui.QApplication.translate("Configuration", "Name", None, QtGui.QApplication.UnicodeUTF8))
         self.serverTable.setHorizontalHeaderItem(0, item)
         item = QtGui.QTableWidgetItem()
-        item.setText(QtGui.QApplication.translate("Configuration", "Address", None, QtGui.QApplication.UnicodeUTF8))
         self.serverTable.setHorizontalHeaderItem(1, item)
         item = QtGui.QTableWidgetItem()
-        item.setText(QtGui.QApplication.translate("Configuration", "Port", None, QtGui.QApplication.UnicodeUTF8))
         self.serverTable.setHorizontalHeaderItem(2, item)
         item = QtGui.QTableWidgetItem()
-        item.setText(QtGui.QApplication.translate("Configuration", "Password", None, QtGui.QApplication.UnicodeUTF8))
         self.serverTable.setHorizontalHeaderItem(3, item)
         self.serverTable.horizontalHeader().setStretchLastSection(True)
         self.serverTable.verticalHeader().setVisible(False)
@@ -138,10 +124,24 @@ class Ui_Configuration(object):
         Configuration.setTabOrder(self.serverTable, self.buttonBox)
 
     def retranslateUi(self, Configuration):
+        Configuration.setWindowTitle(QtGui.QApplication.translate("Configuration", "Dialog", None, QtGui.QApplication.UnicodeUTF8))
+        self.coverPath.setToolTip(QtGui.QApplication.translate("Configuration", "Path to the mpd library root to use folder.jpg\'s as cover art.\n"
+"If no folder.jpg can be found the cover art will be downloaded and cached in the \'covers\' subdirectory.", None, QtGui.QApplication.UnicodeUTF8))
+        self.coverDirButton.setToolTip(QtGui.QApplication.translate("Configuration", "Browse for the directory.", None, QtGui.QApplication.UnicodeUTF8))
+        self.coverDirButton.setText(QtGui.QApplication.translate("Configuration", "Browse", None, QtGui.QApplication.UnicodeUTF8))
+        self.showNotification.setText(QtGui.QApplication.translate("Configuration", "Show notifications on song change for ", None, QtGui.QApplication.UnicodeUTF8))
+        self.label_3.setText(QtGui.QApplication.translate("Configuration", "seconds", None, QtGui.QApplication.UnicodeUTF8))
+        self.label.setToolTip(QtGui.QApplication.translate("Configuration", "Path to the mpd library root to use folder.jpg\'s as cover art.\n"
+"If no folder.jpg can be found the cover art will be downloaded and cached in the \'covers\' subdirectory.", None, QtGui.QApplication.UnicodeUTF8))
+        self.label.setText(QtGui.QApplication.translate("Configuration", "Cover directory:", None, QtGui.QApplication.UnicodeUTF8))
         self.tabs.setTabText(self.tabs.indexOf(self.mainTab), QtGui.QApplication.translate("Configuration", "Main", None, QtGui.QApplication.UnicodeUTF8))
         item = self.serverTable.horizontalHeaderItem(0)
+        item.setText(QtGui.QApplication.translate("Configuration", "Name", None, QtGui.QApplication.UnicodeUTF8))
         item = self.serverTable.horizontalHeaderItem(1)
+        item.setText(QtGui.QApplication.translate("Configuration", "Address", None, QtGui.QApplication.UnicodeUTF8))
         item = self.serverTable.horizontalHeaderItem(2)
+        item.setText(QtGui.QApplication.translate("Configuration", "Port", None, QtGui.QApplication.UnicodeUTF8))
         item = self.serverTable.horizontalHeaderItem(3)
+        item.setText(QtGui.QApplication.translate("Configuration", "Password", None, QtGui.QApplication.UnicodeUTF8))
         self.tabs.setTabText(self.tabs.indexOf(self.serverTab), QtGui.QApplication.translate("Configuration", "Servers", None, QtGui.QApplication.UnicodeUTF8))
 
