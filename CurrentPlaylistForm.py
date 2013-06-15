@@ -215,16 +215,10 @@ class CurrentPlaylistForm(QWidget, auxilia.Actions, CurrentListForm):
         del self.playQueue[start:end]
 
     def _playSong(self, index=None):
-        if index is not None:
-            if hasattr(index, 'row'):
-                row = index.row()
-            else:
-                row = index
-        else:
-            try:
-                row = self._getSelectedRows().next()
-            except StopIteration:
-                return
+        try:
+            row = self._getSelectedRows().next()
+        except StopIteration:
+            return
         self.playerState.currentSong = row
         self.playerState.play()
 
