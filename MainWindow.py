@@ -442,7 +442,7 @@ class PlayerForm(QWidget, PlayerForm):
         iconLabel.setGeometry(geometry)
         iconLabel.setPixmap(songIcon)
         iconLabel.mousePressEvent = closeEvent
-        popup.popup(geometry.topLeft())
+        popup.popup(event.globalPos() - event.pos())
 
 
 class SongLabel(QLabel):
