@@ -48,8 +48,7 @@ class Library(object):
                 for field in ('artist', 'performer', 'composer'):
                     if field in song:
                         artist = song[field]
-                        break
-                self._artists[artist] = index
+                        self._artists[artist] = index
                 if 'albumartist' in song:
                     self._artists[song['albumartist']] = index
 
