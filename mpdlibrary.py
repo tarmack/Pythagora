@@ -16,8 +16,9 @@
 #-------------------------------------------------------------------------------
 import locale
 import time
-import array
 import collections
+from array import array
+import trie
 
 locale.setlocale(locale.LC_ALL, "")
 
@@ -39,33 +40,37 @@ class Library(object):
             self._filesystem = {}
         # parse the list and prepare it for loading in the library browser and the file system view.
         for index, song in enumerate(self._song_list):
-            album = song.get('album', 'None')
-            self._albums[album] = index
+            try:
+                album = song.get('album', 'None')
+                self._albums[album] = index
 
-            artist = 'Unknown'
-            for field in ('artist', 'performer', 'composer'):
-                if field in song:
-                    artist = song[field]
-                    break
-            self._artists[artist] = index
-            if 'albumartist' in song:
-                self._artists[song['albumartist']] = index
+                artist = 'Unknown'
+                for field in ('artist', 'performer', 'composer'):
+                    if field in song:
+                        artist = song[field]
+                        break
+                self._artists[artist] = index
+                if 'albumartist' in song:
+                    self._artists[song['albumartist']] = index
 
-            genre = song.get('genre', None)
-            if genre:
-                    self._genres[genre] = index
+                genre = song.get('genre', None)
+                if genre:
+                        self._genres[genre] = index
 
-            if self.options.get('filesystem', True):
-                # Build the file system tree.
-                fslist = self._filesystem
-                path = song['file'].split('/')
-                while path:
-                    part = path.pop(0)
-                    if path == []:
-                        fslist[part] = index
-                    else:
-                        fslist[part] = fslist.get(part, {})
-                        fslist = fslist[part]
+                if self.options.get('filesystem', True):
+                    # Build the file system tree.
+                    fslist = self._filesystem
+                    path = song['file'].split('/')
+                    while path:
+                        part = path.pop(0)
+                        if path == []:
+                            fslist[part] = index
+                        else:
+                            fslist[part] = fslist.get(part, {})
+                            fslist = fslist[part]
+            except:
+                print '###error###', index, song
+                raise
 
         print('info: Setting up of the library took %.3f seconds.' % (time.time() - reload_start))
         self._artists._order.sort(cmp=locale.strcoll)
@@ -178,10 +183,10 @@ def _sort_album_songs(x, y):
             or cmp(int(Track(x.get('track'))), int(Track(y.get('track'))))
 
 
-class LibraryIndex(dict):
+class LibraryIndex(trie.Trie):
     '''A dictionary for storing the library data.'''
     def __init__(self, values=[]):
-        dict.__init__(self, values)
+        trie.Trie.__init__(self, values)
         self._order = []
 
     def __setitem__(self, key, value):
@@ -195,7 +200,7 @@ class LibraryIndex(dict):
                     part.append(value)
             else:
                 self._order.append(key)
-                dict.__setitem__(self, key, array.array('H', [value]))
+                trie.Trie.__setitem__(self, key, array('I', [value]))
 
     def __iter__(self):
         return self._order.__iter__()
@@ -203,7 +208,7 @@ class LibraryIndex(dict):
     def __getitem__(self, key):
         if isinstance(key, int):
             return self._order[key]
-        return dict.__getitem__(self, key)
+        return trie.Trie.__getitem__(self, key)
 
 
 class LibraryView(collections.Sequence):
