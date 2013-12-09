@@ -97,9 +97,13 @@ class Retriever:
         if not self.coverPath:
             return None
         x = song['file'].rfind('/')
-        dir = song['file'][:x]
-        iconname = os.path.expanduser(self.coverPath) + '/' + dir + '/folder.jpg'
-        if os.path.exists(iconname):
+        directory = song['file'][:x]
+        iconname = os.path.join(os.path.expanduser(self.coverPath), directory, 'folder.jpg')
+        if not os.path.supports_unicode_filenames:
+            path = iconname.encode('utf-8')
+        else:
+            path = iconname
+        if os.path.exists(path):
             return iconname
         else:
             return None
@@ -182,8 +186,8 @@ class Retriever:
 
     def _coverGlob(self, coverPath):
         """
-        Check if the cover file is in the cache. If it's not make sure we have
-        some time between requests to the web services.
+        Check if the cover file is in the cache. If it is return the path, else
+        return None.
         """
         covers = glob(coverPath+'.*')
         if covers != [] and os.path.isfile(covers[0]):
