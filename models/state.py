@@ -99,7 +99,7 @@ class PlayerState(QObject):
         self._setState('progress', status.get('time', '0:0').split(':')[0])
         self._setState('playState', status['state'])
         self._setState('volume', status['volume'])
-        self._setState('xFade', status['xfade'])
+        self._setState('xFade', status.get('xfade', 0))
         self._setState('bitrate', status.get('bitrate', 0))
         self._setState('random', status['random'])
         self._setState('repeat', status['repeat'])
