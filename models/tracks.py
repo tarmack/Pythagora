@@ -46,7 +46,10 @@ class TracksModel(QAbstractItemModel):
         if role == Qt.DisplayRole:
             column = index.column()
             if column == 0:
-                return unicode(song.track)
+                if hasattr(song, 'disc') and song.disc:
+                    return u'%s/%s' % (song.disc, song.track)
+                else:
+                    return unicode(song.track)
             if column == 1:
                 return unicode(song.title)
             if column == 2:
