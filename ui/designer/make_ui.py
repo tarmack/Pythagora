@@ -29,7 +29,7 @@ class output_stream(file):
         #print "###\n", line, "###\n",
         if re.match('\s*icon(\d*) = QtGui.QIcon()', line):
             self._buffer += line
-        elif self._buffer and re.match('\s*icon.addPixmap(QtGui.QPixmap(_fromUtf8("ui/icons/(.*\.png")', line):
+        elif self._buffer and re.match('\s*icon.addPixmap\(QtGui.QPixmap\(_fromUtf8\("ui/icons/(.*\.png")', line):
             print "###", line
         file.write(self, line)
 
