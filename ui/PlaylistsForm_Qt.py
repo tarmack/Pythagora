@@ -2,8 +2,8 @@
 
 # Form implementation generated from reading ui file 'PlaylistsForm.ui.Qt'
 #
-# Created: Sat Aug 11 18:48:04 2012
-#      by: PyQt4 UI code generator 4.9.1
+# Created: Wed Jul  2 23:15:57 2014
+#      by: PyQt4 UI code generator 4.11
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -12,7 +12,16 @@ from PyQt4 import QtCore, QtGui
 try:
     _fromUtf8 = QtCore.QString.fromUtf8
 except AttributeError:
-    _fromUtf8 = lambda s: s
+    def _fromUtf8(s):
+        return s
+
+try:
+    _encoding = QtGui.QApplication.UnicodeUTF8
+    def _translate(context, text, disambig):
+        return QtGui.QApplication.translate(context, text, disambig, _encoding)
+except AttributeError:
+    def _translate(context, text, disambig):
+        return QtGui.QApplication.translate(context, text, disambig)
 
 class Ui_PlaylistsForm(object):
     def setupUi(self, PlaylistsForm):
@@ -27,7 +36,6 @@ class Ui_PlaylistsForm(object):
         self.widget_5.setObjectName(_fromUtf8("widget_5"))
         self.gridLayout_5 = QtGui.QGridLayout(self.widget_5)
         self.gridLayout_5.setMargin(0)
-        self.gridLayout_5.setMargin(0)
         self.gridLayout_5.setObjectName(_fromUtf8("gridLayout_5"))
         self.widget_6 = QtGui.QWidget(self.widget_5)
         sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Fixed, QtGui.QSizePolicy.Expanding)
@@ -38,7 +46,6 @@ class Ui_PlaylistsForm(object):
         self.widget_6.setObjectName(_fromUtf8("widget_6"))
         self.gridLayout_4 = QtGui.QGridLayout(self.widget_6)
         self.gridLayout_4.setMargin(0)
-        self.gridLayout_4.setMargin(0)
         self.gridLayout_4.setObjectName(_fromUtf8("gridLayout_4"))
         self.newButton = QtGui.QPushButton(self.widget_6)
         sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Fixed, QtGui.QSizePolicy.Fixed)
@@ -48,7 +55,8 @@ class Ui_PlaylistsForm(object):
         self.newButton.setSizePolicy(sizePolicy)
         self.newButton.setMaximumSize(QtCore.QSize(120, 16777215))
         self.newButton.setAcceptDrops(True)
-        icon = QtGui.QIcon(icon.addPixmap(QtGui.QPixmap(_fromUtf8("ui/icons/document-new.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off))
+        icon = QtGui.QIcon()
+        icon.addPixmap(QtGui.QPixmap(_fromUtf8("ui/icons/document-new.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.newButton.setIcon(icon)
         self.newButton.setObjectName(_fromUtf8("newButton"))
         self.gridLayout_4.addWidget(self.newButton, 0, 0, 1, 1)
@@ -59,7 +67,8 @@ class Ui_PlaylistsForm(object):
         sizePolicy.setHeightForWidth(self.deleteButton.sizePolicy().hasHeightForWidth())
         self.deleteButton.setSizePolicy(sizePolicy)
         self.deleteButton.setMaximumSize(QtCore.QSize(120, 16777215))
-        icon1 = QtGui.QIcon(icon1.addPixmap(QtGui.QPixmap(_fromUtf8("ui/icons/edit-delete.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off))
+        icon1 = QtGui.QIcon()
+        icon1.addPixmap(QtGui.QPixmap(_fromUtf8("ui/icons/edit-delete.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.deleteButton.setIcon(icon1)
         self.deleteButton.setObjectName(_fromUtf8("deleteButton"))
         self.gridLayout_4.addWidget(self.deleteButton, 1, 0, 1, 1)
@@ -70,7 +79,8 @@ class Ui_PlaylistsForm(object):
         sizePolicy.setHeightForWidth(self.loadButton.sizePolicy().hasHeightForWidth())
         self.loadButton.setSizePolicy(sizePolicy)
         self.loadButton.setMaximumSize(QtCore.QSize(120, 16777215))
-        icon2 = QtGui.QIcon(icon2.addPixmap(QtGui.QPixmap(_fromUtf8("ui/icons/text-frame-link.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off))
+        icon2 = QtGui.QIcon()
+        icon2.addPixmap(QtGui.QPixmap(_fromUtf8("ui/icons/text-frame-link.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.loadButton.setIcon(icon2)
         self.loadButton.setObjectName(_fromUtf8("loadButton"))
         self.gridLayout_4.addWidget(self.loadButton, 2, 0, 1, 1)
@@ -112,8 +122,8 @@ class Ui_PlaylistsForm(object):
         QtCore.QMetaObject.connectSlotsByName(PlaylistsForm)
 
     def retranslateUi(self, PlaylistsForm):
-        PlaylistsForm.setWindowTitle(QtGui.QApplication.translate("PlaylistsForm", "Form", None, QtGui.QApplication.UnicodeUTF8))
-        self.newButton.setText(QtGui.QApplication.translate("PlaylistsForm", "New", None, QtGui.QApplication.UnicodeUTF8))
-        self.deleteButton.setText(QtGui.QApplication.translate("PlaylistsForm", "Delete", None, QtGui.QApplication.UnicodeUTF8))
-        self.loadButton.setText(QtGui.QApplication.translate("PlaylistsForm", "Load", None, QtGui.QApplication.UnicodeUTF8))
+        PlaylistsForm.setWindowTitle(_translate("PlaylistsForm", "Form", None))
+        self.newButton.setText(_translate("PlaylistsForm", "New", None))
+        self.deleteButton.setText(_translate("PlaylistsForm", "Delete", None))
+        self.loadButton.setText(_translate("PlaylistsForm", "Load", None))
 

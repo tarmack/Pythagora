@@ -2,8 +2,8 @@
 
 # Form implementation generated from reading ui file 'LibraryForm.ui'
 #
-# Created: Sat Aug 11 18:48:04 2012
-#      by: PyQt4 UI code generator 4.9.1
+# Created: Wed Jul  2 23:15:57 2014
+#      by: PyQt4 UI code generator 4.11
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -12,7 +12,16 @@ from PyQt4 import QtCore, QtGui
 try:
     _fromUtf8 = QtCore.QString.fromUtf8
 except AttributeError:
-    _fromUtf8 = lambda s: s
+    def _fromUtf8(s):
+        return s
+
+try:
+    _encoding = QtGui.QApplication.UnicodeUTF8
+    def _translate(context, text, disambig):
+        return QtGui.QApplication.translate(context, text, disambig, _encoding)
+except AttributeError:
+    def _translate(context, text, disambig):
+        return QtGui.QApplication.translate(context, text, disambig)
 
 class Ui_LibraryForm(object):
     def setupUi(self, LibraryForm):
@@ -31,7 +40,6 @@ class Ui_LibraryForm(object):
         self.gridLayout = QtGui.QGridLayout(self.widget)
         self.gridLayout.setMargin(0)
         self.gridLayout.setSpacing(0)
-        self.gridLayout.setMargin(0)
         self.gridLayout.setObjectName(_fromUtf8("gridLayout"))
         self.label = QtGui.QLabel(self.widget)
         sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Fixed, QtGui.QSizePolicy.Preferred)
@@ -68,7 +76,6 @@ class Ui_LibraryForm(object):
         self.gridLayout_3 = QtGui.QGridLayout(self.widget_3)
         self.gridLayout_3.setMargin(0)
         self.gridLayout_3.setSpacing(0)
-        self.gridLayout_3.setMargin(0)
         self.gridLayout_3.setObjectName(_fromUtf8("gridLayout_3"))
         self.albumSearchField = KLineEdit(self.widget_3)
         self.albumSearchField.setProperty("trapEnterKeyEvent", True)
@@ -113,7 +120,6 @@ class Ui_LibraryForm(object):
         self.gridLayout_9 = QtGui.QGridLayout(self.widget_4)
         self.gridLayout_9.setMargin(0)
         self.gridLayout_9.setSpacing(0)
-        self.gridLayout_9.setMargin(0)
         self.gridLayout_9.setObjectName(_fromUtf8("gridLayout_9"))
         self.label_2 = QtGui.QLabel(self.widget_4)
         sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Fixed, QtGui.QSizePolicy.Preferred)
@@ -186,13 +192,13 @@ class Ui_LibraryForm(object):
         LibraryForm.setTabOrder(self.showAllTracks, self.trackView)
 
     def retranslateUi(self, LibraryForm):
-        LibraryForm.setWindowTitle(QtGui.QApplication.translate("LibraryForm", "Form", None, QtGui.QApplication.UnicodeUTF8))
-        self.label.setText(QtGui.QApplication.translate("LibraryForm", "Artist", None, QtGui.QApplication.UnicodeUTF8))
-        self.label_3.setText(QtGui.QApplication.translate("LibraryForm", "Album", None, QtGui.QApplication.UnicodeUTF8))
-        self.showAllAlbums.setToolTip(QtGui.QApplication.translate("LibraryForm", "Resets the album list to show all your albums again.", None, QtGui.QApplication.UnicodeUTF8))
-        self.showAllAlbums.setText(QtGui.QApplication.translate("LibraryForm", "Show All", None, QtGui.QApplication.UnicodeUTF8))
-        self.label_2.setText(QtGui.QApplication.translate("LibraryForm", "Tracks", None, QtGui.QApplication.UnicodeUTF8))
-        self.showAllTracks.setToolTip(QtGui.QApplication.translate("LibraryForm", "Resets the track list to show all your songs again.", None, QtGui.QApplication.UnicodeUTF8))
-        self.showAllTracks.setText(QtGui.QApplication.translate("LibraryForm", "Show All", None, QtGui.QApplication.UnicodeUTF8))
+        LibraryForm.setWindowTitle(_translate("LibraryForm", "Form", None))
+        self.label.setText(_translate("LibraryForm", "Artist", None))
+        self.label_3.setText(_translate("LibraryForm", "Album", None))
+        self.showAllAlbums.setToolTip(_translate("LibraryForm", "Resets the album list to show all your albums again.", None))
+        self.showAllAlbums.setText(_translate("LibraryForm", "Show All", None))
+        self.label_2.setText(_translate("LibraryForm", "Tracks", None))
+        self.showAllTracks.setToolTip(_translate("LibraryForm", "Resets the track list to show all your songs again.", None))
+        self.showAllTracks.setText(_translate("LibraryForm", "Show All", None))
 
 from PyKDE4.kdeui import KLineEdit

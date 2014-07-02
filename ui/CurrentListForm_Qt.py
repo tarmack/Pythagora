@@ -2,8 +2,8 @@
 
 # Form implementation generated from reading ui file 'CurrentListForm.ui.Qt'
 #
-# Created: Sat Aug 11 18:48:04 2012
-#      by: PyQt4 UI code generator 4.9.1
+# Created: Wed Jul  2 23:15:57 2014
+#      by: PyQt4 UI code generator 4.11
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -12,7 +12,16 @@ from PyQt4 import QtCore, QtGui
 try:
     _fromUtf8 = QtCore.QString.fromUtf8
 except AttributeError:
-    _fromUtf8 = lambda s: s
+    def _fromUtf8(s):
+        return s
+
+try:
+    _encoding = QtGui.QApplication.UnicodeUTF8
+    def _translate(context, text, disambig):
+        return QtGui.QApplication.translate(context, text, disambig, _encoding)
+except AttributeError:
+    def _translate(context, text, disambig):
+        return QtGui.QApplication.translate(context, text, disambig)
 
 class Ui_CurrentListForm(object):
     def setupUi(self, CurrentListForm):
@@ -123,7 +132,8 @@ class Ui_CurrentListForm(object):
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.currentClear.sizePolicy().hasHeightForWidth())
         self.currentClear.setSizePolicy(sizePolicy)
-        icon = QtGui.QIcon(icon.addPixmap(QtGui.QPixmap(_fromUtf8("ui/icons/edit-clear-list.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off))
+        icon = QtGui.QIcon()
+        icon.addPixmap(QtGui.QPixmap(_fromUtf8("ui/icons/edit-clear-list.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.currentClear.setIcon(icon)
         self.currentClear.setObjectName(_fromUtf8("currentClear"))
         self.toolsLayout.addWidget(self.currentClear, 4, 1, 1, 1)
@@ -133,7 +143,8 @@ class Ui_CurrentListForm(object):
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.currentRemove.sizePolicy().hasHeightForWidth())
         self.currentRemove.setSizePolicy(sizePolicy)
-        icon1 = QtGui.QIcon(icon1.addPixmap(QtGui.QPixmap(_fromUtf8("ui/icons/list-remove.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off))
+        icon1 = QtGui.QIcon()
+        icon1.addPixmap(QtGui.QPixmap(_fromUtf8("ui/icons/list-remove.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.currentRemove.setIcon(icon1)
         self.currentRemove.setObjectName(_fromUtf8("currentRemove"))
         self.toolsLayout.addWidget(self.currentRemove, 3, 1, 1, 1)
@@ -143,7 +154,8 @@ class Ui_CurrentListForm(object):
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.currentSave.sizePolicy().hasHeightForWidth())
         self.currentSave.setSizePolicy(sizePolicy)
-        icon2 = QtGui.QIcon(icon2.addPixmap(QtGui.QPixmap(_fromUtf8("ui/icons/document-save-as.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off))
+        icon2 = QtGui.QIcon()
+        icon2.addPixmap(QtGui.QPixmap(_fromUtf8("ui/icons/document-save-as.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.currentSave.setIcon(icon2)
         self.currentSave.setObjectName(_fromUtf8("currentSave"))
         self.toolsLayout.addWidget(self.currentSave, 1, 1, 1, 1)
@@ -153,7 +165,8 @@ class Ui_CurrentListForm(object):
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.addStream.sizePolicy().hasHeightForWidth())
         self.addStream.setSizePolicy(sizePolicy)
-        icon3 = QtGui.QIcon(icon3.addPixmap(QtGui.QPixmap(_fromUtf8("ui/icons/network-workgroup.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off))
+        icon3 = QtGui.QIcon()
+        icon3.addPixmap(QtGui.QPixmap(_fromUtf8("ui/icons/network-workgroup.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.addStream.setIcon(icon3)
         self.addStream.setObjectName(_fromUtf8("addStream"))
         self.toolsLayout.addWidget(self.addStream, 2, 1, 1, 1)
@@ -161,7 +174,6 @@ class Ui_CurrentListForm(object):
         self.horizontalWidget = QtGui.QWidget(self.currentGroup)
         self.horizontalWidget.setObjectName(_fromUtf8("horizontalWidget"))
         self.currentBottomL = QtGui.QHBoxLayout(self.horizontalWidget)
-        self.currentBottomL.setMargin(0)
         self.currentBottomL.setMargin(0)
         self.currentBottomL.setObjectName(_fromUtf8("currentBottomL"))
         self.currentBottom = QtGui.QToolButton(self.horizontalWidget)
@@ -186,7 +198,8 @@ class Ui_CurrentListForm(object):
         self.repeatButton.setSizePolicy(sizePolicy)
         self.repeatButton.setMaximumSize(QtCore.QSize(26, 26))
         self.repeatButton.setText(_fromUtf8(""))
-        icon4 = QtGui.QIcon(icon4.addPixmap(QtGui.QPixmap(_fromUtf8("ui/icons/task-recurring.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off))
+        icon4 = QtGui.QIcon()
+        icon4.addPixmap(QtGui.QPixmap(_fromUtf8("ui/icons/task-recurring.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.repeatButton.setIcon(icon4)
         self.repeatButton.setCheckable(True)
         self.repeatButton.setFlat(True)
@@ -200,7 +213,8 @@ class Ui_CurrentListForm(object):
         self.randomButton.setSizePolicy(sizePolicy)
         self.randomButton.setMaximumSize(QtCore.QSize(26, 26))
         self.randomButton.setText(_fromUtf8(""))
-        icon5 = QtGui.QIcon(icon5.addPixmap(QtGui.QPixmap(_fromUtf8("ui/icons/media-playlist-shuffle.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off))
+        icon5 = QtGui.QIcon()
+        icon5.addPixmap(QtGui.QPixmap(_fromUtf8("ui/icons/media-playlist-shuffle.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.randomButton.setIcon(icon5)
         self.randomButton.setCheckable(True)
         self.randomButton.setFlat(True)
@@ -215,19 +229,19 @@ class Ui_CurrentListForm(object):
         QtCore.QMetaObject.connectSlotsByName(CurrentListForm)
 
     def retranslateUi(self, CurrentListForm):
-        CurrentListForm.setWindowTitle(QtGui.QApplication.translate("CurrentListForm", "Form", None, QtGui.QApplication.UnicodeUTF8))
-        self.currentGroup.setTitle(QtGui.QApplication.translate("CurrentListForm", "Current Playlist", None, QtGui.QApplication.UnicodeUTF8))
-        self.label_4.setText(QtGui.QApplication.translate("CurrentListForm", "Filter", None, QtGui.QApplication.UnicodeUTF8))
-        self.oneLinePlaylist.setText(QtGui.QApplication.translate("CurrentListForm", "Use one line per playlist item.", None, QtGui.QApplication.UnicodeUTF8))
-        self.keepPlayingVisible.setText(QtGui.QApplication.translate("CurrentListForm", "Keep current song visible", None, QtGui.QApplication.UnicodeUTF8))
-        self.showNumbers.setText(QtGui.QApplication.translate("CurrentListForm", "Show song numbers", None, QtGui.QApplication.UnicodeUTF8))
-        self.label_7.setText(QtGui.QApplication.translate("CurrentListForm", "XFade", None, QtGui.QApplication.UnicodeUTF8))
-        self.label.setText(QtGui.QApplication.translate("CurrentListForm", "seconds", None, QtGui.QApplication.UnicodeUTF8))
-        self.currentClear.setText(QtGui.QApplication.translate("CurrentListForm", "Clear", None, QtGui.QApplication.UnicodeUTF8))
-        self.currentRemove.setText(QtGui.QApplication.translate("CurrentListForm", "Remove", None, QtGui.QApplication.UnicodeUTF8))
-        self.currentSave.setText(QtGui.QApplication.translate("CurrentListForm", "Save", None, QtGui.QApplication.UnicodeUTF8))
-        self.addStream.setText(QtGui.QApplication.translate("CurrentListForm", "Add Stream", None, QtGui.QApplication.UnicodeUTF8))
-        self.currentBottom.setText(QtGui.QApplication.translate("CurrentListForm", "Show Playlist Tools", None, QtGui.QApplication.UnicodeUTF8))
-        self.repeatButton.setToolTip(QtGui.QApplication.translate("CurrentListForm", "Repeat", None, QtGui.QApplication.UnicodeUTF8))
-        self.randomButton.setToolTip(QtGui.QApplication.translate("CurrentListForm", "Random", None, QtGui.QApplication.UnicodeUTF8))
+        CurrentListForm.setWindowTitle(_translate("CurrentListForm", "Form", None))
+        self.currentGroup.setTitle(_translate("CurrentListForm", "Current Playlist", None))
+        self.label_4.setText(_translate("CurrentListForm", "Filter", None))
+        self.oneLinePlaylist.setText(_translate("CurrentListForm", "Use one line per playlist item.", None))
+        self.keepPlayingVisible.setText(_translate("CurrentListForm", "Keep current song visible", None))
+        self.showNumbers.setText(_translate("CurrentListForm", "Show song numbers", None))
+        self.label_7.setText(_translate("CurrentListForm", "XFade", None))
+        self.label.setText(_translate("CurrentListForm", "seconds", None))
+        self.currentClear.setText(_translate("CurrentListForm", "Clear", None))
+        self.currentRemove.setText(_translate("CurrentListForm", "Remove", None))
+        self.currentSave.setText(_translate("CurrentListForm", "Save", None))
+        self.addStream.setText(_translate("CurrentListForm", "Add Stream", None))
+        self.currentBottom.setText(_translate("CurrentListForm", "Show Playlist Tools", None))
+        self.repeatButton.setToolTip(_translate("CurrentListForm", "Repeat", None))
+        self.randomButton.setToolTip(_translate("CurrentListForm", "Random", None))
 

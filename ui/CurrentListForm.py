@@ -2,8 +2,8 @@
 
 # Form implementation generated from reading ui file 'CurrentListForm.ui'
 #
-# Created: Sat Aug 11 18:48:04 2012
-#      by: PyQt4 UI code generator 4.9.1
+# Created: Wed Jul  2 23:15:57 2014
+#      by: PyQt4 UI code generator 4.11
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -12,7 +12,16 @@ from PyQt4 import QtCore, QtGui
 try:
     _fromUtf8 = QtCore.QString.fromUtf8
 except AttributeError:
-    _fromUtf8 = lambda s: s
+    def _fromUtf8(s):
+        return s
+
+try:
+    _encoding = QtGui.QApplication.UnicodeUTF8
+    def _translate(context, text, disambig):
+        return QtGui.QApplication.translate(context, text, disambig, _encoding)
+except AttributeError:
+    def _translate(context, text, disambig):
+        return QtGui.QApplication.translate(context, text, disambig)
 
 class Ui_CurrentListForm(object):
     def setupUi(self, CurrentListForm):
@@ -167,7 +176,6 @@ class Ui_CurrentListForm(object):
         self.horizontalWidget.setObjectName(_fromUtf8("horizontalWidget"))
         self.currentBottomL = QtGui.QHBoxLayout(self.horizontalWidget)
         self.currentBottomL.setMargin(0)
-        self.currentBottomL.setMargin(0)
         self.currentBottomL.setObjectName(_fromUtf8("currentBottomL"))
         self.currentBottom = QtGui.QToolButton(self.horizontalWidget)
         sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Fixed)
@@ -222,20 +230,20 @@ class Ui_CurrentListForm(object):
         QtCore.QMetaObject.connectSlotsByName(CurrentListForm)
 
     def retranslateUi(self, CurrentListForm):
-        CurrentListForm.setWindowTitle(QtGui.QApplication.translate("CurrentListForm", "Form", None, QtGui.QApplication.UnicodeUTF8))
-        self.currentGroup.setTitle(QtGui.QApplication.translate("CurrentListForm", "Current Playlist", None, QtGui.QApplication.UnicodeUTF8))
-        self.label_4.setText(QtGui.QApplication.translate("CurrentListForm", "Filter", None, QtGui.QApplication.UnicodeUTF8))
-        self.oneLinePlaylist.setText(QtGui.QApplication.translate("CurrentListForm", "Use one line per playlist item.", None, QtGui.QApplication.UnicodeUTF8))
-        self.keepPlayingVisible.setText(QtGui.QApplication.translate("CurrentListForm", "Keep current song visible", None, QtGui.QApplication.UnicodeUTF8))
-        self.showNumbers.setText(QtGui.QApplication.translate("CurrentListForm", "Show song numbers", None, QtGui.QApplication.UnicodeUTF8))
-        self.label_7.setText(QtGui.QApplication.translate("CurrentListForm", "XFade", None, QtGui.QApplication.UnicodeUTF8))
-        self.label.setText(QtGui.QApplication.translate("CurrentListForm", "seconds", None, QtGui.QApplication.UnicodeUTF8))
-        self.currentClear.setText(QtGui.QApplication.translate("CurrentListForm", "Clear", None, QtGui.QApplication.UnicodeUTF8))
-        self.currentRemove.setText(QtGui.QApplication.translate("CurrentListForm", "Remove", None, QtGui.QApplication.UnicodeUTF8))
-        self.currentSave.setText(QtGui.QApplication.translate("CurrentListForm", "Save", None, QtGui.QApplication.UnicodeUTF8))
-        self.addStream.setText(QtGui.QApplication.translate("CurrentListForm", "Add Stream", None, QtGui.QApplication.UnicodeUTF8))
-        self.currentBottom.setText(QtGui.QApplication.translate("CurrentListForm", "Show Playlist Tools", None, QtGui.QApplication.UnicodeUTF8))
-        self.repeatButton.setToolTip(QtGui.QApplication.translate("CurrentListForm", "Repeat", None, QtGui.QApplication.UnicodeUTF8))
-        self.randomButton.setToolTip(QtGui.QApplication.translate("CurrentListForm", "Random", None, QtGui.QApplication.UnicodeUTF8))
+        CurrentListForm.setWindowTitle(_translate("CurrentListForm", "Form", None))
+        self.currentGroup.setTitle(_translate("CurrentListForm", "Current Playlist", None))
+        self.label_4.setText(_translate("CurrentListForm", "Filter", None))
+        self.oneLinePlaylist.setText(_translate("CurrentListForm", "Use one line per playlist item.", None))
+        self.keepPlayingVisible.setText(_translate("CurrentListForm", "Keep current song visible", None))
+        self.showNumbers.setText(_translate("CurrentListForm", "Show song numbers", None))
+        self.label_7.setText(_translate("CurrentListForm", "XFade", None))
+        self.label.setText(_translate("CurrentListForm", "seconds", None))
+        self.currentClear.setText(_translate("CurrentListForm", "Clear", None))
+        self.currentRemove.setText(_translate("CurrentListForm", "Remove", None))
+        self.currentSave.setText(_translate("CurrentListForm", "Save", None))
+        self.addStream.setText(_translate("CurrentListForm", "Add Stream", None))
+        self.currentBottom.setText(_translate("CurrentListForm", "Show Playlist Tools", None))
+        self.repeatButton.setToolTip(_translate("CurrentListForm", "Repeat", None))
+        self.randomButton.setToolTip(_translate("CurrentListForm", "Random", None))
 
 from PyKDE4.kdeui import KLineEdit
