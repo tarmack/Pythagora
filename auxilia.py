@@ -149,5 +149,5 @@ def PIcon(icon):
     if KDE:
         return KIcon(icon)
     else:
-        return QIcon(DATA_DIR+'icons/%s.png' % icon)
+        return QIcon(DATA_DIR+'ui/icons/%s.png' % icon)
 
